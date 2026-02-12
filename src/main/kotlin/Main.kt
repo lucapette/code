@@ -5,17 +5,13 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.runBlocking
 import sun.misc.Signal
 import java.util.Properties
+import java.util.UUID
 import java.util.concurrent.Executors
 
 
-
-fun main(): Unit = runBlocking {
-    Signal.handle(Signal("INT")) {
-        this.coroutineContext.cancelChildren()
-    }
-
+fun props(name: String, table: String): Properties {
     val props = Properties()
-    props["name"] = "engine-test"
+    props["name"] = name
 
     props["connector.class"] = "io.debezium.connector.postgresql.PostgresConnector"
     props["offset.storage"] = "org.apache.kafka.connect.storage.FileOffsetBackingStore"
@@ -24,16 +20,23 @@ fun main(): Unit = runBlocking {
 
     props["database.hostname"] = "localhost"
     props["database.port"] = "5432"
-    props["database.user"] = "lucapette"
-    props["database.password"] = ""
-    props["database.dbname"] = "debezium-test"
-    props["topic.prefix"] = "test"
+    props["database.user"] = System.getProperty("user.name")
+    props["database.dbname"] = "embedded-debezium"
+
     props["plugin.name"] = "pgoutput"
-    props["converter.schemas.enable"] = "false"
-    props["table.include.list"] = "public.test"
+    props["table.include.list"] = "public.${table}"
+    props["topic.prefix"] = name
+    return props
+}
+
+
+fun main(): Unit = runBlocking {
+    Signal.handle(Signal("INT")) {
+        this.coroutineContext.cancelChildren()
+    }
 
     val engine = DebeziumEngine.create(KeyValueChangeEventFormat.of(Json::class.java, Json::class.java))
-        .using(props)
+        .using(props("engine-${UUID.randomUUID()}", "foo"))
         .notifying { record ->
             println(record)
         }.build()
