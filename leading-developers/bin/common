@@ -1,0 +1,5 @@
+#!/bin/bash
+
+date=$(date "+%Y-%m-%d")
+
+commonOptions="-F mermaid-filter --css assets/styles.css --metadata-file metadata.yml --metadata date=${date} --lua-filter filters/links.lua"

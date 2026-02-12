@@ -1,0 +1,9 @@
+#!/bin/bash
+
+source common
+
+echo "building pdf"
+
+pandoc $(echo $commonOptions) --lua-filter filters/toc.lua -t html5 --template assets/html.template --pdf-engine=weasyprint -o leading-developers-${date}.pdf *-*.md
+
+echo "done"

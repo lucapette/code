@@ -1,0 +1,7 @@
+#!/bin/sh
+
+source common
+
+pandoc $(echo $commonOptions) -o leading-developers-${date}.epub *-*.md
+
+echo "done"

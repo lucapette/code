@@ -1,0 +1,15 @@
+{
+  "name": "leadership-book",
+  "version": "0.0.1",
+  "repository": "git@github.com:lucapette/leadership-book.git",
+  "author": "lucapette <ciao@lucapette.me>",
+  "license": "MIT",
+  "scripts": {
+    "css": "postcss assets/main.css -u postcss-css-variables -o assets/styles.css"
+  },
+  "devDependencies": {
+    "postcss": "^8.4.19",
+    "postcss-cli": "^10.1.0",
+    "postcss-css-variables": "^0.18.0"
+  }
+}

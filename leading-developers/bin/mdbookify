@@ -1,0 +1,53 @@
+#!/usr/bin/env ruby
+
+require 'fileutils'
+
+class Array
+  def divide(pattern)
+    memo = []
+    memo.push [] unless pattern === first
+    each do |obj|
+      memo.push [] if pattern === obj
+      memo.last << obj
+    end
+    memo
+  end
+end
+
+FileUtils.rm_rf("src")
+FileUtils.mkdir("src")
+FileUtils.cp("web/public/_redirects", "src")
+
+FileUtils.cp("0-introduction.md", "src/introduction.md")
+FileUtils.cp("7-appendix.md", "src/appendix.md")
+
+File.open("src/SUMMARY.md", "w") { |summary|
+  summary.write "[Introduction](introduction.md)\n\n"
+
+  Dir.glob("[1-6]-*.md").sort.each do |file|
+    groups = File.readlines(file).divide(/^## /)
+    chapterGroup = groups.shift
+    chapterTitle = chapterGroup.first.split("# ").last.chomp
+    chapterName = chapterTitle.split(/ /).map(&:downcase).join('-')
+
+    summary.write("- [#{chapterTitle}](#{chapterName}.md)\n")
+
+    FileUtils.mkdir("src/#{chapterName}")
+    File.write("src/#{chapterName}.md", chapterGroup.join)
+
+    groups.each do |group|
+      paraTitle = group.first.split("## ").last.chomp
+      paraName = paraTitle.split(/ /).map(&:downcase).join('-')
+
+      summary.write("  - [#{paraTitle}](#{chapterName}/#{paraName}.md)\n")
+
+      File.write("src/#{chapterName}/#{paraName}.md", group.map{ |l| l.start_with?("#") ? l[1..-1] : l }.join)
+    end
+  end
+
+  summary.write "\n[Appendix](appendix.md)\n"
+}
+
+Dir.glob("src/**/*.md").each do |file|
+  system(" pandoc #{file} --lua-filter filters/html-links.lua -o #{file}")
+end

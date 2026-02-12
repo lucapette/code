@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+
+require 'kramdown'
+
+host = 'https://book.leadthe.dev'
+
+
+chapters = Dir.glob("[1-6]-*.md").sort.flat_map do |file|
+  chapter = file[2..-4]
+  File.readlines(file).map(&:chomp).grep(/^#/).map do |header|
+    level, title = header.match(/(\#{1,}) (.*)/).captures
+
+    next if level.length > 2
+
+
+    if (level.length == 2)
+      link = "[#{title}](#{host}/#{chapter}"
+      link << "/#{title.split(/ /).map(&:downcase).join('-')}" if level.length > 1
+      link << ".html)"
+    else
+      link = "[#{title}](#{host}/#{chapter}.html)"
+    end
+
+    "%s- #{link}" % ("  " * (level.length-1))
+  end
+end
+
+markdown = ["- [Introduction](#{host}/introduction.html)", chapters, "- [Appendix](#{host}/appendix.html)"]
+
+html = Kramdown::Document.new(markdown.join("\n")).to_html
+
+component = <<-COMPONENT
+function Toc() {
+  return (
+    #{html}
+  );
+}
+
+export default Toc;
+COMPONENT
+
+puts component

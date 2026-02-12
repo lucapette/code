@@ -1,0 +1,13 @@
+[book]
+title = "Leading developers"
+authors = ["Luca Pette"]
+description = "A common sense approach to engineering leadership."
+
+[output.html]
+additional-js = ["assets/mermaid.min.js", "assets/mermaid-init.js"]
+
+[output.html.print]
+enable = false
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"

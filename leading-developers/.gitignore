@@ -1,0 +1,6 @@
+leading-developers-*
+node_modules
+/assets/styles.css
+/src
+book
+*.err
