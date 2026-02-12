@@ -1,0 +1,26 @@
+#!/bin/bash
+
+set -e
+
+source ~/.zsh/functions.zsh
+
+if [ -z "$1" ];
+then
+  tmux ls 2>/dev/null
+  exit
+fi
+
+if [ -z "$TMUX" ]
+then
+  for project in $(projects)
+  do
+    name=`basename $project`
+    if ! tmux has-session -t $name 2>/dev/null; then
+      tmux new-session -s $name -c $project -d
+      tmux send-keys "cd $project" 'C-m' 'C-l'
+    fi
+  done
+  tmux a -t $1
+else
+  tmux switch -t $1
+fi

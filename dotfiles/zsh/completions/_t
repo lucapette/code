@@ -1,0 +1,5 @@
+#compdef t
+
+lines=("${(@f)$(projects | xargs -n1 basename)}")
+
+_arguments "1: :($lines)"

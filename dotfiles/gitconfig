@@ -1,0 +1,49 @@
+[user]
+	name = lucapette
+	email = ciao@lucapette.me
+[apply]
+    whitespace = nowarn
+[init]
+	defaultBranch = main
+[core]
+    editor = vim
+    excludesfile = ~/.gitignore
+    pager = delta
+[alias]
+    amend = commit --amend
+    br = branch
+    ck = checkout
+    ca = !git add -A . && git commit -v
+    co = commit
+    df = diff
+    lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+    ls = ls-files
+    pop = stash pop
+    st = stash -u
+    sw = show
+    vi = !vim -O `git status --porcelain | awk '/^[^D]/ {print $NF}'`
+[color]
+    ui = auto
+  [color "branch"]
+    current = yellow reverse
+    local = yellow
+    remote = green
+  [color "diff"]
+    old = red
+    new = green
+  [color "status"]
+    added = yellow
+    changed = green
+    untracked = cyan
+[credential]
+	helper = cache --timeout=3600
+[merge]
+    tool = vimdiff
+[push]
+	default = simple
+[interactive]
+    diffFilter = delta --color-only
+[delta]
+    navigate = true    # use n and N to move between diff sections
+    side-by-side = true
+    syntax-theme = GitHub

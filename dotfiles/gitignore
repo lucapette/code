@@ -1,0 +1,11 @@
+.svn
+*~
+.*.swp
+.DS_Store
+.ruby-version
+.vimrc
+.bundle
+.powenv
+.idea
+node_modules
+dist

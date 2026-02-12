@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+directories = File.readlines(File.expand_path('~/.projects')).map(&:chomp)
+
+if ARGV[0] == "--cdpath"
+  puts directories.map {|d| d.sub("/*", "") }.map { |d| File.expand_path(d) }.join(":")
+else
+  puts directories.map {|d| Dir.glob(File.expand_path(d)) }.sort
+end
+
+exit(0)

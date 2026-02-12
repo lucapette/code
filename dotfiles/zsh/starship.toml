@@ -1,0 +1,65 @@
+add_newline = false
+
+format = """
+$directory\
+[](fg:#5e81ac bg:#81a1c1)\
+$git_branch\
+$git_status\
+[](fg:#81a1c1 bg:#88c0d0)\
+$golang\
+$java\
+$nodejs\
+$rust\
+[ ](fg:#88c0d0)\
+"""
+
+[directory]
+style = "bold bg:#5e81ac"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+
+[directory.substitutions]
+"Documents" = ""
+"Downloads" = ""
+"Music" = ""
+"Pictures" = " "
+
+[docker_context]
+symbol = " "
+style = "bg:#8fbcbb"
+format = '[ $symbol $context ]($style) $path'
+
+[git_branch]
+symbol = ""
+style = "bold bg:#81a1c1"
+format = '[ $symbol $branch ]($style)'
+
+[git_status]
+style = "bg:#81a1c1"
+format = '[$all_status$ahead_behind ]($style)'
+stashed = '[ ⚑ ](bg:#5e81ac)'
+modified = '[  ](bg:#ebcb8b)'
+renamed = '[  ](bg:#ebcb8b)'
+staged = '[  ](bg:#b48ead)'
+untracked = '[  ](bg:#a3be8c)'
+ahead = '[  ](bg:#d08770)'
+behind = '[  ](bg:#d08770)'
+diverged = '[  ](bg:#bf616a)'
+deleted = '[ ✘ ](bg:#bf616a)'
+
+[golang]
+symbol = ""
+style = "bold bg:#88c0d0"
+format = '[ $symbol ($version) ]($style)'
+
+[java]
+symbol = ""
+style = "bold bg:#88c0d0"
+format = '[ $symbol ($version) ]($style)'
+
+[nodejs]
+symbol = ""
+style = "bold bg:#88c0d0"
+format = '[ $symbol ($version) ]($style)'
+detect_extensions = []
