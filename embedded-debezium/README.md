@@ -1,21 +1,34 @@
 # Embedded Debezium
 
-This project is a trivial example of how to use the [Debezium Embedded
-Engine](https://debezium.io/documentation/reference/2.4/development/engine.html)
-to capture changes from a postgres database.
+A sample application demonstrating the Debezium Embedded Engine for capturing PostgreSQL database changes in real-time.
 
-I wrote it while prototyping a new feature for
-[TypeStream](https://github.com/typestreamio/typestream).
+## Overview
+
+Trivial example showcasing how to use the Debezium Embedded Engine to capture changes from a PostgreSQL database. Created while prototyping features for TypeStream.
+
+## Features
+
+- Real-time change data capture (CDC) from PostgreSQL
+- Debezium Embedded Engine integration
+- Kotlin implementation
+- PostgreSQL WAL (Write-Ahead Log) monitoring
 
 ## Setup
 
-Assuming you have postgres installed, run [scripts/setup.sh](scripts/setup.sh)
-before you open the project in intellij.
+1. Ensure PostgreSQL is installed and running
+2. Run `./scripts/setup.sh` to initialize the database
+3. Verify PostgreSQL is accessible at `localhost:5432`
+4. Open the project in IntelliJ IDEA
 
-The code assumes you have a postgres database running on `localhost:5432` with
-your username and no password. Check the props in
-[Main.kt](src/main/kotlin/Main.kt) if you need to change this.
+By default, the application connects to PostgreSQL using your username with no password. Modify connection properties in `src/main/kotlin/Main.kt` if needed.
+
+## Tech Stack
+
+- Kotlin
+- Debezium Embedded Engine
+- PostgreSQL
+- Gradle build system
 
 ## License
 
-[MIT](/LICENSE)
+[MIT](/LICENSE) Copyright (c) [Luca Pette](https://lucapette.me)

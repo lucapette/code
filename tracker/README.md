@@ -1,70 +1,50 @@
 # tracker
 
+Activity tracking application for macOS that monitors Chrome browser usage with InfluxDB and Grafana visualization.
+
 ![screenshot](docs/screenshot.png)
 
-`tracker` uses awesome open source technology:
+## Overview
 
-- [Go](https://golang.org)
-- [Grafana](https://github.com/grafana/grafana)
-- [InfluxDB](https://github.com/influxdata/influxdb)
+An activity tracker written in Go that records application usage data into InfluxDB for visualization in Grafana dashboards. Originally created to experiment with time-series databases and analytics platforms.
 
-# Current status of the project
+## Tech Stack
 
-I wrote `tracker` to play around with InfluxDB and Grafana. I open sourced it
-so I could write on my blog about the experience. At the moment, the project
-has the following limitations:
+- **Backend**: Go application monitoring system processes
+- **Database**: InfluxDB for time-series data storage
+- **Visualization**: Grafana for dashboard creation
+- **Platform**: macOS-specific (monitors Chrome browser activity)
 
-- It works only on mac.
-- It tracks only Google Chrome activity.
-- It has *no* configuration so it assumes db name and credentials for
-  InfluxDB.
-- It has no logging.
-- The default set of [categories](/categories.csv) is too small.
-- There is no way to override default categories.
+## Features
 
-Please have a look at the [docs](docs/development.md) for more details.
+- Tracks application usage time automatically
+- Integrates with InfluxDB for data persistence
+- Provides Grafana dashboard for data visualization
+- Available via Homebrew for easy installation
 
-# Installation guide
+## Installation
 
-At the moment the process is still very manual:
-
-- Install the binary with your preferred system (brew, releases, source code)
-- Have InfluxDB running on default configuration locally
-- Have Grafana talking to your local InfluxDB instance.
-
-## Homebrew
-
-`tracker` can be installed through Homebrew:
-
-``` sh
-$ brew tap lucapette/tap
-$ brew install tracker
-$ brew services start lucapette/tap/tracker
+### Homebrew
+```bash
+brew tap lucapette/tap
+brew install tracker
+brew services start lucapette/tap/tracker
 ```
 
-## Standalone
+### Manual
+Download the latest binary from releases and place in your PATH. Requires InfluxDB running locally.
 
-`tracker` can be installed as an executable. Download the latest [compiled
-binaries](https://github.com/lucapette/tracker/releases) and put it anywhere
-in your executable path.
+## Configuration
 
-## Source
+Currently configured with default settings; customization options are limited. See categories.csv for default activity classifications.
 
-Please refer to our [contributing guidelines](/CONTRIBUTING.md) to build and
-install `tracker` from the source.
+## Limitations
 
-## Grafana dashboard
+- macOS only (Chrome activity tracking)
+- Fixed InfluxDB connection settings
+- Limited configuration options
+- Small default category set
 
-The latest version of the dashboard is available
-[here](/docs/Me-1487506103645.json).
+## License
 
-# Code of Conduct
-
-You are expected to follow our [code of conduct](/CODE_OF_CONDUCT.md) when
-interacting with the projects via issues, pull requests or in any other form.
-Many thanks to the awesome [contributor
-covenant](http://contributor-covenant.org/) initiative!
-
-# License
-
-[MIT License](/LICENSE) Copyright (c) [2017] [Luca Pette](http://lucapette.me)
+[MIT](/LICENSE) Copyright (c) [Luca Pette](https://lucapette.me)

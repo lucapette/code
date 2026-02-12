@@ -1,16 +1,22 @@
 # dotfiles
 
-This repository contains my shell related configuration files.
+My personal shell configuration files for zsh, tmux, vim, and other command-line tools.
 
-I do _not_ recommend to use my configuration files as they are:
+## Components
 
-- If learning about shell tools is your goal, you won't learn much about zsh,
-  tmux and so on by copying someone else' configuration
-- The configuration is tailored to my very specific needs so it won't probably
-  fit you.
+- **zsh** - Custom shell configuration with plugins and aliases
+- **tmux** - Terminal multiplexer settings for productivity
+- **vim** - Editor configuration for efficient coding
+- **Git** - Custom aliases and settings
 
-Having said that, it's open source so feel free to take anything you need :)
+## Installation
 
-# License
+⚠️ Warning: These configurations are tailored for my specific workflow and may not work for others. Use at your own discretion.
 
-[MIT License](/LICENSE) Copyright (c) [Luca Pette](https://lucapette.me)
+## Usage
+
+These dotfiles are managed manually. See individual configuration files for specific features and shortcuts.
+
+## License
+
+[MIT](/LICENSE) Copyright (c) [Luca Pette](https://lucapette.me)

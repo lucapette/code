@@ -1,50 +1,60 @@
 # ISBN Redirect
 
-ISBN Redirect is a Cloudflare Worker that provides a simple API endpoint to redirect ISBN numbers to their corresponding book pages on The StoryGraph.
+Cloudflare Worker that redirects ISBN numbers to their corresponding book pages on The StoryGraph.
+
+## Overview
+
+Simple API endpoint that takes ISBN numbers as input and redirects users to the respective book page on The StoryGraph. Built as a serverless function for fast, global distribution.
+
+## Features
+
+- ISBN to book page redirection
+- Serverless deployment via Cloudflare Workers
+- Fast global edge network
+- Lightweight and minimal dependencies
 
 ## How It Works
 
-The service accepts ISBN numbers as path parameters and redirects users to the respective book page on The StoryGraph. It works by:
-
-1. Taking an ISBN as input in the URL path (`/redirect/{isbn}`)
-2. Searching for the ISBN on The StoryGraph
-3. Scraping the resulting HTML to extract the book link
-4. Redirecting the user to the book page
+1. Accepts ISBN as path parameter (`/redirect/{isbn}`)
+2. Queries The StoryGraph for the book
+3. Extracts the book page URL
+4. Issues HTTP redirect to the target page
 
 ## Usage
 
-Make a GET request to:
+Make a GET request to the worker endpoint:
 
 ```
 https://your-worker.your-subdomain.workers.dev/redirect/{isbn}
 ```
 
-For example:
+Example:
 ```
 https://your-worker.your-subdomain.workers.dev/redirect/9780226526812
 ```
 
+## Tech Stack
+
+- Cloudflare Workers
+- TypeScript
+- Hono framework
+- node-html-parser for HTML parsing
+- Zod for validation
+- Wrangler CLI for deployment
+
 ## Development
 
-### Prerequisites
-- Node.js
-- Wrangler CLI (`npm install -g wrangler`)
-
-### Installation
+Install dependencies and run locally:
 ```bash
 npm install
-```
-
-### Running Locally
-```bash
 npm run dev
 ```
 
-### Deployment
+Deploy to Cloudflare:
 ```bash
 npm run deploy
 ```
 
 ## License
 
-MIT
+[MIT](/LICENSE) Copyright (c) [Luca Pette](https://lucapette.me)
