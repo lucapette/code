@@ -1,0 +1,30 @@
+{
+  "name": "isbn-redirect",
+  "description": "A Cloudflare Worker that redirects ISBNs to corresponding book pages on The StoryGraph.",
+  "cloudflare": {
+    "products": [
+      "Workers"
+    ],
+    "publish": true
+  },
+  "scripts": {
+    "typegen": "wrangler types",
+    "prettier:write": "prettier --write src",
+    "prettier:check": "prettier --check src",
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "dependencies": {
+    "hono": "4.11.5",
+    "node-html-parser": "^7.0.2",
+    "zod": "3.25.67"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "prettier": "^3.8.1",
+    "typescript": "5.9.3",
+    "wrangler": "4.60.0"
+  },
+  "license": "MIT",
+  "private": true
+}
