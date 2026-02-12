@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  {{ partial "head" . }}
+
+
+  <body>
+    {{ partial "theme" . }}
+    <div class="wrap">
+      {{ partial "header" . }}
+
+
+      <section>
+        <div class="hero">
+          <div class="description">
+            <h1>Hi, I'm Luca :)</h1>
+            <p>
+              I'm an independent software developer. I use this website to share
+              my <a href="/writing">writing</a>.
+            </p>
+          </div>
+          <div class="decoration">
+            <figure class="me image">
+              {{ $image := resources.Get "me.png" }}
+              {{ $small := $image.Resize "128x128 webp q90" }}
+              {{ $medium := $image.Resize "256x256 webp q90" }}
+              <img
+                src="{{ $small.RelPermalink }}"
+                srcset="
+                  {{ $small.RelPermalink }} 128w,
+                  {{ $medium.RelPermalink }} 256w
+                "
+                sizes="(max-width: 600px) 128px, 800px"
+                alt="Luca Pette"
+                width="128"
+                height="128"
+              />
+            </figure>
+          </div>
+        </div>
+      </section>
+      <section>
+        <div class="columns">
+          <div class="column">
+            <h2 class="year">Latest writing</h2>
+            <ul class="posts">
+              {{ range first 5 (where site.RegularPages "Type" "in" "writing") }}
+                <li class="post">
+                  <a href="{{ .Permalink }}"
+                    ><span>{{ .Title }}</span>
+                    <span class="date"
+                      >{{ .Date | time.Format "Jan 2006" }}</span
+                    ></a
+                  >
+                </li>
+              {{ end }}
+            </ul>
+          </div>
+        </div>
+        <div class="columns">
+          <div class="column">
+            <h2 class="year">Highlights</h2>
+            <ul class="posts">
+              {{ range (where .Site.Pages.ByLastmod.Reverse "Params.favourite" true ) }}
+                <li class="post">
+                  <a href="{{ .Permalink }}"
+                    ><span>{{ .Title }}</span>
+                    <span class="date"
+                      >{{ .Date | time.Format "Jan 2006" }}</span
+                    ></a
+                  >
+                </li>
+              {{ end }}
+            </ul>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    {{ partial "footer" . }}
+  </body>
+</html>

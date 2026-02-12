@@ -1,0 +1,45 @@
+baseURL = "https://lucapette.me"
+title = "Home"
+summaryLength = 30
+enableGitInfo = true
+[pagination]
+  pagerSize = 10
+[params]
+  author = 'Luca Pette'
+  description = "Luca Pette's website"
+[mediaTypes."application/atom+xml"]
+  suffixes = ["xml"]
+[outputFormats.Atom]
+  name = "Atom"
+  mediaType = "application/atom+xml"
+  baseName = "atom"
+  isPlainText = false
+  rel = "alternate"
+  isHTML = false
+  noUgly = true
+  permalinkable = false
+
+[outputs]
+  home = ["HTML", "RSS", "ATOM"]
+
+[markup]
+  [markup.highlight]
+    noClasses = false
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+        unsafe = true
+[menu]
+  [[menu.main]]
+    identifier = "home"
+    name = "Home"
+    url = "/"
+    weight = 10
+
+[related]
+  includeNewer = true
+  threshold = 80
+  toLower = false
+
+  [[related.indices]]
+    name = "keywords"
+    weight = 100

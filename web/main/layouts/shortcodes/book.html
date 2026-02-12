@@ -1,0 +1,22 @@
+<div class="book">
+  {{ $width  := .Get "width" }}
+  {{ $image  := .Page.Resources.Get (.Get "name") }}
+  {{ $small  := $image.Resize "200x webp q90" }}
+  {{ $medium  := $image.Resize "400x webp q90" }}
+  <a
+    class="book-cover"
+    href="https://www.goodreads.com/book/show/{{ .Get "id" }}"
+  >
+    <img
+      src="{{ $small.RelPermalink }}"
+      srcset="{{ $small.RelPermalink }} 200w, {{ $medium.RelPermalink }} 400w"
+      sizes="(max-width: 600px) 128px, 800px"
+      alt="{{ .Get "title" }}"
+      width="{{ $width }}"
+    />
+  </a>
+
+  <div class="book-review">
+    {{ .Inner | markdownify }}
+  </div>
+</div>

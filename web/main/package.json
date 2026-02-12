@@ -1,0 +1,24 @@
+{
+  "name": "website",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:lucapette/website.git",
+  "author": "lucapette <ciao@lucapette.me>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "prettier:check": "prettier --check '**/*.{ts,js,css,scss,html}'",
+    "prettier:write": "prettier --write '**/*.{ts,js,css,scss,html}'"
+  },
+  "dependencies": {
+    "include-media": "^2.0.0",
+    "lucide": "0.381.0",
+    "nord": "^0.2.1"
+  },
+  "devDependencies": {
+    "postcss": "^8.4.38",
+    "postcss-cli": "11.0.0",
+    "prettier": "^3.2.5",
+    "prettier-plugin-go-template": "^0.0.15"
+  }
+}

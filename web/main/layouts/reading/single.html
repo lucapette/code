@@ -1,0 +1,62 @@
+{{ define "main" }}
+  <section>
+    <h1 class="title">{{ .Title }}</h1>
+    <nav class="level">
+      <div class="left">
+        <p class="is-size-6">
+          {{ with .Params.author }}
+            by
+            {{ . }}
+          {{ end }}
+        </p>
+      </div>
+      <div class="right">
+        <p class="is-size-6">
+          {{ with .Params.isbn }}
+            <p>
+              The book on
+              <a
+                href="https://isbn-redirect.luca-pette.workers.dev/redirect/{{ . }}"
+                >the story graph</a
+              >
+            </p>
+          {{ end }}
+        </p>
+      </div>
+    </nav>
+    <hr />
+
+    <div class="book-cover">
+      {{ $imageName := printf "%s.jpg" .File.BaseFileName }}
+      {{ $imagePath := printf "reading/%s" $imageName }}
+      {{ $image := resources.Get $imagePath }}
+
+      {{ if $image }}
+        <img
+          src="{{ $image.RelPermalink }}"
+          alt="Cover of {{ .Title }}"
+          class="book-cover-image"
+          width="{{ $image.Width }}"
+          height="{{ $image.Height }}"
+        />
+      {{ else }}
+        <div class="book-cover-placeholder">
+          <span>No cover available</span>
+        </div>
+      {{ end }}
+    </div>
+  </section>
+  <section>
+    <div class="content">
+      {{ .Content }}
+    </div>
+  </section>
+
+  <section>
+    <div class="columns">
+      <div class="column">
+        {{ partial "related" . }}
+      </div>
+    </div>
+  </section>
+{{ end }}

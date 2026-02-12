@@ -1,0 +1,46 @@
+{{ define "main" }}
+  <section>
+    <h1>{{ .Title }}</h1>
+
+        {{ .Content }}
+
+    <div class="books-grid">
+      {{ range .Pages }}
+          <a href="{{ .RelPermalink }}">
+
+        <article class="book-card">
+            <div class="book-card-cover">
+              {{ $imageName := printf "%s.jpg" .File.BaseFileName }}
+              {{ $imagePath := printf "reading/%s" $imageName }}
+              {{ $image := resources.Get $imagePath }}
+
+              {{ if $image }}
+                {{ $thumbnail := $image.Fill "300x450" }}
+                <img
+                  src="{{ $thumbnail.RelPermalink }}"
+                  alt="Cover of {{ .Title }}"
+                  loading="lazy"
+                  width="{{ $thumbnail.Width }}"
+                  height="{{ $thumbnail.Height }}"
+                />
+              {{ else }}
+                <div class="book-card-placeholder">
+                  <span>{{ .Title }}</span>
+                </div>
+              {{ end }}
+            </div>
+
+            <footer class="book-card-info">
+              <h3>{{ .Title }}</h2>
+
+              {{ with .Params.author }}
+                <p class="book-card-author">{{ . }}</p>
+              {{ end }}
+              </footer>
+        </article>
+          </a>
+
+      {{ end }}
+    </div>
+  </section>
+{{ end }}

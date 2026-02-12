@@ -1,0 +1,3 @@
+Sitemap: https://lucapette.me/sitemap.xml
+User-agent:*
+Disallow:

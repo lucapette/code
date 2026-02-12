@@ -1,0 +1,11 @@
+<h3 class="year">See also</h3>
+<ul class="posts">
+  {{ range .Site.RegularPages.Related . | first 5 }}
+    <li class="post">
+      <a href="{{ .RelPermalink }}"
+        ><span>{{ .Title }}</span>
+        <span class="date">{{ .Date | time.Format "Jan 2006" }}</span></a
+      >
+    </li>
+  {{ end }}
+</ul>

@@ -1,0 +1,206 @@
+@charset "UTF-8";
+
+@use "../node_modules/include-media/dist/include-media";
+
+@use "reset";
+@use "mixins" as m;
+@use "variables" as v;
+@use "elements";
+@use "layout";
+@use "content";
+@use "dark";
+
+@use "reading";
+
+.year {
+  margin-bottom: 1rem;
+}
+
+ul.posts {
+  li {
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid v.$white-ter;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    a {
+      text-decoration: none;
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.4rem 0;
+      align-items: center;
+      justify-content: space-between;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      .date {
+        color: v.$black;
+        font-family: v.$font-family-monospace;
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-left: auto;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+.highlight {
+  margin-bottom: 1em;
+}
+
+.copy-code {
+  display: none;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  border-radius: v.$radius;
+  user-select: none;
+}
+
+.highlight pre {
+  border-radius: v.$radius;
+}
+
+.highlight,
+pre {
+  position: relative;
+}
+
+div.highlight:hover .copy-code,
+pre:hover .copy-code {
+  display: block;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 4fr 2fr;
+
+  .description {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    h1 {
+      font-size: 3rem;
+      @include m.fancyTitle();
+    }
+  }
+
+  .decoration {
+    justify-self: right;
+  }
+}
+
+@include include-media.media(">=tablet", "<desktop") {
+  :root {
+    --wrap-width: 740px;
+  }
+
+  .hero {
+    .description {
+      order: 1;
+
+      h1 {
+        font-size: 2.5rem;
+      }
+    }
+
+    .decoration {
+      order: 2;
+    }
+  }
+}
+
+@include include-media.media("<=tablet") {
+  :root {
+    --wrap-width: 95%;
+  }
+
+  .hero {
+    grid-template-columns: none;
+    gap: 1rem;
+
+    .description {
+      order: 2;
+
+      h1 {
+        font-size: 2rem;
+      }
+    }
+
+    .decoration {
+      justify-self: left;
+      order: 1;
+    }
+  }
+
+  ul.posts {
+    li {
+      a {
+        white-space: preserve;
+
+        .date {
+          display: none;
+        }
+      }
+    }
+  }
+}
+
+/* https://www.scottohara.me/blog/2017/04/14/inclusively-hidden.html */
+.sr-only:not(:focus):not(:active) {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.sun {
+  visibility: hidden;
+  display: none;
+}
+
+.me:hover {
+  transform: scaleX(-1);
+}
+
+figure.me {
+  width: 128px;
+  height: 128px;
+}
+
+.anchor a {
+  opacity: 0;
+  transition: opacity 0.2s ease-in;
+}
+
+.anchor:hover a {
+  opacity: 1;
+  transition: opacity 0.2s ease-in;
+}
+
+.book {
+  display: flex;
+  gap: 0.5em;
+}
+
+.book-cover {
+  width: 20%;
+}
+
+.book-review {
+  width: 80%;
+}
+
+@include include-media.media("<=tablet") {
+  .book {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,5 @@
+---
+title: "Kafka"
+---
+
+{{< typestream >}}
