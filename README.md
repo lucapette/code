@@ -31,7 +31,7 @@ My personal monorepo. A collection of projects, experiments, and tools I've buil
 |-------------------------------------------------------------|------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
 | [embedded-debezium](/embedded-debezium)                     | ![Kotlin](https://img.shields.io/badge/-Kotlin-0095D5?logo=kotlin&logoColor=white)             | Example of using Debezium Embedded Engine with PostgreSQL |
 | [interactive-queries](/interactive-queries)                 | ![Kotlin](https://img.shields.io/badge/-Kotlin-0095D5?logo=kotlin&logoColor=white)             | Kafka Streams interactive queries demo                    |
-| [kafka-streams-vs-typestream](/kafka-streams-vs-typestream) | ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript&logoColor=white) | Companion repo for a comparative article                  |
+| [kafka-streams-vs-typestream](/kafka-streams-vs-typestream) | ![Kotlin](https://img.shields.io/badge/-Kotlin-0095D5?logo=kotlin&logoColor=white)             | Companion repo for a comparative article                  |
 
 ## Utilities
 
