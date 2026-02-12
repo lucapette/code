@@ -4,19 +4,22 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
+
+	"github.com/lucapette/tracker"
 )
 
 func main() {
 	go func() {
 		tick := time.Tick(1 * time.Second)
 		for range tick {
-			name, err := GetActivityName()
+			name, err := tracker.GetActivityName()
 			if err != nil {
 				log.Println(err)
 			}
 
-			a := NewActivity(name)
+			a := tracker.NewActivity(name)
 
 			err = a.Store()
 			if err != nil {
@@ -26,6 +29,6 @@ func main() {
 	}()
 
 	s := make(chan os.Signal, 1)
-	signal.Notify(s, os.Interrupt, os.Kill)
+	signal.Notify(s, os.Interrupt, syscall.SIGTERM)
 	<-s
 }
