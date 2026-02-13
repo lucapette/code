@@ -267,13 +267,10 @@ What I'm saying is that I would use TypeStream for trivial event-driven
 microservices and leave Kafka Streams for the more advanced problems. Yes, of
 course my answer is to use both 😁
 
-<article class="message is-info">
-  <div class="message-body">
-    <p>Hey! 👋</p>
-    <p>Thank you for reading my content. I appreciate it.</p>
-    <p>
-      If you like what you're reading, you may want to check out
-      <a href="https://typestream.io">TypeStream</a>.
-    </p>
-  </div>
-</article>
+{{#message "is-info"}}
+Hey! 👋
+
+Thank you for reading my content. I appreciate it.
+
+If you like what you're reading, you may want to check out [TypeStream](https://typestream.io).
+{{/message}}

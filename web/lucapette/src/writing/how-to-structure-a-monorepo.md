@@ -11,13 +11,11 @@ keywords:
 date: 2022-09-28T07:09:51+02:00
 ---
 
-<article class="message is-info">
-  <div class="message-body">This article assumes you're _already_ convinced that a monorepo is how you want
-to organise your codebase.
+{{#message "is-info"}}
+This article assumes you're _already_ convinced that a monorepo is how you want to organise your codebase.
 
-While I mention some benefits of the approach, they are part of a larger set of
-benefits I discussed in [The appeal of monorepo](/writing/the-appeal-of-monorepo "the appeal of monorepo").</div>
-</article>
+While I mention some benefits of the approach, they are part of a larger set of benefits I discussed in [The appeal of monorepo](/writing/the-appeal-of-monorepo).
+{{/message}}
 
 With this article, I initially intended to provide some sort of "starting
 template" for a monorepo. The deeper I got into the topic, the more obvious it
@@ -209,13 +207,10 @@ engineering management should happen.
 You want a structure that works technically _and_ that has organisational
 meaning.
 
-<article class="message is-info">
-  <div class="message-body">
-    <p>Hey! 👋</p>
-    <p>Thank you for reading my content. I appreciate it.</p>
-    <p>
-      If you like what you're reading, you may want to check out my book
-      <a href="https://leadthe.dev">Leading developers</a>.
-    </p>
-  </div>
-</article>
+{{#message "is-info"}}
+Hey! 👋
+
+Thank you for reading my content. I appreciate it.
+
+If you like what you're reading, you may want to check out my book [Leading developers](https://leadthe.dev).
+{{/message}}

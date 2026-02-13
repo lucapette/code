@@ -9,11 +9,9 @@ aliases:
 title: First steps with webpack, babel, and yarn
 ---
 
-<article class="message is-warning">
-  <div class="message-body"><a href="https://github.com/lucapette/passata"  target="_blank">Passata</a> is being rewritten at
-the moment so the information in this page is out of date. I'll be publishing a
-new article as soon as it's ready.</div>
-</article>
+{{#message "is-warning"}}
+[Passata](https://github.com/lucapette/passata) is being rewritten at the moment so the information in this page is out of date. I'll be publishing a new article as soon as it's ready.
+{{/message}}
 
 I have just started my journey in the [React](https://facebook.github.io/react/)
 ecosystem. I decided to take notes along the way so I could share my experience

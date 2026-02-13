@@ -10,10 +10,9 @@ keywords:
 date: 2022-09-23T09:09:51+02:00
 ---
 
-<article class="message is-info">
-  <div class="message-body">This is a _long_ read. You will find a table of
-contents right after the introduction.</div>
-</article>
+{{#message "is-info"}}
+This is a _long_ read. You will find a table of contents right after the introduction.
+{{/message}}
 
 Before I dive into what appeals to me and what doesn't about a monorepo approach,
 let me share a definition from

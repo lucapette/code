@@ -8,9 +8,9 @@ tags:
   - react
 ---
 
-<article class="message is-warning">
-  <div class="message-body">This project has been archived.</div>
-</article>
+{{#message "is-warning"}}
+This project has been archived.
+{{/message}}
 
 `deloominator` is a data visualization application for SQL users I published a
 few weeks ago. You can read the announcement

@@ -140,13 +140,10 @@ with other people.
 Let your direct reports go wherever they want to go with them. You'll love the
 results.
 
-<article class="message is-info">
-  <div class="message-body">
-    <p>Hey! 👋</p>
-    <p>Thank you for reading my content. I appreciate it.</p>
-    <p>
-      If you like what you're reading, you may want to check out my book
-      <a href="https://leadthe.dev">Leading developers</a>.
-    </p>
-  </div>
-</article>
+{{#message "is-info"}}
+Hey! 👋
+
+Thank you for reading my content. I appreciate it.
+
+If you like what you're reading, you may want to check out my book [Leading developers](https://leadthe.dev).
+{{/message}}

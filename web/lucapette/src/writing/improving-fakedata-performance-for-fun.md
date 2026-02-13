@@ -8,11 +8,9 @@ description: A good excuse to play around with some interesting tools
 keywords: golang, fakedata, performance, strace, pprof, datasette
 ---
 
-<article class="message is-info">
-  <div class="message-body">If you're familiar with
-[fakedata](https://github.com/lucapette/fakedata/), skip over to the [next
-section](#why-am-i-doing-this).</div>
-</article>
+{{#message "is-info"}}
+If you're familiar with [fakedata](https://github.com/lucapette/fakedata/), skip over to the [next section](#why-am-i-doing-this).
+{{/message}}
 
 Fakedata is a small CLI (command-line application) that helps you generate data.
 

@@ -14,13 +14,9 @@ aliases:
   - /using-flow-and-jest
 ---
 
-<article class="message is-warning">
-  <div class="message-body">
-    <a href="https://github.com/lucapette/passata" target="_blank">Passata</a> is
-    being rewritten at the moment so the information in this page is out of date.
-    I'll be publishing a new article as soon as it's ready.
-  </div>
-</article>
+{{#message "is-warning"}}
+[Passata](https://github.com/lucapette/passata) is being rewritten at the moment so the information in this page is out of date. I'll be publishing a new article as soon as it's ready.
+{{/message}}
 
 In the previous article of the series, I explained how I introduced a timer in
 [passata](https://github.com/lucapette/passata), my playground application for

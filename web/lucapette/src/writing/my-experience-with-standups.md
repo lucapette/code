@@ -118,13 +118,10 @@ perfection, although I know I can't have it. Attending or running a standup
 every morning is a sad activity from that perspective. Because it's a constant
 reminder: we could be doing a better job at basic communication.
 
-<article class="message is-info">
-  <div class="message-body">
-    <p>Hey! 👋</p>
-    <p>Thank you for reading my content. I appreciate it.</p>
-    <p>
-      If you like what you're reading, you may want to check out my book
-      <a href="https://leadthe.dev">Leading developers</a>.
-    </p>
-  </div>
-</article>
+{{#message "is-info"}}
+Hey! 👋
+
+Thank you for reading my content. I appreciate it.
+
+If you like what you're reading, you may want to check out my book [Leading developers](https://leadthe.dev).
+{{/message}}

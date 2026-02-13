@@ -10,10 +10,9 @@ keywords:
 favourite: true
 ---
 
-<article class="message is-info">
-  <div class="message-body">This is a _long_ read. You will find a table of
-contents right after the introduction.</div>
-</article>
+{{#message "is-info"}}
+This is a _long_ read. You will find a table of contents right after the introduction.
+{{/message}}
 
 One day, during a post-game interview, elite chess Grandmaster Alexander
 Grischuk was asked the routine question: "How long have you been preparing for

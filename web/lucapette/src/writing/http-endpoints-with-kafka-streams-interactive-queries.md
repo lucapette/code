@@ -9,14 +9,11 @@ tags:
 keywords: kafka, kafka streams, kotlin
 ---
 
-<article class="message is-info">
-  <div class="message-body">Interactive queries are a somewhat advanced topic in the context of Kafka
-Streams application, so this article assumes the reader knows the basics of
-Kafka Streams.
+{{#message "is-info"}}
+Interactive queries are a somewhat advanced topic in the context of Kafka Streams application, so this article assumes the reader knows the basics of Kafka Streams.
 
-If you'd like to learn more about Kafka Streams, check out [Getting started with
-Kafka Streams](/writing/getting-started-with-kafka-streams).</div>
-</article>
+If you'd like to learn more about Kafka Streams, check out [Getting started with Kafka Streams](/writing/getting-started-with-kafka-streams).
+{{/message}}
 
 [Interactive
 queries](https://kafka.apache.org/documentation/streams/developer-guide/interactive-queries.html)
@@ -117,16 +114,13 @@ bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic words --r
 Created topic words.
 ```
 
-<article class="message is-warning">
-  <div class="message-body">**Warning:** neither the code nor the settings presented are recommended for
-production use.
+{{#message "is-warning"}}
+**Warning:** neither the code nor the settings presented are recommended for production use.
 
-Production readiness code and configuration would add too much detail and reduce
-clarity.
+Production readiness code and configuration would add too much detail and reduce clarity.
 
-At the end of the article, I provide a list of recommendations for
-production-ready Kafka Streams applications.</div>
-</article>
+At the end of the article, I provide a list of recommendations for production-ready Kafka Streams applications.
+{{/message}}
 
 Now let's add some words to the topic:
 
@@ -475,13 +469,10 @@ built for this article as a Kotlin playground, so I will probably work on some o
 these points myself. If you're interested, check the issues as I generally use
 them as a TODO list and maybe give it a star :)
 
-<article class="message is-info">
-  <div class="message-body">
-    <p>Hey! 👋</p>
-    <p>Thank you for reading my content. I appreciate it.</p>
-    <p>
-      If you like what you're reading, you may want to check out
-      <a href="https://typestream.io">TypeStream</a>.
-    </p>
-  </div>
-</article>
+{{#message "is-info"}}
+Hey! 👋
+
+Thank you for reading my content. I appreciate it.
+
+If you like what you're reading, you may want to check out [TypeStream](https://typestream.io).
+{{/message}}

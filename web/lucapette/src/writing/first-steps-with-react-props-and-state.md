@@ -7,11 +7,9 @@ keywords: react, webpack, passata, pomodoro technique
 title: First steps with React props and state
 ---
 
-<article class="message is-warning">
-  <div class="message-body"><a href="https://github.com/lucapette/passata"  target="_blank">Passata</a> is being rewritten at
-the moment so the information in this page is out of date. I'll be publishing a
-new article as soon as it's ready.</div>
-</article>
+{{#message "is-warning"}}
+[Passata](https://github.com/lucapette/passata) is being rewritten at the moment so the information in this page is out of date. I'll be publishing a new article as soon as it's ready.
+{{/message}}
 
 ## Passata design and features
 
