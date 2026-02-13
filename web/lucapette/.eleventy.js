@@ -18,6 +18,13 @@ export default function (eleventyConfig) {
   eleventyConfig.addFilter("formatDate", formatDate);
   eleventyConfig.addFilter("limit", (array, n) => array.slice(0, n));
 
+  eleventyConfig.addPreprocessor("drafts", "md,hbs", function (data, content) {
+    if (data.draft && process.env.NODE_ENV !== "development") {
+      return false;
+    }
+    return content;
+  });
+
   eleventyConfig.addPassthroughCopy("./src/assets");
   eleventyConfig.addPassthroughCopy("./src/static");
 

@@ -20,7 +20,7 @@ This site is in active migration from Hugo to 11ty. The primary focus is reachin
 | `leading-developers` shortcode            | Missing |
 | `message` shortcode                       | Missing |
 | `typestream` shortcode                    | Missing |
-| Draft filtering                           | Broken  |
+| Draft filtering                           | Done    |
 | Image optimization (`@11ty/eleventy-img`) | Missing |
 
 ### "The books I read in 20XX" Articles
