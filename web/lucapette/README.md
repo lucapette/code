@@ -7,13 +7,17 @@ the original Hugo version.
 
 This site is in active migration from Hugo to 11ty. The primary focus is reaching full feature parity with `web/main`.
 
+### Naming Conventions
+
+The new site uses **"article"** everywhere instead of **"post"** (Hugo's terminology). This applies to CSS classes, variable names, etc.
+
 ### In Progress
 
 ### To Do (Feature Parity)
 
 | Feature                                   | Status  |
 |-------------------------------------------|---------|
-| Tags taxonomy pages                       | Missing |
+| Tags taxonomy pages                       | Done    |
 | Related posts partial                     | Missing |
 | RSS/Atom feed                             | Missing |
 | `book` shortcode                          | Missing |

@@ -18,7 +18,10 @@ export default function (eleventyConfig) {
 
   eleventyConfig.addFilter("eq", eq);
   eleventyConfig.addFilter("formatDate", formatDate);
-  eleventyConfig.addFilter("limit", (array, n) => array.slice(0, n));
+  eleventyConfig.addFilter("limit", (array, n) => array ? array.slice(0, n) : []);
+  eleventyConfig.addFilter("getTagPosts", function (tagPosts, tag) {
+    return tagPosts[tag] || [];
+  });
 
   eleventyConfig.addPreprocessor("drafts", "md,hbs", drafts);
 
@@ -30,6 +33,36 @@ export default function (eleventyConfig) {
   eleventyConfig.addCollection("favouriteWritings", favouriteWritings);
   eleventyConfig.addCollection("reading", reading);
   eleventyConfig.addCollection("readingByYear", readingByYear);
+
+  eleventyConfig.addCollection("tagList", function (collectionApi) {
+    const tags = new Set();
+    collectionApi.getAll().forEach((item) => {
+      if ("tags" in item.data) {
+        const itemTags = item.data.tags;
+        if (typeof itemTags === "string") {
+          tags.add(itemTags);
+        } else if (Array.isArray(itemTags)) {
+          itemTags.forEach((tag) => tags.add(tag));
+        }
+      }
+    });
+    return [...tags].sort();
+  });
+
+  eleventyConfig.addCollection("tagPosts", function (collectionApi) {
+    const tagMap = {};
+    collectionApi.getAll().forEach((item) => {
+      if (item.data.tags) {
+        item.data.tags.forEach((tag) => {
+          if (!tagMap[tag]) {
+            tagMap[tag] = [];
+          }
+          tagMap[tag].push(item);
+        });
+      }
+    });
+    return tagMap;
+  });
 
   return {
     dir: {
