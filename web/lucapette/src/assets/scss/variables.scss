@@ -1,4 +1,3 @@
-@use "../../../node_modules/nord/src/sass/nord";
 @use "sass:color";
 
 $wrap-width: 780px;
@@ -15,27 +14,27 @@ $font-size-code: 1em;
 
 $font-weight-normal: 500;
 
-$orange: nord.$nord12;
-$yellow: nord.$nord13;
-$green: nord.$nord14;
-$turquoise: nord.$nord8;
-$cyan: nord.$nord9;
-$blue: nord.$nord10;
-$purple: nord.$nord15;
-$red: nord.$nord11;
+$orange: #d08770;
+$yellow: #ebcb8b;
+$green: #a3be8c;
+$turquoise: #8fbcbb;
+$cyan: #88c0d0;
+$blue: #81a1c1;
+$purple: #b48ead;
+$red: #bf616a;
 
-$black: nord.$nord0;
-$black-bis: nord.$nord1;
-$black-ter: nord.$nord2;
-$black-quad: nord.$nord3;
+$black: #2e3440;
+$black-bis: #3b4252;
+$black-ter: #434c5e;
+$black-quad: #4c566a;
 
-$white: nord.$nord6;
-$white-bis: nord.$nord5;
-$white-ter: nord.$nord4;
+$white: #e5e9f0;
+$white-bis: #d8dee9;
+$white-ter: #d8dee4;
 
 $text-color: $black-quad;
 $background-color: $white;
 
 $accent-color: color.adjust($orange, $lightness: -10%);
 
-$link-color: color.adjust($blue, $lightness: -10%);
+$link-color: color.adjust($cyan, $lightness: -10%);

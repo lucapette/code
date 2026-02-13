@@ -7,12 +7,14 @@ import { reading, readingByYear } from "./src/_collections/reading.js";
 import { tagList, tagPosts, getTagPosts } from "./src/_collections/tags.js";
 import { drafts } from "./src/_preprocessors/drafts.js";
 import lucideShortcode from "./src/_shortcodes/lucide.js";
+import { messageShortcode } from "./src/_shortcodes/message.js";
 
 export default function (eleventyConfig) {
   eleventyConfig.addPlugin(handlebarsPlugin);
   eleventyConfig.addPlugin(syntaxHighlight);
 
   lucideShortcode(eleventyConfig);
+  messageShortcode(eleventyConfig);
 
   eleventyConfig.addGlobalData(
     "today",

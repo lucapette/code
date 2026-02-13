@@ -10,13 +10,11 @@ tags:
 keywords: kafka, kafka streams, kotlin
 ---
 
-<article class="message is-info">
-  <div class="message-body">This article assumes the reader has a good grasp
-of Kafka basic concepts: topics, consumers, consumer groups, offset management.
+{{#message "is-info"}}
+This article assumes the reader has a good grasp of Kafka basic concepts: topics, consumers, consumer groups, offset management.
 
-It's also a long read. You will find a table of contents right after the
-introduction.</div>
-</article>
+It's also a long read. You will find a table of contents right after the introduction.
+{{/message}}
 
 Ever since I started working with Kafka Streams, I have been noticing an
 interesting, somewhat polarising phenomenon about the relationship developers
