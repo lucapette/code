@@ -3,6 +3,7 @@ import { eq } from "./src/_filters/comparison.js";
 import { formatDate, dateToRfc3339 } from "./src/_filters/date.js";
 import { writings, writingsByYear, favouriteWritings } from "./src/_collections/writings.js";
 import { reading, readingByYear } from "./src/_collections/reading.js";
+import { tagList, tagPosts } from "./src/_collections/tags.js";
 import { drafts } from "./src/_preprocessors/drafts.js";
 import lucideShortcode from "./src/_shortcodes/lucide.js";
 
@@ -38,36 +39,8 @@ export default function (eleventyConfig) {
   eleventyConfig.addCollection("favouriteWritings", favouriteWritings);
   eleventyConfig.addCollection("reading", reading);
   eleventyConfig.addCollection("readingByYear", readingByYear);
-
-  eleventyConfig.addCollection("tagList", function (collectionApi) {
-    const tags = new Set();
-    collectionApi.getAll().forEach((item) => {
-      if ("tags" in item.data) {
-        const itemTags = item.data.tags;
-        if (typeof itemTags === "string") {
-          tags.add(itemTags);
-        } else if (Array.isArray(itemTags)) {
-          itemTags.forEach((tag) => tags.add(tag));
-        }
-      }
-    });
-    return [...tags].sort();
-  });
-
-  eleventyConfig.addCollection("tagPosts", function (collectionApi) {
-    const tagMap = {};
-    collectionApi.getAll().forEach((item) => {
-      if (item.data.tags) {
-        item.data.tags.forEach((tag) => {
-          if (!tagMap[tag]) {
-            tagMap[tag] = [];
-          }
-          tagMap[tag].push(item);
-        });
-      }
-    });
-    return tagMap;
-  });
+  eleventyConfig.addCollection("tagList", tagList);
+  eleventyConfig.addCollection("tagPosts", tagPosts);
 
   return {
     dir: {
