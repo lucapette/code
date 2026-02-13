@@ -1,10 +1,8 @@
 import { formatDate } from "../_filters/date.js";
+import { getFiles } from "./helper.js";
 
 function getReading(collectionApi) {
-  return collectionApi
-    .getFilteredByGlob("./src/reading/**/*.md")
-    .filter(item => !item.fileSlug.includes("_index"))
-    .sort((a, b) => b.date - a.date);
+  return getFiles(collectionApi, "./src/reading/**/*.md");
 }
 
 export function reading(collectionApi) {

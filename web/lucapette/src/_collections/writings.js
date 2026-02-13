@@ -1,8 +1,7 @@
+import { getFiles } from "./helper.js";
+
 function getWritings(collectionApi) {
-  return collectionApi
-    .getFilteredByGlob("./src/writing/**/*.md")
-    .filter(item => !item.fileSlug.includes("_index"))
-    .sort((a, b) => b.date - a.date);
+  return getFiles(collectionApi, "./src/writing/**/*.md");
 }
 
 export function writings(collectionApi) {
