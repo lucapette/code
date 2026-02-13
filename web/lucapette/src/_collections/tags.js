@@ -25,6 +25,9 @@ export function tagPosts(collectionApi) {
       });
     }
   });
+  Object.keys(tagMap).forEach((tag) => {
+    tagMap[tag].sort((a, b) => b.date - a.date);
+  });
   return tagMap;
 }
 
