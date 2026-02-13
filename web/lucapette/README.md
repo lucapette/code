@@ -27,6 +27,13 @@ This site is in active migration from Hugo to 11ty. The primary focus is reachin
 
 These require the `book` shortcode with image processing. Complex migration – blocked by image optimization.
 
+| Article                  | Status   |
+|--------------------------|----------|
+| the-books-i-read-in-2022 | Missing  |
+| the-books-i-read-in-2023 | Missing  |
+| the-books-i-read-in-2024 | Missing  |
+| the-books-i-read-in-2025 | Missing  |
+
 ### Post Migration
 
 - [ ] Make headers in main pages as fancy as home page
