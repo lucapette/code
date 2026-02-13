@@ -1,21 +1,18 @@
 import { formatDate } from "../_filters/date.js";
 
-export function reading(collectionApi) {
+function getReading(collectionApi) {
   return collectionApi
     .getFilteredByGlob("./src/reading/**/*.md")
     .filter(item => !item.fileSlug.includes("_index"))
-    .sort((a, b) => {
-      return b.date - a.date;
-    });
+    .sort((a, b) => b.date - a.date);
+}
+
+export function reading(collectionApi) {
+  return getReading(collectionApi);
 }
 
 export function readingByYear(collectionApi) {
-  const reading = collectionApi
-    .getFilteredByGlob("./src/reading/**/*.md")
-    .filter(item => !item.fileSlug.includes("_index"))
-    .sort((a, b) => {
-      return b.date - a.date;
-    });
+  const reading = getReading(collectionApi);
   const grouped = {};
   reading.forEach((item) => {
     const date = new Date(item.date);
