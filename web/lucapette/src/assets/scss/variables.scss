@@ -1,0 +1,41 @@
+@use "../../../node_modules/nord/src/sass/nord";
+@use "sass:color";
+
+$wrap-width: 780px;
+
+$radius: 4px;
+
+$font-family-primary: "Iowan Old Style", "Palatino Linotype", serif;
+$font-size-primary: 1.2em;
+
+$font-family-monospace: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo,
+  Consolas, "DejaVu Sans Mono", monospace;
+
+$font-size-code: 1em;
+
+$font-weight-normal: 500;
+
+$orange: nord.$nord12;
+$yellow: nord.$nord13;
+$green: nord.$nord14;
+$turquoise: nord.$nord8;
+$cyan: nord.$nord9;
+$blue: nord.$nord10;
+$purple: nord.$nord15;
+$red: nord.$nord11;
+
+$black: nord.$nord0;
+$black-bis: nord.$nord1;
+$black-ter: nord.$nord2;
+$black-quad: nord.$nord3;
+
+$white: nord.$nord6;
+$white-bis: nord.$nord5;
+$white-ter: nord.$nord4;
+
+$text-color: $black-quad;
+$background-color: $white;
+
+$accent-color: color.adjust($orange, $lightness: -10%);
+
+$link-color: color.adjust($blue, $lightness: -10%);

@@ -1,0 +1,31 @@
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  {{#if title}}
+    {{#if (eq title "Home") }}
+      <title>Luca Pette</title>
+    {{else}}
+      <title>{{title}} - Luca Pette</title>
+    {{/if}}
+  {{else}}
+    <title>Luca Pette</title>
+  {{/if}}
+  <meta name="description" content="{{#if description}}{{description}}{{else}}{{site.description}}{{/if}}" />
+  <meta property="og:title" content="{{#if title}}{{title}}{{else}}Luca Pette{{/if}}" />
+  <meta property="og:description" content="{{#if description}}{{description}}{{else}}{{site.description}}{{/if}}" />
+  <meta property="og:url" content="{{site.url}}{{page.url}}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Luca Pette" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:site" content="@lucapette" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <link rel="stylesheet" href="/assets/css/content.css" />
+  <link rel="stylesheet" href="/assets/css/layout.css" />
+  <link rel="stylesheet" href="/assets/css/elements.css" />
+  <link rel="stylesheet" href="/assets/css/dark.css" />
+  <link rel="stylesheet" href="/assets/css/reading.css" />
+  <link rel="preload" href="/assets/css/highlight.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="/assets/css/highlight.css" /></noscript>
+  <link href="/atom.xml" rel="alternate" title="Luca Pette" type="application/atom+xml" />
+  <meta name="keywords" content="{{#if keywords}}{{keywords}}{{else}}{{#if tags}}{{tags}}{{/if}}{{/if}}" />
+</head>

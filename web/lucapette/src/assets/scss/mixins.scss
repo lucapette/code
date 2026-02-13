@@ -1,0 +1,13 @@
+@use "variables" as v;
+
+@mixin wrap-container {
+  margin-left: auto;
+  margin-right: auto;
+  width: var(--wrap-width);
+}
+
+@mixin fancyTitle() {
+  background-image: linear-gradient(-90deg, v.$purple, v.$turquoise);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

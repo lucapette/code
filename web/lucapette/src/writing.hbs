@@ -1,0 +1,30 @@
+---
+layout: base.hbs
+title: Writing
+permalink: /writing/
+description: Writings by Luca Pette about software development and other topics.
+---
+
+<h1>Writing</h1>
+
+{{#if collections.posts.length}}
+    <div class="columns">
+        <div class="column">
+            {{#each collections.postsByYear}}
+                <h2 class="year">{{year}}</h2>
+                <ul class="posts">
+                    {{#each posts}}
+                        <li class="post">
+                            <a href="{{postUrl}}">
+                                <span>{{title}}</span>
+                                <span class="date">{{formattedDate}}</span>
+                            </a>
+                        </li>
+                    {{/each}}
+                </ul>
+            {{/each}}
+        </div>
+    </div>
+{{else}}
+    <p>No posts yet. Check back soon!</p>
+{{/if}}

@@ -1,0 +1,118 @@
+@use "../../../node_modules/include-media/dist/include-media";
+@use "variables" as v;
+
+:root {
+  --wrap-width: #{v.$wrap-width};
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  font-family: v.$font-family-primary;
+  font-size: v.$font-size-primary;
+  font-weight: v.$font-weight-normal;
+
+  line-height: 1.5;
+
+  color: v.$text-color;
+  background-color: v.$background-color;
+}
+
+h1 {
+  font-size: 3rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.75rem;
+}
+
+h4 {
+  font-size: 1.5rem;
+}
+
+h5 {
+  font-size: 1.25rem;
+}
+
+section {
+  padding: 2rem 1rem;
+
+  &:last-child {
+    padding-top: 0;
+  }
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  th {
+    text-align: left;
+  }
+  th,
+  td {
+    border: 1px solid v.$white-ter;
+    padding: 0.5rem;
+  }
+}
+
+pre code {
+  font-family: v.$font-family-monospace;
+  font-size: v.$font-size-code;
+}
+
+a {
+  color: v.$link-color;
+  text-decoration: underline;
+
+  &:hover {
+    color: v.$accent-color;
+  }
+}
+
+em {
+  color: v.$accent-color;
+  font-weight: 700;
+}
+
+hr {
+  background-color: v.$white-ter;
+  border: none;
+  display: block;
+  height: 2px;
+  margin: 1.5rem 0;
+}
+
+@include include-media.media("<tablet") {
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  h4 {
+    font-size: 1.1rem;
+  }
+
+  h5 {
+    font-size: 1rem;
+  }
+
+  section {
+    padding: 1rem 0.5rem;
+  }
+}
