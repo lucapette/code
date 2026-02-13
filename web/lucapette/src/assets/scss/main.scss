@@ -76,34 +76,6 @@ pre[class*="language-"] {
   }
 }
 
-.line-numbers {
-  counter-reset: line;
-
-  .line-numbers-rows {
-    position: absolute;
-    pointer-events: none;
-    top: 0;
-    left: 0;
-    width: 3em;
-    letter-spacing: -1px;
-    border-right: 1px solid #4c566a;
-    user-select: none;
-
-    span {
-      display: block;
-      counter-increment: line;
-
-      &::before {
-        content: counter(line);
-        display: block;
-        padding-right: 0.8em;
-        text-align: right;
-        color: #6c6f74;
-      }
-    }
-  }
-}
-
 .highlight pre {
   border-radius: v.$radius;
 }

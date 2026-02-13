@@ -15,9 +15,9 @@ pre[class*="language-"].line-numbers > code {
 	top: 0;
 	font-size: 100%;
 	left: -3.8em;
-	width: 3em; /* works for line-numbers below 1000 lines */
+	width: 3em;
 	letter-spacing: -1px;
-	border-right: 1px solid #999;
+	border-right: 1px solid #4c566a;
 
 	-webkit-user-select: none;
 	-moz-user-select: none;
@@ -33,7 +33,7 @@ pre[class*="language-"].line-numbers > code {
 
 		.line-numbers-rows > span:before {
 			content: counter(linenumber);
-			color: #999;
+			color: #6c6f74;
 			display: block;
 			padding-right: 0.8em;
 			text-align: right;

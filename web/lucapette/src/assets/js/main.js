@@ -46,7 +46,7 @@ document.querySelectorAll("pre[class*='language-']").forEach((pre) => {
       lineNumbersWrapper.appendChild(span);
     });
     
-    code.appendChild(lineNumbersWrapper);
+    pre.appendChild(lineNumbersWrapper);
   }
 
   // Add copy button
