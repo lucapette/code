@@ -17,6 +17,8 @@
 }
 
 ul.articles {
+  list-style: none;
+
   li {
     margin-bottom: 0.5rem;
     border-bottom: 1px solid v.$white-ter;
