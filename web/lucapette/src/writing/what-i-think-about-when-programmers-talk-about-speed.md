@@ -197,10 +197,4 @@ I hope other people benefit from this perspective and realise they are not as
 slow as they think. Or the other way around. The latter may be a little harder
 to accept :)
 
-{{#message "is-info"}}
-Hey! 👋
-
-Thank you for reading my content. I appreciate it.
-
-If you like what you're reading, you may want to check out my book [Leading developers](https://leadthe.dev).
-{{/message}}
+{{ leading-developers }}

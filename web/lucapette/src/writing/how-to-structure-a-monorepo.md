@@ -207,10 +207,4 @@ engineering management should happen.
 You want a structure that works technically _and_ that has organisational
 meaning.
 
-{{#message "is-info"}}
-Hey! 👋
-
-Thank you for reading my content. I appreciate it.
-
-If you like what you're reading, you may want to check out my book [Leading developers](https://leadthe.dev).
-{{/message}}
+{{ leading-developers }}

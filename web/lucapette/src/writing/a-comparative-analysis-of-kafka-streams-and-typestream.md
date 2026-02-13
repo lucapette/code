@@ -267,10 +267,4 @@ What I'm saying is that I would use TypeStream for trivial event-driven
 microservices and leave Kafka Streams for the more advanced problems. Yes, of
 course my answer is to use both 😁
 
-{{#message "is-info"}}
-Hey! 👋
-
-Thank you for reading my content. I appreciate it.
-
-If you like what you're reading, you may want to check out [TypeStream](https://typestream.io).
-{{/message}}
+{{ typestream }}

@@ -8,6 +8,8 @@ import { tagList, tagPosts, getTagPosts } from "./src/_collections/tags.js";
 import { drafts } from "./src/_preprocessors/drafts.js";
 import lucideShortcode from "./src/_shortcodes/lucide.js";
 import { messageShortcode } from "./src/_shortcodes/message.js";
+import { leadingDevelopersShortcode } from "./src/_shortcodes/leading-developers.js";
+import { typestreamShortcode } from "./src/_shortcodes/typestream.js";
 
 export default function (eleventyConfig) {
   eleventyConfig.addPlugin(handlebarsPlugin);
@@ -15,6 +17,8 @@ export default function (eleventyConfig) {
 
   lucideShortcode(eleventyConfig);
   messageShortcode(eleventyConfig);
+  leadingDevelopersShortcode(eleventyConfig);
+  typestreamShortcode(eleventyConfig);
 
   eleventyConfig.addGlobalData(
     "today",

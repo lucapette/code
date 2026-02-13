@@ -715,10 +715,4 @@ In fact, there's much more to it than I covered. From here, I would probably
 start from reading the [developer guide for Kafka
 Streams](https://kafka.apache.org/33/documentation/streams/developer-guide/).
 
-{{#message "is-info"}}
-Hey! 👋
-
-Thank you for reading my content. I appreciate it.
-
-If you like what you're reading, you may want to check out [TypeStream](https://typestream.io).
-{{/message}}
+{{ typestream }}

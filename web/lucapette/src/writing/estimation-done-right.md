@@ -133,10 +133,4 @@ features all the time.
 If that gets you a predictable flow, why wouldn't you do it? I personally see no
 downsides.
 
-{{#message "is-info"}}
-Hey! 👋
-
-Thank you for reading my content. I appreciate it.
-
-If you like what you're reading, you may want to check out my book [Leading developers](https://leadthe.dev).
-{{/message}}
+{{ leading-developers }}

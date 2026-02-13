@@ -217,10 +217,4 @@ teams is communication. It is the hard part, the really challenging one. We
 often mistake faults in our communication for faults in our processes. I will
 tackle in another article soon enough.
 
-{{#message "is-info"}}
-Hey! 👋
-
-Thank you for reading my content. I appreciate it.
-
-If you like what you're reading, you may want to check out my book [Leading developers](https://leadthe.dev).
-{{/message}}
+{{ leading-developers }}

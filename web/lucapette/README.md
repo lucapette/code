@@ -9,7 +9,8 @@ This site is in active migration from Hugo to 11ty. The primary focus is reachin
 
 ### Naming Conventions
 
-The new site uses **"article"** everywhere instead of **"post"** (Hugo's terminology). This applies to CSS classes, variable names, etc.
+The new site uses **"article"** everywhere instead of **"post"** (Hugo's terminology). This applies to CSS classes,
+variable names, etc.
 
 ### In Progress
 
@@ -19,11 +20,11 @@ The new site uses **"article"** everywhere instead of **"post"** (Hugo's termino
 |-------------------------------------------|---------|
 | Tags taxonomy pages                       | Done    |
 | Related posts partial                     | Done    |
-| RSS/Atom feed                           | Done    |
+| RSS/Atom feed                             | Done    |
 | `book` shortcode                          | Missing |
-| `leading-developers` shortcode            | Missing |
-| `message` shortcode                       | Missing |
-| `typestream` shortcode                    | Missing |
+| `leading-developers` shortcode            | Done    |
+| `message` shortcode                       | Done    |
+| `typestream` shortcode                    | Done    |
 | Draft filtering                           | Done    |
 | Image optimization (`@11ty/eleventy-img`) | Missing |
 
@@ -31,12 +32,12 @@ The new site uses **"article"** everywhere instead of **"post"** (Hugo's termino
 
 These require the `book` shortcode with image processing. Complex migration – blocked by image optimization.
 
-| Article                  | Status   |
-|--------------------------|----------|
-| the-books-i-read-in-2022 | Missing  |
-| the-books-i-read-in-2023 | Missing  |
-| the-books-i-read-in-2024 | Missing  |
-| the-books-i-read-in-2025 | Missing  |
+| Article                  | Status  |
+|--------------------------|---------|
+| the-books-i-read-in-2022 | Missing |
+| the-books-i-read-in-2023 | Missing |
+| the-books-i-read-in-2024 | Missing |
+| the-books-i-read-in-2025 | Missing |
 
 ### Post Migration
 
@@ -46,6 +47,7 @@ These require the `book` shortcode with image processing. Complex migration – 
 - [ ] Improve RSS feed to include other sections (reading, hire, etc)
 - [ ] Use Eleventy bundle feature instead of esbuild (attempted - not working well with ESM lucide package)
 - [ ] Drop Sass in favor of vanilla CSS or PostCSS
+- [ ] Update all content that refers to my repos (moved to monorepo)
 
 ## Tech Stack
 

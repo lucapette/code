@@ -118,10 +118,4 @@ perfection, although I know I can't have it. Attending or running a standup
 every morning is a sad activity from that perspective. Because it's a constant
 reminder: we could be doing a better job at basic communication.
 
-{{#message "is-info"}}
-Hey! 👋
-
-Thank you for reading my content. I appreciate it.
-
-If you like what you're reading, you may want to check out my book [Leading developers](https://leadthe.dev).
-{{/message}}
+{{ leading-developers }}

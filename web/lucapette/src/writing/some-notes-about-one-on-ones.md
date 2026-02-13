@@ -140,10 +140,4 @@ with other people.
 Let your direct reports go wherever they want to go with them. You'll love the
 results.
 
-{{#message "is-info"}}
-Hey! 👋
-
-Thank you for reading my content. I appreciate it.
-
-If you like what you're reading, you may want to check out my book [Leading developers](https://leadthe.dev).
-{{/message}}
+{{ leading-developers }}

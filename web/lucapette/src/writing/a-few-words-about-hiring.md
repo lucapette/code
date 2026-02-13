@@ -246,10 +246,4 @@ I find these very difficult, but I still try as hard as I can to achieve them:
 
 Probably those points deserve their own article.
 
-{{#message "is-info"}}
-Hey! 👋
-
-Thank you for reading my content. I appreciate it.
-
-If you like what you're reading, you may want to check out my book [Leading developers](https://leadthe.dev).
-{{/message}}
+{{ leading-developers }}

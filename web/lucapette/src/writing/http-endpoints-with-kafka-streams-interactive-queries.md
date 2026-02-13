@@ -469,10 +469,4 @@ built for this article as a Kotlin playground, so I will probably work on some o
 these points myself. If you're interested, check the issues as I generally use
 them as a TODO list and maybe give it a star :)
 
-{{#message "is-info"}}
-Hey! 👋
-
-Thank you for reading my content. I appreciate it.
-
-If you like what you're reading, you may want to check out [TypeStream](https://typestream.io).
-{{/message}}
+{{ typestream }}
