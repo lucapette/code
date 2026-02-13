@@ -53,7 +53,6 @@ ul.articles {
 }
 
 .copy-code {
-  display: none;
   position: absolute;
   top: 4px;
   right: 4px;
@@ -70,10 +69,6 @@ ul.articles {
 
 pre[class*="language-"] {
   position: relative;
-
-  &:hover .copy-code {
-    display: block;
-  }
 }
 
 .highlight pre {
@@ -83,11 +78,6 @@ pre[class*="language-"] {
 .highlight,
 pre {
   position: relative;
-}
-
-div.highlight:hover .copy-code,
-pre:hover .copy-code {
-  display: block;
 }
 
 .hero {

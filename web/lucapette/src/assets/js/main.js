@@ -33,25 +33,21 @@ if (toggle) {
 }
 
 document.querySelectorAll("pre[class*='language-']").forEach((pre) => {
-  // Add line numbers
+  pre.classList.add("line-numbers");
+
   const code = pre.querySelector("code");
   const lines = code.textContent.split("\n");
-  
-  if (lines.length > 1) {
-    pre.classList.add("line-numbers");
-    const lineNumbersWrapper = document.createElement("span");
-    lineNumbersWrapper.className = "line-numbers-rows";
-    lineNumbersWrapper.setAttribute("aria-hidden", "true");
-    
-    lines.forEach(() => {
-      const span = document.createElement("span");
-      lineNumbersWrapper.appendChild(span);
-    });
-    
-    pre.appendChild(lineNumbersWrapper);
-  }
+  const lineNumbersWrapper = document.createElement("span");
+  lineNumbersWrapper.className = "line-numbers-rows";
+  lineNumbersWrapper.setAttribute("aria-hidden", "true");
 
-  // Add copy button
+  lines.forEach(() => {
+    const span = document.createElement("span");
+    lineNumbersWrapper.appendChild(span);
+  });
+
+  code.appendChild(lineNumbersWrapper);
+
   const copyButton = document.createElement("button");
   copyButton.className = "copy-code";
   copyButton.textContent = "copy";
@@ -64,7 +60,6 @@ document.querySelectorAll("pre[class*='language-']").forEach((pre) => {
   }
 
   copyButton.addEventListener("click", () => {
-    const code = pre.querySelector("code");
     if (navigator.clipboard) {
       navigator.clipboard.writeText(code.textContent);
       copyingDone();
