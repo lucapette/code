@@ -1,7 +1,7 @@
 import handlebarsPlugin from "@11ty/eleventy-plugin-handlebars";
 import { eq } from "./src/_filters/comparison.js";
 import { formatDate, dateToRfc3339 } from "./src/_filters/date.js";
-import { writings, writingsByYear, favouriteWritings } from "./src/_collections/writings.js";
+import { writings, writingsByYear, favouriteWritings, relatedWritings } from "./src/_collections/writings.js";
 import { reading, readingByYear } from "./src/_collections/reading.js";
 import { tagList, tagPosts, getTagPosts } from "./src/_collections/tags.js";
 import { drafts } from "./src/_preprocessors/drafts.js";
@@ -26,6 +26,9 @@ export default function (eleventyConfig) {
   });
   eleventyConfig.addFilter("limit", (array, n) => array ? array.slice(0, n) : []);
   eleventyConfig.addFilter("getTagPosts", getTagPosts);
+  eleventyConfig.addFilter("getRelatedPosts", function (relatedWritingsMap, url) {
+    return relatedWritingsMap ? (relatedWritingsMap.get(url) || []) : [];
+  });
 
   eleventyConfig.addPreprocessor("drafts", "md,hbs", drafts);
 
@@ -35,6 +38,7 @@ export default function (eleventyConfig) {
   eleventyConfig.addCollection("writings", writings);
   eleventyConfig.addCollection("writingsByYear", writingsByYear);
   eleventyConfig.addCollection("favouriteWritings", favouriteWritings);
+  eleventyConfig.addCollection("relatedWritings", relatedWritings);
   eleventyConfig.addCollection("reading", reading);
   eleventyConfig.addCollection("readingByYear", readingByYear);
   eleventyConfig.addCollection("tagList", tagList);

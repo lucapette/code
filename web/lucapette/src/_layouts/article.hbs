@@ -25,6 +25,24 @@ layout: base.hbs
     {{{content}}}
   </div>
 </section>
+
+{{#with (getRelatedPosts collections.relatedWritings page.url)}}
+{{#if this}}
+<section>
+  <h3 class="year">See also</h3>
+  <ul class="articles">
+    {{#each this}}
+      <li class="article">
+        <a href="{{this.url}}">
+          <span>{{this.data.title}}</span>
+          <span class="date">{{formatDate this.date}}</span>
+        </a>
+      </li>
+    {{/each}}
+  </ul>
+</section>
+{{/if}}
+{{/with}}
 <script>
   document.querySelectorAll("pre > code").forEach((codeBlock) => {
     const copyButton = document.createElement("button");

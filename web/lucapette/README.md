@@ -18,7 +18,7 @@ The new site uses **"article"** everywhere instead of **"post"** (Hugo's termino
 | Feature                                   | Status  |
 |-------------------------------------------|---------|
 | Tags taxonomy pages                       | Done    |
-| Related posts partial                     | Missing |
+| Related posts partial                     | Done    |
 | RSS/Atom feed                           | Done    |
 | `book` shortcode                          | Missing |
 | `leading-developers` shortcode            | Missing |
