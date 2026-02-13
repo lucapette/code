@@ -20,12 +20,14 @@
     "@11ty/eleventy": "3.1.2",
     "@11ty/eleventy-plugin-bundle": "^3.0.7",
     "@11ty/eleventy-plugin-handlebars": "1.0.0",
+    "@11ty/eleventy-plugin-syntaxhighlight": "^5.0.2",
     "esbuild": "^0.27.3",
     "lucide-static": "^0.563.0",
     "postcss": "^8.4.38",
     "postcss-cli": "11.0.0",
     "prettier": "^3.2.5",
     "prettier-plugin-go-template": "^0.0.15",
+    "prism-themes": "^1.9.0",
     "sass": "^1.77.8"
   }
 }

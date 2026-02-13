@@ -1,4 +1,5 @@
 import handlebarsPlugin from "@11ty/eleventy-plugin-handlebars";
+import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 import { eq } from "./src/_filters/comparison.js";
 import { formatDate, dateToRfc3339 } from "./src/_filters/date.js";
 import { writings, writingsByYear, favouriteWritings, relatedWritings } from "./src/_collections/writings.js";
@@ -9,6 +10,7 @@ import lucideShortcode from "./src/_shortcodes/lucide.js";
 
 export default function (eleventyConfig) {
   eleventyConfig.addPlugin(handlebarsPlugin);
+  eleventyConfig.addPlugin(syntaxHighlight);
 
   lucideShortcode(eleventyConfig);
 
