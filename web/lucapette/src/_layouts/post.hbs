@@ -2,18 +2,16 @@
 layout: base.hbs
 ---
 
-<article class="post">
-    <header class="post-header">
-        <h1>{{title}}</h1>
-        <div class="post-metadata">
-            <time>{{formatDate date}}</time>
-        </div>
-    </header>
-
-    <div class="content">
+<section>
+  <h1>{{title}}</h1>
+  <div class="columns">
+    <div class="column">
+      <div class="content">
         {{{content}}}
+      </div>
     </div>
-</article>
+  </div>
+</section>
 <script>
   document.querySelectorAll("pre > code").forEach((codeBlock) => {
     const copyButton = document.createElement("button");
