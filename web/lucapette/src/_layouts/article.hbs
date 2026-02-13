@@ -3,13 +3,26 @@ layout: base.hbs
 ---
 
 <section>
-  <h1>{{title}}</h1>
-  <div class="columns">
-    <div class="column">
-      <div class="content">
-        {{{content}}}
-      </div>
+  <h1 class="title">{{title}}</h1>
+
+  <nav class="level">
+    <div class="left">
+      <p class="is-size-6">
+        Published in
+        {{#if tags}}
+          {{#each tags as |tag|}}
+            <a href="/tags/{{tag}}">#{{tag}}</a>{{#unless @last}}, {{/unless}}
+          {{/each}}
+        {{/if}}
+        on
+        {{formatDate date}}
+      </p>
     </div>
+  </nav>
+  <hr />
+
+  <div class="content">
+    {{{content}}}
   </div>
 </section>
 <script>

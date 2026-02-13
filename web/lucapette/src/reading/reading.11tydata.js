@@ -1,4 +1,4 @@
 export default {
-  layout: "post.hbs",
+  layout: "article.hbs",
   permalink: "/reading/{{ page.fileSlug }}/"
 };
