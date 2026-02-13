@@ -29,6 +29,7 @@ These require the `book` shortcode with image processing. Complex migration – 
 
 ### Post Migration
 
+- [ ] Make headers in main pages as fancy as home page
 - [ ] Migrate all JS/TS files to TypeScript
 - [ ] Move books article links from Goodreads to TheStoryGraph
 - [ ] Use Eleventy bundle feature instead of esbuild (attempted - not working well with ESM lucide package)
