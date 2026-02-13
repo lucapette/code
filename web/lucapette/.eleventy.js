@@ -1,6 +1,6 @@
 import handlebarsPlugin from "@11ty/eleventy-plugin-handlebars";
 import { eq } from "./src/_filters/comparison.js";
-import { formatDate } from "./src/_filters/date.js";
+import { formatDate, dateToRfc3339 } from "./src/_filters/date.js";
 import { writings, writingsByYear, favouriteWritings } from "./src/_collections/writings.js";
 import { reading, readingByYear } from "./src/_collections/reading.js";
 import { drafts } from "./src/_preprocessors/drafts.js";
@@ -18,6 +18,11 @@ export default function (eleventyConfig) {
 
   eleventyConfig.addFilter("eq", eq);
   eleventyConfig.addFilter("formatDate", formatDate);
+  eleventyConfig.addFilter("dateToRfc3339", dateToRfc3339);
+  eleventyConfig.addFilter("getNewestItemDate", function (items) {
+    if (!items || items.length === 0) return new Date();
+    return items.sort((a, b) => new Date(b.date) - new Date(a.date))[0].date;
+  });
   eleventyConfig.addFilter("limit", (array, n) => array ? array.slice(0, n) : []);
   eleventyConfig.addFilter("getTagPosts", function (tagPosts, tag) {
     return tagPosts[tag] || [];

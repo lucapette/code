@@ -19,7 +19,7 @@ The new site uses **"article"** everywhere instead of **"post"** (Hugo's termino
 |-------------------------------------------|---------|
 | Tags taxonomy pages                       | Done    |
 | Related posts partial                     | Missing |
-| RSS/Atom feed                             | Missing |
+| RSS/Atom feed                           | Done    |
 | `book` shortcode                          | Missing |
 | `leading-developers` shortcode            | Missing |
 | `message` shortcode                       | Missing |
@@ -43,6 +43,7 @@ These require the `book` shortcode with image processing. Complex migration – 
 - [ ] Make headers in main pages as fancy as home page
 - [ ] Migrate all JS/TS files to TypeScript
 - [ ] Move books article links from Goodreads to TheStoryGraph
+- [ ] Improve RSS feed to include other sections (reading, hire, etc)
 - [ ] Use Eleventy bundle feature instead of esbuild (attempted - not working well with ESM lucide package)
 - [ ] Drop Sass in favor of vanilla CSS or PostCSS
 

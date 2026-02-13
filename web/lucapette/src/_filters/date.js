@@ -6,3 +6,9 @@ export function formatDate(dateObj) {
     const year = date.getFullYear();
     return `${month} ${day}, ${year}`;
 }
+
+export function dateToRfc3339(dateObj) {
+    if (!dateObj) return "";
+    const date = new Date(dateObj);
+    return date.toISOString();
+}

@@ -1,0 +1,29 @@
+---
+permalink: atom.xml
+eleventyExcludeFromCollections: true
+---
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>Luca Pette</title>
+    <subtitle>Writing about software development, management, and learning</subtitle>
+    <link href="{{ site.url }}/atom.xml" rel="self" type="application/atom+xml"/>
+    <link href="{{ site.url }}/" rel="alternate" type="text/html"/>
+    <updated>{{dateToRfc3339 (getNewestItemDate collections.writings)}}</updated>
+    <id>{{ site.url }}/</id>
+    <generator uri="https://www.11ty.dev/">Eleventy</generator>
+    {{#each (limit collections.writings 20)}}
+    <entry>
+        <title>{{this.data.title}}</title>
+        <link href="{{@root.site.url}}{{this.url}}?utm_source=atom_feed" rel="alternate" type="text/html"/>
+        <id>{{@root.site.url}}{{this.url}}</id>
+        <published>{{dateToRfc3339 this.date}}</published>
+        <updated>{{dateToRfc3339 this.date}}</updated>
+        <content type="html"><![CDATA[{{#if this.data.description}}{{this.data.description}}{{else}}{{this.data.title}}{{/if}}]]></content>
+        {{#if this.data.tags}}
+        {{#each this.data.tags}}
+        <category term="{{this}}" scheme="{{@root.site.url}}/writing/tags/" label="{{this}}"/>
+        {{/each}}
+        {{/if}}
+    </entry>
+    {{/each}}
+</feed>
