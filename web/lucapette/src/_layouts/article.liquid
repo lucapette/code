@@ -1,48 +1,47 @@
 ---
-layout: base.hbs
+layout: base.liquid
 ---
 
 <section>
-  <h1 class="title">{{title}}</h1>
+  <h1 class="title">{{ title }}</h1>
 
   <nav class="level">
     <div class="left">
       <p class="is-size-6">
         Published in
-        {{#if tags}}
-          {{#each tags as |tag|}}
-            <a href="/tags/{{tag}}">#{{tag}}</a>{{#unless @last}}, {{/unless}}
-          {{/each}}
-        {{/if}}
+        {% if tags %}
+          {% for tag in tags %}
+            <a href="/tags/{{ tag }}">#{{ tag }}</a>{% unless forloop.last %}, {% endunless %}
+          {% endfor %}
+        {% endif %}
         on
-        {{formatDate date}}
+        {{ date | formatDate }}
       </p>
     </div>
   </nav>
   <hr />
 
   <div class="content">
-    {{{content}}}
+    {{ content }}
   </div>
 </section>
 
-{{#with (getRelatedPosts collections.relatedWritings page.url)}}
-{{#if this}}
+{% assign related = relatedWritings[page.url] %}
+{% if related %}
 <section>
   <h3 class="year">See also</h3>
   <ul class="articles">
-    {{#each this}}
+    {% for item in related %}
       <li class="article">
-        <a href="{{this.url}}">
-          <span>{{this.data.title}}</span>
-          <span class="date">{{formatDate this.date}}</span>
+        <a href="{{ item.url }}">
+          <span>{{ item.data.title }}</span>
+          <span class="date">{{ item.date | formatDate }}</span>
         </a>
       </li>
-    {{/each}}
+    {% endfor %}
   </ul>
 </section>
-{{/if}}
-{{/with}}
+{% endif %}
 <script>
   document.querySelectorAll("pre > code").forEach((codeBlock) => {
     const copyButton = document.createElement("button");

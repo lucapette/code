@@ -1,6 +1,5 @@
-export function typestreamShortcode(eleventyConfig) {
-  eleventyConfig.addShortcode("typestream", () => {
-    return `<article class="message is-info">
+export function typestreamShortcode() {
+  return `<article class="message is-info">
   <div class="message-body">
     <p>Hey! 👋</p>
     <p>Thank you for reading my content. I appreciate it.</p>
@@ -10,5 +9,4 @@ export function typestreamShortcode(eleventyConfig) {
     </p>
   </div>
 </article>`;
-  });
 }

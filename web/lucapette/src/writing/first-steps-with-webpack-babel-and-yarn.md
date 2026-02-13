@@ -9,9 +9,9 @@ aliases:
 title: First steps with webpack, babel, and yarn
 ---
 
-{{#message "is-warning"}}
+{% message "is-warning" %}
 [Passata](https://github.com/lucapette/passata) is being rewritten at the moment so the information in this page is out of date. I'll be publishing a new article as soon as it's ready.
-{{/message}}
+{% endmessage %}
 
 I have just started my journey in the [React](https://facebook.github.io/react/)
 ecosystem. I decided to take notes along the way so I could share my experience

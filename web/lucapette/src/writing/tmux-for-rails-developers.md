@@ -83,8 +83,8 @@ can do all I need to do while developing within the same visual space. I
 in a manner it's more similar to Vim. So I don't even have to remember new
 stuff. And I'm pretty happy with its appearance too now:
 
-<a href="/img/tmux-and-rails.png" target='_blank'>
-  <img src="/img/tmux-and-rails.png" width="700" height="394" alt="tmux and rails" />
+<a href="/assets/img/tmux-and-rails.png" target='_blank'>
+  <img src="/assets/img/tmux-and-rails.png" width="700" height="394" alt="tmux and rails" />
 </a>
 
 It looks nice, doesn't it?

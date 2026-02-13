@@ -221,7 +221,7 @@ can dive into that, let's have a quick look at how pandoc works.
 
 In short, pandoc is a data pipeline that looks like this:
 
-![pandoc data pipeline](/img/pandoc.svg)
+![pandoc data pipeline](/assets/img/pandoc.svg)
 
 A simple idea. For the sake of this conversation, let's consider the markdown to
 ePUB example again:

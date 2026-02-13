@@ -197,4 +197,4 @@ I hope other people benefit from this perspective and realise they are not as
 slow as they think. Or the other way around. The latter may be a little harder
 to accept :)
 
-{{ leading-developers }}
+{% leaddevbook %}

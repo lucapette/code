@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-{{> head}}
+{% include "head.liquid" %}
 <body>
-{{> theme-init}}
+{% include "theme-init.liquid" %}
 <div class="wrap">
-  {{> navigation}}
+  {% include "navigation.liquid" %}
   <main>
-    {{{content}}}
+    {{ content }}
   </main>
 </div>
-{{> footer}}
+{% include "footer.liquid" %}
 <script type="module" src="/assets/js/main.bundle.js"></script>
 </body>
 </html>

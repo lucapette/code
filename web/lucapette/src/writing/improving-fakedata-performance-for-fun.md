@@ -8,9 +8,9 @@ description: A good excuse to play around with some interesting tools
 keywords: golang, fakedata, performance, strace, pprof, datasette
 ---
 
-{{#message "is-info"}}
+{% message "is-info" %}
 If you're familiar with [fakedata](https://github.com/lucapette/fakedata/), skip over to the [next section](#why-am-i-doing-this).
-{{/message}}
+{% endmessage %}
 
 Fakedata is a small CLI (command-line application) that helps you generate data.
 
@@ -395,7 +395,7 @@ that uses the amazing [Vega](https://vega.github.io/) library to plot data.
 
 The graphs look like this:
 
-![fakedata improved perf graph](/img/fakedata-improved-perf.svg)
+![fakedata improved perf graph](/assets/img/fakedata-improved-perf.svg)
 
 and it's backed by the following saved query:
 

@@ -10,11 +10,11 @@ tags:
 keywords: kafka, kafka streams, kotlin
 ---
 
-{{#message "is-info"}}
+{% message "is-info" %}
 This article assumes the reader has a good grasp of Kafka basic concepts: topics, consumers, consumer groups, offset management.
 
 It's also a long read. You will find a table of contents right after the introduction.
-{{/message}}
+{% endmessage %}
 
 Ever since I started working with Kafka Streams, I have been noticing an
 interesting, somewhat polarising phenomenon about the relationship developers
@@ -715,4 +715,4 @@ In fact, there's much more to it than I covered. From here, I would probably
 start from reading the [developer guide for Kafka
 Streams](https://kafka.apache.org/33/documentation/streams/developer-guide/).
 
-{{ typestream }}
+{% typestream %}

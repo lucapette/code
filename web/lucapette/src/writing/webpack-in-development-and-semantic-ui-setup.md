@@ -7,9 +7,9 @@ keywords: react, webpack, source maps, flowtype, semantic-ui
 title: Webpack in development and semantic-ui setup
 ---
 
-{{#message "is-warning"}}
+{% message "is-warning" %}
 [Passata](https://github.com/lucapette/passata) is being rewritten at the moment so the information in this page is out of date. I'll be publishing a new article as soon as it's ready.
-{{/message}}
+{% endmessage %}
 
 ## How do I setup webpack for development?
 

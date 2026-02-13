@@ -246,4 +246,4 @@ I find these very difficult, but I still try as hard as I can to achieve them:
 
 Probably those points deserve their own article.
 
-{{ leading-developers }}
+{% leaddevbook %}

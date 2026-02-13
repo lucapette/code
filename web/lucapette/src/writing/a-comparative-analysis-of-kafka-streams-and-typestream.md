@@ -55,7 +55,7 @@ this approach.
 
 Here's a trivial example diagram of this architecture:
 
-![event-driven sample architecture diagram](/img/event-driven.svg)
+![event-driven sample architecture diagram](/assets/img/event-driven.svg)
 
 From this point on, when I say event-driven microservice, I'm always talking
 about a small application (see?) that consumes data from one or more Kafka
@@ -267,4 +267,4 @@ What I'm saying is that I would use TypeStream for trivial event-driven
 microservices and leave Kafka Streams for the more advanced problems. Yes, of
 course my answer is to use both 😁
 
-{{ typestream }}
+{% typestream %}

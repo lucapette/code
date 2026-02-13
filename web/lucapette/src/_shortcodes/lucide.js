@@ -60,7 +60,6 @@ function validateIconName(iconName) {
     return safeIconName;
 }
 
-// Main shortcode function
 export function lucideShortcode(iconName, options = {}) {
     const safeIconName = validateIconName(iconName);
     const filteredOptions = filterOptions(options);
@@ -75,9 +74,4 @@ export function lucideShortcode(iconName, options = {}) {
     
     const svgContent = createSvg(icons[safeIconName]);
     return `<svg ${attrsToString(svgProps)}>${svgContent.join("")}</svg>`;
-}
-
-// For convenience, also export a function that adds the shortcode to eleventyConfig
-export default function (eleventyConfig) {
-    eleventyConfig.addShortcode("lucide", lucideShortcode);
 }

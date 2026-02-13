@@ -8,9 +8,9 @@ tags:
   - react
 ---
 
-{{#message "is-warning"}}
+{% message "is-warning" %}
 This project has been archived.
-{{/message}}
+{% endmessage %}
 
 `deloominator` is a data visualization application for SQL users I published a
 few weeks ago. You can read the announcement

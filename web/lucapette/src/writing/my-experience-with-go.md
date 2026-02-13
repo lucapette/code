@@ -63,7 +63,7 @@ examples section: I look around, find a good example that works for me, move on
 to the next problem. In case you're not familiar with it, here is how testable
 examples look like:
 
-![go doc](/img/godoc.png)
+![go doc](/assets/img/godoc.png)
 
 Being able to run examples right there is helpful, I use the feature when I'm
 not sure I understand the docs.

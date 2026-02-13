@@ -108,7 +108,7 @@ database in memory. This way the database became easier to extend.
 
 Finally, I built a dashboard and it looked like this:
 
-![tracker screenshot](/img/tracker.png)
+![tracker screenshot](/assets/img/tracker.png)
 
 Grafana has all the characteristics of a good product: you don't need to read
 the documentation to use its interface and if you try things out they often just

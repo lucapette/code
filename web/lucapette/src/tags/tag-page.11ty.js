@@ -9,7 +9,7 @@ export default {
         alias: "tag"
       },
       permalink: (data) => `/tags/${data.tag}/`,
-      layout: "base.hbs",
+      layout: "base.liquid",
       eleventyComputed: {
         title: (data) => data.tag,
         posts: (data) => {

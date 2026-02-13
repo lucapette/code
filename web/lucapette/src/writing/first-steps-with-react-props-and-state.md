@@ -7,9 +7,9 @@ keywords: react, webpack, passata, pomodoro technique
 title: First steps with React props and state
 ---
 
-{{#message "is-warning"}}
+{% message "is-warning" %}
 [Passata](https://github.com/lucapette/passata) is being rewritten at the moment so the information in this page is out of date. I'll be publishing a new article as soon as it's ready.
-{{/message}}
+{% endmessage %}
 
 ## Passata design and features
 
@@ -41,14 +41,14 @@ with three screens:
 The home screen presents available categories. I can start a new pomodoro and
 access my stats.
 
-![home screen](/img/home.jpg)
+![home screen](/assets/img/home.jpg)
 
 #### Run screen
 
 The run screen is shown when a pomodoro is running. I can take notes and check
 the progress of the running pomodoro.
 
-![run screen](/img/run.jpg)
+![run screen](/assets/img/run.jpg)
 
 #### Rest screen
 
@@ -56,7 +56,7 @@ The rest screen is similar to the run screen but shown after pomodoro
 completion. I can read and export my notes, I can start a new pomodoro or get
 back to the home screen.
 
-![rest screen](/img/rest.jpg)
+![rest screen](/assets/img/rest.jpg)
 
 I deliberately ignored the graphs view so I could focus on a first working
 version of the application.

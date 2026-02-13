@@ -30,7 +30,3 @@ export function tagPosts(collectionApi) {
   });
   return tagMap;
 }
-
-export function getTagPosts(tagPosts, tag) {
-  return tagPosts[tag] || [];
-}

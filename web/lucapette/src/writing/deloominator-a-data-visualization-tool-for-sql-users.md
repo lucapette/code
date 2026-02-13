@@ -10,9 +10,9 @@ keywords: golang, react, data visualization, vega-lite, sql, databases
 title: "deloominator: a data visualization tool for SQL users"
 ---
 
-{{#message "is-warning"}}
+{% message "is-warning" %}
 This project has been archived.
-{{/message}}
+{% endmessage %}
 
 Today I'm open-sourcing `deloominator`: a data visualization tool for SQL users.
 You write SQL queries into a small web UI, you run your queries and
@@ -85,7 +85,7 @@ negative) I should be aware of. Now, let's try to visualize this small (and
 purposely trivial) data set with graphs. Let's start with aggregating the
 acquisitions by country:
 
-![grouped by country](/img/grouped-by-country.png)
+![grouped by country](/assets/img/grouped-by-country.png)
 
 The insight is obvious: Germany is the country where we acquired more customers,
 Netherlands is doing good and Italy is not quite there yet. An interesting side
@@ -105,7 +105,7 @@ business:
 
 For this small data set I can use a multi line chart:
 
-![by time](/img/by-time.png)
+![by time](/assets/img/by-time.png)
 
 In this case, the insight is more subtle: Germany (the country in which we
 acquired more customers) is the only country with a negative trend over the

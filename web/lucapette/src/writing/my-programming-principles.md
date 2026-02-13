@@ -10,9 +10,9 @@ keywords:
 favourite: true
 ---
 
-{{#message "is-info"}}
+{% message "is-info" %}
 This is a _long_ read. You will find a table of contents right after the introduction.
-{{/message}}
+{% endmessage %}
 
 One day, during a post-game interview, elite chess Grandmaster Alexander
 Grischuk was asked the routine question: "How long have you been preparing for

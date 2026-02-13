@@ -118,4 +118,4 @@ perfection, although I know I can't have it. Attending or running a standup
 every morning is a sad activity from that perspective. Because it's a constant
 reminder: we could be doing a better job at basic communication.
 
-{{ leading-developers }}
+{% leaddevbook %}

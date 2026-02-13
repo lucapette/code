@@ -119,11 +119,11 @@ likely you have set the
 When you trigger a FuzzyFinderTextMate search _*without*_ the previous
 configuration you'll see something like that:
 
-![/img/fuzzy_finder_not_configured.png](/img/fuzzy_finder_not_configured.png)
+![](/assets/img/fuzzy_finder_not_configured.png)
 
 _*With*_ the previous configuration you'll see something like that:
 
-![/img/fuzzy_finder_configured.png!](/img/fuzzy_finder_configured.png)
+![](/assets/img/fuzzy_finder_configured.png)
 
 Another way to solve this problem involves two things. First of all, this
 solution works only on the condition that you store all your projects in a

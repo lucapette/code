@@ -14,9 +14,9 @@ aliases:
   - /using-flow-and-jest
 ---
 
-{{#message "is-warning"}}
+{% message "is-warning" %}
 [Passata](https://github.com/lucapette/passata) is being rewritten at the moment so the information in this page is out of date. I'll be publishing a new article as soon as it's ready.
-{{/message}}
+{% endmessage %}
 
 In the previous article of the series, I explained how I introduced a timer in
 [passata](https://github.com/lucapette/passata), my playground application for

@@ -33,9 +33,9 @@ order as they're connected to each other the way they're presented:
   - [I don't want to bash SQL but](#i-dont-want-to-bash-sql-but)
   - [Naming is hard](#naming-is-hard)
 
-{{#message "is-info"}}
+{% message "is-info" %}
 TypeStream is a young project so it changes all the time. Some features are already implemented and others are being worked on. The official TypeStream [discord server](https://discord.gg/JHYsa3xd) is the best way to ask roadmap questions.
-{{/message}}
+{% endmessage %}
 
 ## The first intuition
 

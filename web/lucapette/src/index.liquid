@@ -1,5 +1,5 @@
 ---
-layout: home.hbs
+layout: home.liquid
 title: Home
 permalink: /
 description: Luca Pette's personal website
@@ -16,12 +16,7 @@ description: Luca Pette's personal website
     </div>
     <div class="decoration">
       <figure class="me image">
-        <img
-          src="/assets/me.png"
-          alt="Luca Pette"
-          width="128"
-          height="128"
-        />
+        {% image "assets/me.png", "Luca Pette", "(max-width: 600px) 128px, 800px", 128 %}
       </figure>
     </div>
   </div>
@@ -31,14 +26,14 @@ description: Luca Pette's personal website
     <div class="column">
       <h2 class="year">Latest writing</h2>
       <ul class="articles">
-        {{#each (limit collections.writings 5)}}
+        {% for item in collections.writings limit: 5 %}
           <li class="article">
-            <a href="{{this.url}}">
-              <span>{{this.data.title}}</span>
-              <span class="date">{{formatDate this.date}}</span>
+            <a href="{{ item.url }}">
+              <span>{{ item.data.title }}</span>
+              <span class="date">{{ item.date | formatDate }}</span>
             </a>
           </li>
-        {{/each}}
+        {% endfor %}
       </ul>
     </div>
   </div>
@@ -46,17 +41,15 @@ description: Luca Pette's personal website
     <div class="column">
       <h2 class="year">Highlights</h2>
       <ul class="articles">
-        {{#each collections.favouriteWritings}}
+        {% for item in collections.favouriteWritings %}
           <li class="article">
-            <a href="{{this.url}}">
-              <span>{{this.data.title}}</span>
-              <span class="date">{{formatDate this.date}}</span>
+            <a href="{{ item.url }}">
+              <span>{{ item.data.title }}</span>
+              <span class="date">{{ item.date | formatDate }}</span>
             </a>
           </li>
-        {{/each}}
+        {% endfor %}
       </ul>
     </div>
   </div>
 </section>
-
-

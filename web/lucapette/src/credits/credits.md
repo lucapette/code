@@ -1,5 +1,5 @@
 ---
-layout: base.hbs
+layout: base.liquid
 permalink: /credits/
 title: "Credits"
 menu:

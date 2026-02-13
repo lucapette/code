@@ -11,9 +11,9 @@ keywords:
   - values
 ---
 
-{{#message "is-info"}}
+{% message "is-info" %}
 This is a _long_ read. You will find a table of contents right after the introduction.
-{{/message}}
+{% endmessage %}
 
 In my career, I've worked in very different industries, covering all kinds of
 product development roles. Two patterns emerged early on and stayed with me ever
@@ -529,4 +529,4 @@ people go wherever they want to go.
 Sharing your own mistakes with your team can be a powerful moment of
 self-reflection and can get you closer to your direct reports.
 
-{{ leading-developers }}
+{% leaddevbook %}

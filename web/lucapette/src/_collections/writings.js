@@ -23,7 +23,7 @@ export function writingsByYear(collectionApi) {
     }
 
     grouped[year].push({
-      postUrl: article.data.page.url,
+      postUrl: article.url,
       title: article.data.title,
       formattedDate: `${month} ${day}`,
     });

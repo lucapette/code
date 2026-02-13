@@ -1,0 +1,20 @@
+<section>
+  <nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-menu">
+      <div class="navbar-start">
+        <a href="/" class="navbar-item {% if page.url == '/' %}is-active{% endif %}">Home</a>
+        <a href="/writing/" class="navbar-item {% if page.url == '/writing/' %}is-active{% endif %}">Writing</a>
+        <a href="/reading/" class="navbar-item {% if page.url == '/reading/' %}is-active{% endif %}">Reading</a>
+        <a href="/hire/" class="navbar-item {% if page.url == '/hire/' %}is-active{% endif %}">Hire me</a>
+        <a href="/about/" class="navbar-item {% if page.url == '/about/' %}is-active{% endif %}">About</a>
+      </div>
+      <div class="navbar-end">
+        <button id="toggle" class="navbar-item">
+          <i data-lucide="moon" class="moon" aria-hidden="true"></i>
+          <i data-lucide="sun" class="sun" aria-hidden="true"></i>
+          <span class="sr-only">toggle theme</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+</section>

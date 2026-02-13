@@ -10,9 +10,9 @@ keywords:
 date: 2022-09-23T09:09:51+02:00
 ---
 
-{{#message "is-info"}}
+{% message "is-info" %}
 This is a _long_ read. You will find a table of contents right after the introduction.
-{{/message}}
+{% endmessage %}
 
 Before I dive into what appeals to me and what doesn't about a monorepo approach,
 let me share a definition from

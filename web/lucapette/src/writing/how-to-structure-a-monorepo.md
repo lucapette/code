@@ -11,11 +11,11 @@ keywords:
 date: 2022-09-28T07:09:51+02:00
 ---
 
-{{#message "is-info"}}
+{% message "is-info" %}
 This article assumes you're _already_ convinced that a monorepo is how you want to organise your codebase.
 
 While I mention some benefits of the approach, they are part of a larger set of benefits I discussed in [The appeal of monorepo](/writing/the-appeal-of-monorepo).
-{{/message}}
+{% endmessage %}
 
 With this article, I initially intended to provide some sort of "starting
 template" for a monorepo. The deeper I got into the topic, the more obvious it
@@ -207,4 +207,4 @@ engineering management should happen.
 You want a structure that works technically _and_ that has organisational
 meaning.
 
-{{ leading-developers }}
+{% leaddevbook %}
