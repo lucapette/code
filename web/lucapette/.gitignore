@@ -55,3 +55,6 @@ yarn-error.log*
 # Editor files
 .vs/
 *.sass-cache
+
+# Generated CSS maps
+src/assets/css/*.map
