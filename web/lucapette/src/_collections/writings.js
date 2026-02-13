@@ -1,19 +1,16 @@
-export function writings(collectionApi) {
+function getWritings(collectionApi) {
   return collectionApi
     .getFilteredByGlob("./src/writing/**/*.md")
     .filter(item => !item.fileSlug.includes("_index"))
-    .sort((a, b) => {
-      return b.date - a.date;
-    });
+    .sort((a, b) => b.date - a.date);
+}
+
+export function writings(collectionApi) {
+  return getWritings(collectionApi);
 }
 
 export function writingsByYear(collectionApi) {
-  const writings = collectionApi
-    .getFilteredByGlob("./src/writing/**/*.md")
-    .filter(item => !item.fileSlug.includes("_index"))
-    .sort((a, b) => {
-      return b.date - a.date;
-    });
+  const writings = getWritings(collectionApi);
 
   const grouped = {};
   writings.forEach((article) => {
@@ -42,8 +39,5 @@ export function writingsByYear(collectionApi) {
 }
 
 export function favouriteWritings(collectionApi) {
-  return collectionApi
-    .getFilteredByGlob("./src/writing/**/*.md")
-    .filter(item => item.data.favourite === true)
-    .sort((a, b) => b.date - a.date);
+  return getWritings(collectionApi).filter(item => item.data.favourite === true);
 }
