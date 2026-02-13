@@ -1,7 +1,9 @@
 import handlebarsPlugin from "@11ty/eleventy-plugin-handlebars";
 import { eq } from "./src/_filters/comparison.js";
 import { formatDate } from "./src/_filters/date.js";
-import { posts, postsByYear } from "./src/_collections/posts.js";
+import { writings, writingsByYear, favouriteWritings } from "./src/_collections/writings.js";
+import { reading, readingByYear } from "./src/_collections/reading.js";
+import { drafts } from "./src/_collections/drafts.js";
 import lucideShortcode from "./src/_shortcodes/lucide.js";
 
 export default function (eleventyConfig) {
@@ -18,62 +20,16 @@ export default function (eleventyConfig) {
   eleventyConfig.addFilter("formatDate", formatDate);
   eleventyConfig.addFilter("limit", (array, n) => array.slice(0, n));
 
-  eleventyConfig.addPreprocessor("drafts", "md,hbs", function (data, content) {
-    if (data.draft && process.env.NODE_ENV !== "development") {
-      return false;
-    }
-    return content;
-  });
+  eleventyConfig.addPreprocessor("drafts", "md,hbs", drafts);
 
   eleventyConfig.addPassthroughCopy("./src/assets");
   eleventyConfig.addPassthroughCopy("./src/static");
 
-  eleventyConfig.addCollection("posts", posts);
-  eleventyConfig.addCollection("postsByYear", postsByYear);
-
-  eleventyConfig.addCollection("favourites", function(collectionApi) {
-    return collectionApi
-      .getFilteredByGlob("./src/writing/**/*.md")
-      .filter(item => item.data.favourite === true)
-      .sort((a, b) => b.date - a.date);
-  });
-
-  eleventyConfig.addCollection("reading", function (collectionApi) {
-    return collectionApi
-      .getFilteredByGlob("./src/reading/**/*.md")
-      .filter(item => !item.fileSlug.includes("_index"))
-      .sort((a, b) => {
-        return b.date - a.date;
-      });
-  });
-
-  eleventyConfig.addCollection("readingByYear", function (collectionApi) {
-    const reading = collectionApi
-      .getFilteredByGlob("./src/reading/**/*.md")
-      .filter(item => !item.fileSlug.includes("_index"))
-      .sort((a, b) => {
-        return b.date - a.date;
-      });
-    const grouped = {};
-    reading.forEach((item) => {
-      const date = new Date(item.date);
-      const year = date.getFullYear();
-      if (!grouped[year]) {
-        grouped[year] = [];
-      }
-      grouped[year].push({
-        postUrl: item.data.page.url,
-        title: item.data.title,
-        formattedDate: formatDate(item.date),
-      });
-    });
-    return Object.keys(grouped)
-      .sort((a, b) => b - a)
-      .map((year) => ({
-        year: year,
-        posts: grouped[year],
-      }));
-  });
+  eleventyConfig.addCollection("writings", writings);
+  eleventyConfig.addCollection("writingsByYear", writingsByYear);
+  eleventyConfig.addCollection("favouriteWritings", favouriteWritings);
+  eleventyConfig.addCollection("reading", reading);
+  eleventyConfig.addCollection("readingByYear", readingByYear);
 
   return {
     dir: {

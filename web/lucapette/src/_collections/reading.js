@@ -1,42 +1,38 @@
-export function posts(collectionApi) {
+import { formatDate } from "../_filters/date.js";
+
+export function reading(collectionApi) {
   return collectionApi
-    .getFilteredByGlob("./src/writing/**/*.md")
+    .getFilteredByGlob("./src/reading/**/*.md")
     .filter(item => !item.fileSlug.includes("_index"))
     .sort((a, b) => {
       return b.date - a.date;
     });
 }
 
-export function postsByYear(collectionApi) {
-  const posts = collectionApi
-    .getFilteredByGlob("./src/writing/**/*.md")
+export function readingByYear(collectionApi) {
+  const reading = collectionApi
+    .getFilteredByGlob("./src/reading/**/*.md")
     .filter(item => !item.fileSlug.includes("_index"))
     .sort((a, b) => {
       return b.date - a.date;
     });
-
   const grouped = {};
-  posts.forEach((post) => {
-    const date = new Date(post.date);
+  reading.forEach((item) => {
+    const date = new Date(item.date);
     const year = date.getFullYear();
-    const month = date.toLocaleString("en-US", { month: "short" });
-    const day = date.getDate();
-
     if (!grouped[year]) {
       grouped[year] = [];
     }
-
     grouped[year].push({
-      postUrl: post.data.page.url,
-      title: post.data.title,
-      formattedDate: `${month} ${day}`,
+      postUrl: item.data.page.url,
+      title: item.data.title,
+      formattedDate: formatDate(item.date),
     });
   });
-
   return Object.keys(grouped)
     .sort((a, b) => b - a)
     .map((year) => ({
       year: year,
-      posts: grouped[year],
+      books: grouped[year],
     }));
 }

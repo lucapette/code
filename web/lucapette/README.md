@@ -29,6 +29,7 @@ These require the `book` shortcode with image processing. Complex migration – 
 
 ### Post Migration
 
+- [ ] Migrate all JS/TS files to TypeScript
 - [ ] Move books article links from Goodreads to TheStoryGraph
 - [ ] Use Eleventy bundle feature instead of esbuild
 - [ ] Drop Sass in favor of vanilla CSS or PostCSS
@@ -63,7 +64,7 @@ src/
 ├── _layouts/         # Templates
 ├── _shortcodes/      # Icon shortcodes
 ├── assets/           # SCSS, JS, images
-├── writing/          # Blog posts
+├── writing/          # Articles/Writings
 ├── reading/          # Book reviews
 ├── about/
 ├── hire/

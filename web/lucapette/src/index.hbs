@@ -30,8 +30,8 @@ description: Luca Pette's personal website
   <div class="columns">
     <div class="column">
       <h2 class="year">Latest writing</h2>
-      <ul class="posts">
-        {{#each (limit collections.posts 5)}}
+      <ul class="articles">
+        {{#each (limit collections.writings 5)}}
           <li class="post">
             <a href="{{this.url}}">
               <span>{{this.data.title}}</span>
@@ -45,8 +45,8 @@ description: Luca Pette's personal website
   <div class="columns">
     <div class="column">
       <h2 class="year">Highlights</h2>
-      <ul class="posts">
-        {{#each collections.favourites}}
+      <ul class="articles">
+        {{#each collections.favouriteWritings}}
           <li class="post">
             <a href="{{this.url}}">
               <span>{{this.data.title}}</span>

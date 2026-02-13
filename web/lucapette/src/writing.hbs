@@ -7,13 +7,13 @@ description: Writings by Luca Pette about software development and other topics.
 
 <h1>Writing</h1>
 
-{{#if collections.posts.length}}
+{{#if collections.writings.length}}
     <div class="columns">
         <div class="column">
-            {{#each collections.postsByYear}}
+            {{#each collections.writingsByYear}}
                 <h2 class="year">{{year}}</h2>
-                <ul class="posts">
-                    {{#each posts}}
+                <ul class="articles">
+                    {{#each articles}}
                         <li class="post">
                             <a href="{{postUrl}}">
                                 <span>{{title}}</span>
