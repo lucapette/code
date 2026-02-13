@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "src/assets/js/main.js",
   "scripts": {
-    "build": "npm run js:build && eleventy",
-    "serve": "npm run js:build && NODE_ENV=development eleventy --serve --incremental",
-    "js:build": "esbuild src/assets/js/main.js --bundle --outfile=src/assets/js/main.bundle.js --format=esm --target=es2020",
+    "build": "npm run css:build && npm run js:build && eleventy",
+    "serve": "npm run css:build && npm run js:build && NODE_ENV=development eleventy --serve --incremental",
+    "js:build": "esbuild src/assets/js/main.js --bundle --outfile=_site/assets/js/main.bundle.js --format=esm --target=es2020",
     "prettier:check": "prettier --check '**/*.{ts,js,css,scss,html}'",
     "prettier:write": "prettier --write '**/*.{ts,js,css,scss,html}'",
     "css:build": "sass src/assets/scss:src/assets/css --style compressed"
