@@ -21,14 +21,16 @@ createIcons({
 
 const toggle = document.getElementById("toggle");
 
-toggle.addEventListener("click", function (e) {
-  e.preventDefault();
-  document.documentElement.classList.toggle("dark");
-  localStorage.setItem(
-    "theme",
-    localStorage.getItem("theme") === "light" ? "dark" : "light",
-  );
-});
+if (toggle) {
+  toggle.addEventListener("click", function (e) {
+    e.preventDefault();
+    document.documentElement.classList.toggle("dark");
+    localStorage.setItem(
+      "theme",
+      localStorage.getItem("theme") === "light" ? "dark" : "light",
+    );
+  });
+}
 
 document.querySelectorAll("pre[class*='language-']").forEach((pre) => {
   // Add line numbers
