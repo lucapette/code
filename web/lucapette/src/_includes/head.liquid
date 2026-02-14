@@ -10,14 +10,24 @@
   {% else %}
     <title>Luca Pette</title>
   {% endif %}
-  <meta name="description" content="{% if description %}{{ description }}{% else %}{{ site.description }}{% endif %}" />
+  <meta name="description" content="{% if description %}{{ description | escape }}{% else %}{{ site.description }}{% endif %}" />
   <meta property="og:title" content="{% if title %}{{ title }}{% else %}Luca Pette{% endif %}" />
-  <meta property="og:description" content="{% if description %}{{ description }}{% else %}{{ site.description }}{% endif %}" />
+  <meta property="og:description" content="{% if description %}{{ description | escape }}{% else %}{{ site.description }}{% endif %}" />
   <meta property="og:url" content="{{ site.url }}{{ page.url }}" />
-  <meta property="og:type" content="website" />
+  <meta property="og:type" content="{% if images %}article{% else %}website{% endif %}" />
   <meta property="og:site_name" content="Luca Pette" />
+  {% if images %}
+  <meta name="twitter:card" content="summary_large_image" />
+  {% else %}
   <meta name="twitter:card" content="summary" />
+  {% endif %}
   <meta name="twitter:site" content="@lucapette" />
+  <meta name="twitter:title" content="{% if title %}{{ title }}{% else %}Luca Pette{% endif %}" />
+  <meta name="twitter:description" content="{% if description %}{{ description | escape }}{% else %}{{ site.description }}{% endif %}" />
+  {% if images %}
+  <meta property="og:image" content="{{ site.url }}{{ page.url }}{{ images[0] }}" />
+  <meta name="twitter:image" content="{{ site.url }}{{ page.url }}{{ images[0] }}" />
+  {% endif %}
   <link rel="stylesheet" href="{{ "css/main.scss" | asset }}" />
   {% if node_env != "production" %}
   <link rel="stylesheet" href="/assets/css/prism-nord.css" />

@@ -11,4 +11,10 @@ eleventyExcludeFromCollections: true
     <lastmod>{{ today }}</lastmod>
   </url>
 {% endfor %}
+{% for tag in collections.tagList %}
+  <url>
+    <loc>{{ site.url }}/tags/{{ tag }}/</loc>
+    <lastmod>{{ today }}</lastmod>
+  </url>
+{% endfor %}
 </urlset>
