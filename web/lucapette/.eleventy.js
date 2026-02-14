@@ -9,6 +9,7 @@ import { messageShortcode } from "./src/_shortcodes/message.js";
 import { leadingDevelopersShortcode } from "./src/_shortcodes/leading-developers.js";
 import { typestreamShortcode } from "./src/_shortcodes/typestream.js";
 import { imageShortcode } from "./src/_shortcodes/image.js";
+import { bookShortcode } from "./src/_shortcodes/book.js";
 
 export default function (eleventyConfig) {
   eleventyConfig.addPlugin(syntaxHighlight);
@@ -18,6 +19,7 @@ export default function (eleventyConfig) {
   eleventyConfig.addShortcode("leaddevbook", leadingDevelopersShortcode);
   eleventyConfig.addShortcode("typestream", typestreamShortcode);
   eleventyConfig.addAsyncShortcode("image", imageShortcode);
+  eleventyConfig.addPairedLiquidShortcode("book", bookShortcode);
 
   eleventyConfig.addGlobalData(
     "today",
