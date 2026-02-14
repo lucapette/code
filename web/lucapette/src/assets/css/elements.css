@@ -1,8 +1,7 @@
-@use "../../../node_modules/include-media/dist/include-media";
-@use "variables" as v;
+@import "variables.css";
 
 :root {
-  --wrap-width: #{v.$wrap-width};
+  --wrap-width: 780px;
 }
 
 html,
@@ -13,14 +12,12 @@ body {
 body {
   display: flex;
   flex-direction: column;
-  font-family: v.$font-family-primary;
-  font-size: v.$font-size-primary;
-  font-weight: v.$font-weight-normal;
-
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-primary);
+  font-weight: var(--font-weight-normal);
   line-height: 1.5;
-
-  color: v.$text-color;
-  background-color: v.$background-color;
+  color: var(--text-color);
+  background-color: var(--background-color);
 }
 
 h1 {
@@ -45,53 +42,55 @@ h5 {
 
 section {
   padding: 2rem 1rem;
+}
 
-  &:last-child {
-    padding-top: 0;
-  }
+section:last-child {
+  padding-top: 0;
 }
 
 table {
   border-collapse: collapse;
   width: 100%;
-  th {
-    text-align: left;
-  }
-  th,
-  td {
-    border: 1px solid v.$white-ter;
-    padding: 0.5rem;
-  }
+}
+
+th {
+  text-align: left;
+}
+
+th,
+td {
+  border: 1px solid var(--white-ter);
+  padding: 0.5rem;
 }
 
 pre code {
-  font-family: v.$font-family-monospace;
-  font-size: v.$font-size-code;
+  font-family: var(--font-family-monospace);
+  font-size: var(--font-size-code);
 }
 
 a {
-  color: v.$link-color;
+  color: var(--link-color);
   text-decoration: underline;
+}
 
-  &:hover {
-    color: v.$accent-color;
-  }
+a:hover {
+  color: var(--accent-color);
 }
 
 em {
-  color: v.$accent-color;
+  color: var(--accent-color);
   font-weight: 700;
 }
 
 hr {
-  background-color: v.$white-ter;
+  background-color: var(--white-ter);
   border: none;
   display: block;
   height: 2px;
   margin: 1.5rem 0;
 }
 
-@include include-media.media("<tablet") {
+@media (max-width: 767px) {
   h1 {
     font-size: 1.75rem;
   }

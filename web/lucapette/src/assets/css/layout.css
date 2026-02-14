@@ -1,0 +1,141 @@
+.wrap {
+  flex: 1 0 auto;
+  margin-left: auto;
+  margin-right: auto;
+  width: var(--wrap-width);
+}
+
+.footer {
+  flex-shrink: 0;
+  padding: 1rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: var(--wrap-width);
+}
+
+.footer .left {
+  float: left;
+}
+
+.footer .right {
+  float: right;
+  display: flex;
+  gap: 1em;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+}
+
+.navbar .navbar-menu {
+  display: flex;
+  flex-grow: 1;
+  flex-shrink: 0;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.navbar .navbar-menu .navbar-start {
+  justify-content: flex-start;
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.navbar .navbar-menu .navbar-end {
+  justify-content: flex-end;
+}
+
+.navbar .navbar-menu a.navbar-item {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--white-ter);
+  border-radius: 8px;
+}
+
+.navbar .navbar-menu a.navbar-item.is-active {
+  background-color: var(--white-bis);
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.navbar .navbar-menu a.navbar-item:hover {
+  background-color: var(--white-bis);
+  color: var(--text-color);
+}
+
+.navbar .navbar-menu button.navbar-item {
+  padding: 0.5rem;
+  border: 1px solid var(--white-ter);
+  background-color: var(--white);
+  color: var(--link-color);
+  border-radius: 50%;
+}
+
+.navbar .navbar-menu button.navbar-item:hover {
+  background-color: var(--text-color);
+  color: var(--white-bis);
+}
+
+.navbar .navbar-menu button.navbar-item svg {
+  margin: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.level {
+  display: flex;
+  justify-content: space-between;
+}
+
+.level .left {
+  align-self: flex-start;
+}
+
+.level .right {
+  align-self: flex-end;
+}
+
+.columns {
+  display: flex;
+}
+
+.columns .column {
+  display: block;
+  flex-grow: 1;
+  flex-basis: 0;
+  flex-shrink: 1;
+  padding: 0.75rem 0.75rem 0.75rem 0;
+}
+
+@media (max-width: 767px) {
+  .navbar .navbar-item {
+    font-size: 0.9rem;
+  }
+
+  .columns {
+    display: unset;
+  }
+
+  .columns .column.is-half,
+  .columns .column.is-three-quarters {
+    width: 100%;
+  }
+
+  .footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1em;
+  }
+
+  .footer .left,
+  .footer .right {
+    display: flex;
+  }
+
+  .footer .right {
+    flex-direction: row;
+  }
+}

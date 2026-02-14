@@ -3,23 +3,14 @@
   "version": "1.0.0",
   "main": "src/assets/js/main.js",
   "scripts": {
-    "build": "npm run css:build && npm run js:build && eleventy",
-    "build:prod": "npm run css:build:prod && npm run js:build:prod && node scripts/manifest.js && eleventy",
-    "dev": "concurrently \"npm run watch:js\" \"npm run watch:css\" \"NODE_ENV=development eleventy --serve --incremental\"",
-    "serve": "NODE_ENV=development eleventy --serve --incremental",
-    "watch:js": "esbuild src/assets/js/main.js --bundle --outdir=_site/assets/js --format=esm --target=es2020 --watch",
-    "watch:css": "sass src/assets/scss/main.scss:_site/assets/css/main.css --no-source-map --watch",
+    "build": "node scripts/css.js prod && node scripts/js.js prod && node scripts/manifest.js && eleventy",
+    "dev": "node scripts/css.js && concurrently \"node scripts/js.js watch\" \"NODE_ENV=development eleventy --serve --incremental\"",
     "prettier:check": "prettier --check '**/*.{ts,js,css,scss,html}'",
-    "prettier:write": "prettier --write '**/*.{ts,js,css,scss,html}'",
-    "css:build": "sass src/assets/scss/main.scss:_site/assets/css/main.css --no-source-map",
-    "css:build:prod": "sass src/assets/scss/main.scss:main.css --no-source-map && cat src/assets/css/prism-nord.css src/assets/css/prism-line-numbers.css >> main.css && esbuild main.css --minify --bundle --outdir=_site/assets/css --entry-names=main.min.[hash] && rm main.css",
-    "js:build": "esbuild src/assets/js/main.js --bundle --outdir=_site/assets/js --format=esm --target=es2020",
-    "js:build:prod": "esbuild src/assets/js/main.js --bundle --minify --outdir=_site/assets/js --entry-names=main.min.[hash]"
+    "prettier:write": "prettier --write '**/*.{ts,js,css,scss,html}'"
   },
   "type": "module",
   "dependencies": {
     "@11ty/eleventy-img": "^6.0.4",
-    "include-media": "^2.0.0",
     "lucide": "0.381.0"
   },
   "devDependencies": {
@@ -28,7 +19,10 @@
     "concurrently": "^9.2.1",
     "esbuild": "^0.27.3",
     "lucide-static": "^0.563.0",
+    "playwright": "^1.58.2",
+    "postcss": "^8.5.6",
+    "postcss-import": "^16.1.1",
     "prettier": "^3.2.5",
-    "sass": "^1.77.8"
+    "stylelint": "^17.3.0"
   }
 }

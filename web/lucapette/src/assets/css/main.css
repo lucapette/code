@@ -1,0 +1,188 @@
+@charset "UTF-8";
+
+@import "reset.css";
+@import "elements.css";
+@import "layout.css";
+@import "content.css";
+@import "dark.css";
+@import "reading.css";
+
+.year {
+  margin-bottom: 1rem;
+}
+
+ul.articles {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+ul.articles li {
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--white-ter);
+}
+
+ul.articles li:last-child {
+  border-bottom: none;
+}
+
+ul.articles li a {
+  text-decoration: none;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  align-items: center;
+  justify-content: space-between;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+ul.articles li a .date {
+  color: var(--black);
+  font-family: var(--font-family-monospace);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.highlight {
+  margin-bottom: 1em;
+}
+
+.copy-code {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  border-radius: var(--radius);
+  user-select: none;
+  background: #4c566a;
+  color: #eceff4;
+  border: none;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+pre[class*="language-"] {
+  position: relative;
+}
+
+.highlight pre {
+  border-radius: var(--radius);
+}
+
+.highlight,
+pre {
+  position: relative;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 4fr 2fr;
+}
+
+.hero .description {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hero .description h1 {
+  font-size: 3rem;
+  background-image: linear-gradient(-90deg, var(--purple), var(--turquoise));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero .decoration {
+  justify-self: right;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --wrap-width: 740px;
+  }
+
+  .hero .description {
+    order: 1;
+  }
+
+  .hero .description h1 {
+    font-size: 2.5rem;
+  }
+
+  .hero .decoration {
+    order: 2;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --wrap-width: 95%;
+  }
+
+  .hero {
+    grid-template-columns: none;
+    gap: 1rem;
+  }
+
+  .hero .description {
+    order: 2;
+  }
+
+  .hero .description h1 {
+    font-size: 2rem;
+  }
+
+  .hero .decoration {
+    justify-self: left;
+    order: 1;
+  }
+
+  ul.articles li a {
+    white-space: preserve;
+  }
+
+  ul.articles li a .date {
+    display: none;
+  }
+}
+
+.sr-only:not(:focus):not(:active) {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.sun {
+  visibility: hidden;
+  display: none;
+}
+
+.me:hover {
+  transform: scaleX(-1);
+}
+
+figure.me {
+  width: 128px;
+  height: 128px;
+}
+
+.anchor a {
+  opacity: 0;
+  transition: opacity 0.2s ease-in;
+}
+
+.anchor:hover a {
+  opacity: 1;
+  transition: opacity 0.2s ease-in;
+}

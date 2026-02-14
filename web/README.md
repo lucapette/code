@@ -11,7 +11,6 @@ Monorepo containing my websites built with Hugo and Go templates.
 
 - Static sites generated with Hugo (Go templates)
 - CSS processed with PostCSS
-- Hosted on Netlify/Vercel
 
 ## Structure
 

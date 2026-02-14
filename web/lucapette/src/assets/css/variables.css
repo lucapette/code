@@ -1,0 +1,28 @@
+:root {
+  --wrap-width: 780px;
+  --radius: 4px;
+  --font-family-primary: "Iowan Old Style", "Palatino Linotype", serif;
+  --font-size-primary: 1.2em;
+  --font-family-monospace: ui-monospace, "Cascadia Code", "Source Code Pro", menlo, consolas, "DejaVu Sans Mono", monospace;
+  --font-size-code: 1em;
+  --font-weight-normal: 500;
+  --orange: #d08770;
+  --yellow: #ebcb8b;
+  --green: #a3be8c;
+  --turquoise: #8fbcbb;
+  --cyan: #88c0d0;
+  --blue: #81a1c1;
+  --purple: #b48ead;
+  --red: #bf616a;
+  --black: #2e3440;
+  --black-bis: #3b4252;
+  --black-ter: #434c5e;
+  --black-quad: #4c566a;
+  --white: #e5e9f0;
+  --white-bis: #d8dee9;
+  --white-ter: #d8dee4;
+  --text-color: #4c566a;
+  --background-color: #e5e9f0;
+  --accent-color: #c07a60;
+  --link-color: #6a8ab0;
+}

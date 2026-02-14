@@ -1,5 +1,3 @@
-import { formatDate } from "../_filters/date.js";
-
 export default {
   data() {
     return {
@@ -21,14 +19,14 @@ export default {
   },
   render(data) {
     const posts = data.posts || [];
-    const postsHtml = posts.length > 0 
+    const postsHtml = posts.length > 0
       ? posts.map(post => `          <li class="article">
             <a href="${post.url}">
               <span>${post.data.title}</span>
             </a>
           </li>`).join('\n')
       : '';
-    
+
     return `\
 <section>
   <h1>${data.title}</h1>
