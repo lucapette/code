@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "src/assets/js/main.js",
   "scripts": {
-    "build": "node scripts/css.js prod && node scripts/js.js prod && node scripts/manifest.js && eleventy",
+    "build": "NODE_ENV=production node scripts/css.js && NODE_ENV=production node scripts/js.js && NODE_ENV=production node scripts/manifest.js && NODE_ENV=production eleventy",
     "dev": "node scripts/css.js && concurrently \"node scripts/js.js watch\" \"NODE_ENV=development eleventy --serve --incremental\"",
     "prettier:check": "prettier --check '**/*.{ts,js,css,scss,html}'",
     "prettier:write": "prettier --write '**/*.{ts,js,css,scss,html}'"
