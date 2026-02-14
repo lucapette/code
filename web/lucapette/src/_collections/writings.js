@@ -68,7 +68,8 @@ function calculateScore(article1, article2) {
 
 export function relatedWritings(collectionApi) {
   const writings = getWritings(collectionApi);
-  const related = new Map();
+  
+  const related = {};
 
   writings.forEach((article) => {
     const otherArticles = writings.filter(w => w.url !== article.url);
@@ -82,7 +83,7 @@ export function relatedWritings(collectionApi) {
     const sorted = filtered.sort((a, b) => b.score - a.score);
     const top5 = sorted.slice(0, 5).map(s => s.article);
 
-    related.set(article.url, top5);
+    related[article.url] = top5;
   });
 
   return related;
