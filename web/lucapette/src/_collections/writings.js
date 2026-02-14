@@ -25,7 +25,7 @@ export function writingsByYear(collectionApi) {
     grouped[year].push({
       postUrl: article.url,
       title: article.data.title,
-      formattedDate: `${month} ${day}`,
+      formattedDate: `${month} ${day.toString().padStart(2, "0")}`,
     });
   });
 
