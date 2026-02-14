@@ -30,7 +30,7 @@ description: Luca Pette's website
           <li class="article">
             <a href="{{ item.url }}">
               <span>{{ item.data.title }}</span>
-              <span class="date">{{ item.date | formatDate }}</span>
+              <span class="date">{{ item.date | formatDateShort }}</span>
             </a>
           </li>
         {% endfor %}
@@ -45,7 +45,7 @@ description: Luca Pette's website
           <li class="article">
             <a href="{{ item.url }}">
               <span>{{ item.data.title }}</span>
-              <span class="date">{{ item.date | formatDate }}</span>
+              <span class="date">{{ item.date | formatDateShort }}</span>
             </a>
           </li>
         {% endfor %}

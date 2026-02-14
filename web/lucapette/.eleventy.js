@@ -1,5 +1,5 @@
 import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
-import { formatDate, dateToRfc3339 } from "./src/_filters/date.js";
+import { formatDate, formatDateShort, dateToRfc3339 } from "./src/_filters/date.js";
 import { asset } from "./src/_filters/asset.js";
 import { writings, writingsByYear, favouriteWritings, relatedWritings } from "./src/_collections/writings.js";
 import { reading, readingByYear } from "./src/_collections/reading.js";
@@ -33,6 +33,7 @@ export default function (eleventyConfig) {
   );
 
   eleventyConfig.addFilter("formatDate", formatDate);
+  eleventyConfig.addFilter("formatDateShort", formatDateShort);
   eleventyConfig.addFilter("dateToRfc3339", dateToRfc3339);
   eleventyConfig.addFilter("asset", asset);
   eleventyConfig.addFilter("getNewestItemDate", function (items) {
