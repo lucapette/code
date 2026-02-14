@@ -1,30 +1,20 @@
 ---
-layout: base.liquid
+layout: section.liquid
 title: Writing
 permalink: /writing/
 description: Writings by Luca Pette about software development and other topics.
 ---
 
-<h1>Writing</h1>
-
-{% if collections.writings.size > 0 %}
-    <div class="columns">
-        <div class="column">
-            {% for yearGroup in collections.writingsByYear %}
-                <h2 class="year">{{ yearGroup.year }}</h2>
-                <ul class="articles">
-                    {% for item in yearGroup.articles %}
-                        <li class="article">
-                            <a href="{{ item.postUrl }}">
-                                <span>{{ item.title }}</span>
-                                <span class="date">{{ item.formattedDate }}</span>
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endfor %}
-        </div>
-    </div>
-{% else %}
-    <p>No posts yet. Check back soon!</p>
-{% endif %}
+{% for yearGroup in collections.writingsByYear %}
+    <h2 class="year">{{ yearGroup.year }}</h2>
+    <ul class="articles">
+        {% for item in yearGroup.articles %}
+            <li class="article">
+                <a href="{{ item.postUrl }}">
+                    <span>{{ item.title }}</span>
+                    <span class="date">{{ item.formattedDate }}</span>
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% endfor %}

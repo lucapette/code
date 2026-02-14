@@ -1,5 +1,6 @@
 import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 import { formatDate, dateToRfc3339 } from "./src/_filters/date.js";
+import { asset } from "./src/_filters/asset.js";
 import { writings, writingsByYear, favouriteWritings, relatedWritings } from "./src/_collections/writings.js";
 import { reading, readingByYear } from "./src/_collections/reading.js";
 import { tagList, tagPosts } from "./src/_collections/tags.js";
@@ -26,8 +27,14 @@ export default function (eleventyConfig) {
     () => new Date().toISOString().split("T")[0],
   );
 
+  eleventyConfig.addGlobalData(
+    "node_env",
+    () => process.env.NODE_ENV || "development",
+  );
+
   eleventyConfig.addFilter("formatDate", formatDate);
   eleventyConfig.addFilter("dateToRfc3339", dateToRfc3339);
+  eleventyConfig.addFilter("asset", asset);
   eleventyConfig.addFilter("getNewestItemDate", function (items) {
     if (!items || items.length === 0) return new Date();
     return items.sort((a, b) => new Date(b.date) - new Date(a.date))[0].date;
@@ -35,7 +42,10 @@ export default function (eleventyConfig) {
 
   eleventyConfig.addPreprocessor("drafts", "md,liquid", drafts);
 
-  eleventyConfig.addPassthroughCopy("./src/assets");
+  eleventyConfig.addPassthroughCopy("./src/assets/css/prism-nord.css");
+  eleventyConfig.addPassthroughCopy("./src/assets/css/prism-line-numbers.css");
+  eleventyConfig.addPassthroughCopy("./src/assets/img");
+  eleventyConfig.addPassthroughCopy("./src/assets/reading");
   eleventyConfig.addPassthroughCopy("./src/static");
 
   eleventyConfig.addCollection("writings", writings);

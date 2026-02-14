@@ -1,12 +1,7 @@
 ---
-layout: base.liquid
+layout: section.liquid
 permalink: /credits/
 title: "Credits"
-menu:
-  main:
-    identifier: Credits
-    name: credits
-    parent: about
 ---
 
 This website uses the following amazing tools and libraries:

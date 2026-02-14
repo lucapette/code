@@ -11,7 +11,7 @@ export default {
       permalink: (data) => `/tags/${data.tag}/`,
       layout: "base.liquid",
       eleventyComputed: {
-        title: (data) => data.tag,
+        title: (data) => data.tag.charAt(0).toUpperCase() + data.tag.slice(1),
         posts: (data) => {
           const tagPosts = data.collections.tagPosts;
           return tagPosts ? (tagPosts[data.tag] || []) : [];
@@ -25,7 +25,6 @@ export default {
       ? posts.map(post => `          <li class="article">
             <a href="${post.url}">
               <span>${post.data.title}</span>
-              <span class="date">${formatDate(post.date)}</span>
             </a>
           </li>`).join('\n')
       : '';
@@ -38,11 +37,9 @@ export default {
 <section class="section">
   <div class="columns">
     <div class="column">
-      <div class="content">
-        <ul class="articles">
+      <ul class="articles">
 ${postsHtml}
-        </ul>
-      </div>
+      </ul>
     </div>
   </div>
 </section>`;

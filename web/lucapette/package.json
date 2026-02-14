@@ -4,14 +4,17 @@
   "main": "src/assets/js/main.js",
   "scripts": {
     "build": "npm run css:build && npm run js:build && eleventy",
+    "build:prod": "npm run css:build:prod && npm run js:build:prod && node scripts/manifest.js && eleventy",
     "dev": "concurrently \"npm run watch:js\" \"npm run watch:css\" \"NODE_ENV=development eleventy --serve --incremental\"",
     "serve": "NODE_ENV=development eleventy --serve --incremental",
-    "watch:js": "esbuild src/assets/js/main.js --bundle --outfile=_site/assets/js/main.bundle.js --format=esm --target=es2020 --watch",
-    "watch:css": "sass src/assets/scss/main.scss:src/assets/css/bundle.css --style compressed --no-source-map --watch",
+    "watch:js": "esbuild src/assets/js/main.js --bundle --outdir=_site/assets/js --format=esm --target=es2020 --watch",
+    "watch:css": "sass src/assets/scss/main.scss:_site/assets/css/main.css --no-source-map --watch",
     "prettier:check": "prettier --check '**/*.{ts,js,css,scss,html}'",
     "prettier:write": "prettier --write '**/*.{ts,js,css,scss,html}'",
-    "css:build": "sass src/assets/scss/main.scss:src/assets/css/bundle.css --style compressed --no-source-map",
-    "js:build": "esbuild src/assets/js/main.js --bundle --outfile=_site/assets/js/main.bundle.js --format=esm --target=es2020"
+    "css:build": "sass src/assets/scss/main.scss:_site/assets/css/main.css --no-source-map",
+    "css:build:prod": "sass src/assets/scss/main.scss:main.css --no-source-map && cat src/assets/css/prism-nord.css src/assets/css/prism-line-numbers.css >> main.css && esbuild main.css --minify --bundle --outdir=_site/assets/css --entry-names=main.min.[hash] && rm main.css",
+    "js:build": "esbuild src/assets/js/main.js --bundle --outdir=_site/assets/js --format=esm --target=es2020",
+    "js:build:prod": "esbuild src/assets/js/main.js --bundle --minify --outdir=_site/assets/js --entry-names=main.min.[hash]"
   },
   "type": "module",
   "dependencies": {
