@@ -17,10 +17,13 @@ async function build() {
   });
 
   if (isProd) {
-    const prismNord = fs.readFileSync(path.join(srcDir, "prism-nord.css"), "utf8");
+    const prismNord = fs.readFileSync(
+      path.join(srcDir, "prism-nord.css"),
+      "utf8",
+    );
     const prismLineNumbers = fs.readFileSync(
       path.join(srcDir, "prism-line-numbers.css"),
-      "utf8"
+      "utf8",
     );
 
     const combined = result.css + "\n" + prismNord + "\n" + prismLineNumbers;

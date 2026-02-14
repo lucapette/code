@@ -10,5 +10,5 @@ export async function imageShortcode(src, alt, sizes = "100vw", width = 128) {
     urlPath: "/img/",
   });
 
-  return `<img src="${metadata.webp[0].url}" alt="${alt}" loading="lazy" decoding="async" width="${width}" height="${width}" srcset="${metadata.webp.map(s => `${s.url} ${s.width}w`).join(', ')}" sizes="${sizes}">`;
+  return `<img src="${metadata.webp[0].url}" alt="${alt}" loading="lazy" decoding="async" width="${width}" height="${width}" srcset="${metadata.webp.map((s) => `${s.url} ${s.width}w`).join(", ")}" sizes="${sizes}">`;
 }

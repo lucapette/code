@@ -10,7 +10,9 @@ const jsDir = path.join(assetsDir, "js");
 
 if (fs.existsSync(cssDir)) {
   const cssFiles = fs.readdirSync(cssDir);
-  const mainCss = cssFiles.find(f => f.startsWith("main.min.") && f.endsWith(".css"));
+  const mainCss = cssFiles.find(
+    (f) => f.startsWith("main.min.") && f.endsWith(".css"),
+  );
   if (mainCss) {
     manifest["css/main.scss"] = `css/${mainCss}`;
   }
@@ -18,7 +20,9 @@ if (fs.existsSync(cssDir)) {
 
 if (fs.existsSync(jsDir)) {
   const jsFiles = fs.readdirSync(jsDir);
-  const mainJs = jsFiles.find(f => f.startsWith("main.min.") && f.endsWith(".js"));
+  const mainJs = jsFiles.find(
+    (f) => f.startsWith("main.min.") && f.endsWith(".js"),
+  );
   if (mainJs) {
     manifest["js/main.js"] = `js/${mainJs}`;
   }
@@ -26,7 +30,7 @@ if (fs.existsSync(jsDir)) {
 
 fs.writeFileSync(
   path.join(assetsDir, "manifest.json"),
-  JSON.stringify(manifest, null, 2)
+  JSON.stringify(manifest, null, 2),
 );
 
 console.log("Generated manifest.json:", manifest);

@@ -1,4 +1,4 @@
 export default {
   layout: "article.liquid",
-  permalink: "/reading/{{ page.fileSlug }}/"
+  permalink: "/reading/{{ page.fileSlug }}/",
 };

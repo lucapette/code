@@ -4,7 +4,7 @@ export default {
       pagination: {
         data: "collections.tagList",
         size: 1,
-        alias: "tag"
+        alias: "tag",
       },
       permalink: (data) => `/tags/${data.tag}/`,
       layout: "base.liquid",
@@ -12,20 +12,25 @@ export default {
         title: (data) => data.tag.charAt(0).toUpperCase() + data.tag.slice(1),
         posts: (data) => {
           const tagPosts = data.collections.tagPosts;
-          return tagPosts ? (tagPosts[data.tag] || []) : [];
-        }
-      }
+          return tagPosts ? tagPosts[data.tag] || [] : [];
+        },
+      },
     };
   },
   render(data) {
     const posts = data.posts || [];
-    const postsHtml = posts.length > 0
-      ? posts.map(post => `          <li class="article">
+    const postsHtml =
+      posts.length > 0
+        ? posts
+            .map(
+              (post) => `          <li class="article">
             <a href="${post.url}">
               <span>${post.data.title}</span>
             </a>
-          </li>`).join('\n')
-      : '';
+          </li>`,
+            )
+            .join("\n")
+        : "";
 
     return `\
 <section>
@@ -41,5 +46,5 @@ ${postsHtml}
     </div>
   </div>
 </section>`;
-  }
+  },
 };

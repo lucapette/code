@@ -1,7 +1,16 @@
 import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
-import { formatDate, formatDateShort, dateToRfc3339 } from "./src/_filters/date.js";
+import {
+  formatDate,
+  formatDateShort,
+  dateToRfc3339,
+} from "./src/_filters/date.js";
 import { asset } from "./src/_filters/asset.js";
-import { writings, writingsByYear, favouriteWritings, relatedWritings } from "./src/_collections/writings.js";
+import {
+  writings,
+  writingsByYear,
+  favouriteWritings,
+  relatedWritings,
+} from "./src/_collections/writings.js";
 import { reading, readingByYear } from "./src/_collections/reading.js";
 import { tagList, tagPosts } from "./src/_collections/tags.js";
 import { drafts } from "./src/_preprocessors/drafts.js";
