@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-export function asset(filename) {
+export function asset(filename: string): string {
   const isProd = process.env.NODE_ENV === "production";
 
   if (!isProd) {

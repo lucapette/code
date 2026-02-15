@@ -1,4 +1,4 @@
-export function typestreamShortcode() {
+export function typestreamShortcode(): string {
   return `<article class="message is-info">
   <div class="message-body">
     <p>Hey! 👋</p>

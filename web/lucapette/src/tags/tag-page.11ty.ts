@@ -1,3 +1,9 @@
+interface TagPageData {
+  tag: string;
+  posts: { url: string; data: { title: string } }[];
+  title: string;
+}
+
 export default {
   data() {
     return {
@@ -6,18 +12,22 @@ export default {
         size: 1,
         alias: "tag",
       },
-      permalink: (data) => `/tags/${data.tag}/`,
+      permalink: (data: { tag: string }) => `/tags/${data.tag}/`,
       layout: "base.liquid",
       eleventyComputed: {
-        title: (data) => data.tag.charAt(0).toUpperCase() + data.tag.slice(1),
-        posts: (data) => {
+        title: (data: { tag: string }) =>
+          data.tag.charAt(0).toUpperCase() + data.tag.slice(1),
+        posts: (data: {
+          collections: { tagPosts?: Record<string, TagPageData["posts"]> };
+          tag: string;
+        }) => {
           const tagPosts = data.collections.tagPosts;
           return tagPosts ? tagPosts[data.tag] || [] : [];
         },
       },
     };
   },
-  render(data) {
+  render(data: TagPageData): string {
     const posts = data.posts || [];
     const postsHtml =
       posts.length > 0

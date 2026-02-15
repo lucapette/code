@@ -1,4 +1,25 @@
-import icons from "lucide-static/icon-nodes.json" with { type: "json" };
+import icons from "lucide-static/icon-nodes.json";
+
+interface IconPath {
+  [key: string]: string | number;
+}
+
+type IconData = [string, IconPath][];
+
+interface Options {
+  size?: number;
+  width?: number;
+  height?: number;
+  [key: string]: unknown;
+  xmlns?: string;
+  viewBox?: string;
+  fill?: string;
+  stroke?: string;
+  "stroke-width"?: number;
+  "stroke-linecap"?: string;
+  "stroke-linejoin"?: string;
+  class?: string;
+}
 
 const DEFAULT_OPTIONS = {
   xmlns: "http://www.w3.org/2000/svg",
@@ -13,13 +34,13 @@ const DEFAULT_OPTIONS = {
   class: "lucide-icon",
 };
 
-function attrsToString(attrs) {
+function attrsToString(attrs: Record<string, string | number>): string {
   return Object.keys(attrs)
     .map((key) => `${key}="${attrs[key]}"`)
     .join(" ");
 }
 
-function createSvg(icon) {
+function createSvg(icon: IconData): string[] {
   return icon.map((path) => {
     const name = path[0];
     const values = path[1];
@@ -27,8 +48,8 @@ function createSvg(icon) {
   });
 }
 
-function filterOptions(options) {
-  const filteredOptions = { ...options };
+function filterOptions(options: Options): Record<string, unknown> {
+  const filteredOptions: Record<string, unknown> = { ...options };
 
   const eleventyProps = [
     "hash",
@@ -54,20 +75,23 @@ function filterOptions(options) {
   return filteredOptions;
 }
 
-function validateIconName(iconName) {
+function validateIconName(iconName: string): string {
   if (!iconName) {
     throw new Error(`[lucide] the iconName must be specified`);
   }
 
   const safeIconName = iconName.toLowerCase();
-  if (!icons[safeIconName]) {
+  if (!icons[safeIconName as keyof typeof icons]) {
     throw new Error(`[lucide] the iconName is not correct`);
   }
 
   return safeIconName;
 }
 
-export function lucideShortcode(iconName, options = {}) {
+export function lucideShortcode(
+  iconName: string,
+  options: Options = {},
+): string {
   const safeIconName = validateIconName(iconName);
   const filteredOptions = filterOptions(options);
 
@@ -76,9 +100,14 @@ export function lucideShortcode(iconName, options = {}) {
     height: options.size || options.height || DEFAULT_OPTIONS.height,
     ...filteredOptions,
   };
-  delete newOptions.size;
-  const svgProps = { ...DEFAULT_OPTIONS, ...newOptions };
+  delete (newOptions as Record<string, unknown>).size;
+  const svgProps = { ...DEFAULT_OPTIONS, ...newOptions } as Record<
+    string,
+    string | number
+  >;
 
-  const svgContent = createSvg(icons[safeIconName]);
+  const svgContent = createSvg(
+    icons[safeIconName as keyof typeof icons] as IconData,
+  );
   return `<svg ${attrsToString(svgProps)}>${svgContent.join("")}</svg>`;
 }

@@ -33,9 +33,11 @@ if (toggle) {
 }
 
 document.querySelectorAll("pre[class*='language-']").forEach((pre) => {
-  pre.classList.add("line-numbers");
+  const htmlPre = pre as HTMLElement;
+  htmlPre.classList.add("line-numbers");
 
-  const code = pre.querySelector("code");
+  const code = htmlPre.querySelector("code");
+  if (!code) return;
   const lines = code.textContent.split("\n");
   const lineNumbersWrapper = document.createElement("span");
   lineNumbersWrapper.className = "line-numbers-rows";
@@ -61,24 +63,28 @@ document.querySelectorAll("pre[class*='language-']").forEach((pre) => {
 
   copyButton.addEventListener("click", () => {
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(code.textContent);
+      navigator.clipboard.writeText(code.textContent || "");
       copyingDone();
     } else {
       const range = document.createRange();
       range.selectNodeContents(code);
       const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-      try {
-        document.execCommand("copy");
-        copyingDone();
-      } catch (e) {}
-      selection.removeAllRanges(range);
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+        try {
+          document.execCommand("copy");
+          copyingDone();
+        } catch (e) {
+          // Ignore errors
+        }
+        selection.removeAllRanges();
+      }
     }
   });
 
-  pre.style.position = "relative";
-  pre.appendChild(copyButton);
+  htmlPre.style.position = "relative";
+  htmlPre.appendChild(copyButton);
 });
 
 console.info(

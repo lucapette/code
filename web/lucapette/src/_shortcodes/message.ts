@@ -6,7 +6,10 @@ const md = markdownIt({
   linkify: true,
 });
 
-export function messageShortcode(content, className = "is-info") {
+export function messageShortcode(
+  content: string,
+  className = "is-info",
+): string {
   const renderedContent = md.render(content);
   return `<article class="message ${className}">
   <div class="message-body">${renderedContent}</div>

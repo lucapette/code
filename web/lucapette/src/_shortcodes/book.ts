@@ -2,15 +2,28 @@ import Image from "@11ty/eleventy-img";
 import path from "node:path";
 import fs from "node:fs";
 
-// Use regular function to access `this.page`
-export async function bookShortcode(content, id, title, name, width = 200) {
+interface BookShortcodeThis {
+  page?: {
+    inputPath?: string;
+    [key: string]: unknown;
+  };
+}
+
+export async function bookShortcode(
+  this: BookShortcodeThis,
+  content: string,
+  id: string,
+  title: string,
+  name: string,
+  width = 200,
+): Promise<string> {
   const page = this.page;
 
   let imageHtml = "";
   let imagePath = "";
 
   if (page && name) {
-    imagePath = path.resolve(path.dirname(page.inputPath), name);
+    imagePath = path.resolve(path.dirname(page.inputPath as string), name);
 
     if (fs.existsSync(imagePath)) {
       try {

@@ -1,6 +1,6 @@
 import esbuild from "esbuild";
 
-const srcDir = "src/assets/js/main.js";
+const srcDir = "src/assets/js/main.ts";
 const distDir = "_site/assets/js";
 
 const isProd = process.env.NODE_ENV === "production";

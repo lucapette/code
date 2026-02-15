@@ -1,5 +1,14 @@
-export function tagList(collectionApi) {
-  const tags = new Set();
+interface CollectionItem {
+  data: {
+    tags?: string | string[];
+    [key: string]: unknown;
+  };
+  date: Date;
+  url?: string;
+}
+
+export function tagList(collectionApi: { getAll: () => CollectionItem[] }) {
+  const tags = new Set<string>();
   collectionApi.getAll().forEach((item) => {
     if ("tags" in item.data) {
       const itemTags = item.data.tags;
@@ -13,11 +22,14 @@ export function tagList(collectionApi) {
   return [...tags].sort();
 }
 
-export function tagPosts(collectionApi) {
-  const tagMap = {};
+export function tagPosts(collectionApi: { getAll: () => CollectionItem[] }) {
+  const tagMap: Record<string, CollectionItem[]> = {};
   collectionApi.getAll().forEach((item) => {
     if (item.data.tags) {
-      item.data.tags.forEach((tag) => {
+      const tags = Array.isArray(item.data.tags)
+        ? item.data.tags
+        : [item.data.tags];
+      tags.forEach((tag) => {
         if (!tagMap[tag]) {
           tagMap[tag] = [];
         }
@@ -26,7 +38,7 @@ export function tagPosts(collectionApi) {
     }
   });
   Object.keys(tagMap).forEach((tag) => {
-    tagMap[tag].sort((a, b) => b.date - a.date);
+    tagMap[tag].sort((a, b) => b.date.getTime() - a.date.getTime());
   });
   return tagMap;
 }

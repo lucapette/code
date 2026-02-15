@@ -21,7 +21,9 @@ import { typestreamShortcode } from "./src/_shortcodes/typestream.js";
 import { imageShortcode } from "./src/_shortcodes/image.js";
 import { bookShortcode } from "./src/_shortcodes/book.js";
 
-export default function (eleventyConfig) {
+import type { EleventyConfig } from "@11ty/eleventy";
+
+export default function (eleventyConfig: EleventyConfig) {
   eleventyConfig.addPlugin(syntaxHighlight);
 
   eleventyConfig.addShortcode("lucide", lucideShortcode);
@@ -45,10 +47,15 @@ export default function (eleventyConfig) {
   eleventyConfig.addFilter("formatDateShort", formatDateShort);
   eleventyConfig.addFilter("dateToRfc3339", dateToRfc3339);
   eleventyConfig.addFilter("asset", asset);
-  eleventyConfig.addFilter("getNewestItemDate", function (items) {
-    if (!items || items.length === 0) return new Date();
-    return items.sort((a, b) => new Date(b.date) - new Date(a.date))[0].date;
-  });
+  eleventyConfig.addFilter(
+    "getNewestItemDate",
+    function (items: { date: string | Date }[]) {
+      if (!items || items.length === 0) return new Date();
+      return items.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      )[0].date;
+    },
+  );
 
   eleventyConfig.addPreprocessor("drafts", "md,liquid", drafts);
 

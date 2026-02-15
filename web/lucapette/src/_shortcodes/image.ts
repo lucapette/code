@@ -1,7 +1,12 @@
 import Image from "@11ty/eleventy-img";
 import path from "node:path";
 
-export async function imageShortcode(src, alt, sizes = "100vw", width = 128) {
+export async function imageShortcode(
+  src: string,
+  alt: string,
+  sizes = "100vw",
+  width = 128,
+): Promise<string> {
   const inputPath = path.resolve("src", src);
   const metadata = await Image(inputPath, {
     widths: [width, width * 2],
