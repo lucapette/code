@@ -133,13 +133,13 @@ p code {
 
 .is-info .message-body {
   border-color: var(--turquoise);
-  background-color: #c2dcdd;
+  background-color: #f6fafb;
   color: var(--black);
 }
 
 .is-warning .message-body {
   border-color: var(--yellow);
-  background-color: #f2e5b8;
+  background-color: #faf2e2;
   color: var(--black);
 }
 
