@@ -27,4 +27,8 @@
   --background-color: #eceff4;
   --accent-color: #c07a60;
   --link-color: #465a7a;
+  --info-bg: #f6fafb;
+  --warning-bg: #faf2e2;
+  --info-bg-dark: #a8c6e0;
+  --gray: #6c6f74;
 }

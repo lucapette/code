@@ -124,7 +124,7 @@ html.dark .message-body a {
 
 html.dark .is-info .message-body {
   border-color: var(--blue);
-  background-color: #a8c6e0;
+  background-color: var(--info-bg-dark);
   color: var(--black);
 }
 

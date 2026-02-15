@@ -57,8 +57,8 @@ ul.articles li a .date {
   right: 4px;
   border-radius: var(--radius);
   user-select: none;
-  background: #4c566a;
-  color: #eceff4;
+  background: var(--black-quad);
+  color: var(--white);
   border: none;
   padding: 4px 8px;
   font-size: 12px;
