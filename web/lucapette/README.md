@@ -64,5 +64,8 @@ npm run prettier:write
 
 ## Todo
 
+- [ ] Redesign the books I read articles series
+- [ ] Add notes section
+- [ ] Add Leading Developers section
 - [ ] Move books article links from Goodreads to TheStoryGraph
 - [ ] Update all content that refers to my repos (moved to monorepo)
