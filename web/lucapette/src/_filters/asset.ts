@@ -5,10 +5,6 @@ export function asset(filename: string): string {
   const isProd = process.env.NODE_ENV === "production";
 
   if (!isProd) {
-    const ext = path.extname(filename);
-    if (ext === ".scss") {
-      filename = filename.replace(/\.scss$/, ".css");
-    }
     return `/assets/${filename}`;
   }
 

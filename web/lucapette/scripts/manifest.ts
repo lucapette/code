@@ -14,7 +14,7 @@ if (fs.existsSync(cssDir)) {
     (f) => f.startsWith("main.min.") && f.endsWith(".css"),
   );
   if (mainCss) {
-    manifest["css/main.scss"] = `css/${mainCss}`;
+    manifest["css/main.css"] = `css/${mainCss}`;
   }
 }
 
