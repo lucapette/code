@@ -30,7 +30,7 @@ if (fs.existsSync(jsDir)) {
 
 fs.writeFileSync(
   path.join(assetsDir, "manifest.json"),
-  JSON.stringify(manifest, null, 2),
+  JSON.stringify(manifest),
 );
 
 console.log("Generated manifest.json:", manifest);

@@ -1,4 +1,6 @@
-function parseDate(dateObj: unknown): { month: string; day: number; year: number } | null {
+function parseDate(
+  dateObj: unknown,
+): { month: string; day: number; year: number } | null {
   if (!dateObj) return null;
   const date = new Date(dateObj as string | Date);
   return {

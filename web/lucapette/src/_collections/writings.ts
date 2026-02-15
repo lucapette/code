@@ -1,13 +1,17 @@
 import { CollectionItem } from "./index";
 import { formatDateDayMonth } from "../_filters/date";
 
-export function writings(collectionApi: { getFilteredByGlob: (path: string) => CollectionItem[] }) {
+export function writings(collectionApi: {
+  getFilteredByGlob: (path: string) => CollectionItem[];
+}) {
   return collectionApi
     .getFilteredByGlob("./src/writing/**/*.md")
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
-export function writingsByYear(collectionApi: { getFilteredByGlob: (path: string) => CollectionItem[] }) {
+export function writingsByYear(collectionApi: {
+  getFilteredByGlob: (path: string) => CollectionItem[];
+}) {
   const items = writings(collectionApi);
 
   const grouped: Record<
@@ -37,7 +41,9 @@ export function writingsByYear(collectionApi: { getFilteredByGlob: (path: string
     }));
 }
 
-export function favouriteWritings(collectionApi: { getFilteredByGlob: (path: string) => CollectionItem[] }) {
+export function favouriteWritings(collectionApi: {
+  getFilteredByGlob: (path: string) => CollectionItem[];
+}) {
   return writings(collectionApi).filter((item) => item.data.favourite === true);
 }
 
@@ -72,7 +78,9 @@ function calculateScore(
   return score;
 }
 
-export function relatedWritings(collectionApi: { getFilteredByGlob: (path: string) => CollectionItem[] }) {
+export function relatedWritings(collectionApi: {
+  getFilteredByGlob: (path: string) => CollectionItem[];
+}) {
   const items = writings(collectionApi);
 
   const related: Record<string, CollectionItem[]> = {};

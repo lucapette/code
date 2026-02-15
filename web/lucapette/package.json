@@ -6,6 +6,7 @@
     "build": "NODE_ENV=production tsx scripts/css.ts && NODE_ENV=production tsx scripts/js.ts && NODE_ENV=production tsx scripts/manifest.ts && NODE_ENV=production tsx ./node_modules/.bin/eleventy --config=eleventy.config.ts",
     "dev": "tsx scripts/css.ts && concurrently \"tsx scripts/js.ts watch\" \"NODE_ENV=development tsx ./node_modules/.bin/eleventy --config=eleventy.config.ts --serve --incremental\"",
     "typecheck": "tsc --noEmit",
+    "lint": "prettier --check .",
     "prettier:check": "prettier --check .",
     "prettier:write": "prettier --write ."
   },
