@@ -64,6 +64,13 @@ ul.articles li a .date {
   font-size: 12px;
   cursor: pointer;
   z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.highlight:hover .copy-code,
+pre:hover .copy-code {
+  opacity: 1;
 }
 
 pre[class*="language-"] {
