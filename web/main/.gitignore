@@ -1,7 +1,0 @@
-# Generated files by hugo
-/public/
-/resources/_gen/
-*.lock
-node_modules
-hugo_stats.json
-.idea
