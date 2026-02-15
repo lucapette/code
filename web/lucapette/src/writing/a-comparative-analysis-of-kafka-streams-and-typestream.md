@@ -157,7 +157,7 @@ TypeStream [getting started](https://docs.typestream.io) guide.
 ## The developer experience
 
 We're talking about two different programming languages here so the developer
-experience *is* different.
+experience _is_ different.
 
 Kafka Streams is a Java library so anything JVM works for you. That's not a
 limiting choice if you like at least one JVM language. I've build Kafka Streams
@@ -221,7 +221,7 @@ reflected in the TypeStream code: less configuration, no explicit types.
 
 ## The deployment model
 
-Since Kafka Streams is *just* a library (that "just" is meant as a huge
+Since Kafka Streams is _just_ a library (that "just" is meant as a huge
 compliment), the deployment model is whatever way you deploy JVM applications.
 Since Kafka Streams applications can be stateful, you may need to pay attention
 to the local disks (a bit tricky in Kubernetes). All in all, it's a very

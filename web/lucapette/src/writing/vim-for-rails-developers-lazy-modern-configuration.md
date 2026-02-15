@@ -97,10 +97,12 @@ steps:
 - Put pathogen.vim there
 - Put on the top of your .vimrc the following lines:
   ```vim
-runtime bundle/pathogen/autoload/pathogen.vim
+  runtime bundle/pathogen/autoload/pathogen.vim
   call pathogen#infect()
   call pathogen#helptags()
-```
+  ```
+
+````
 
 Now, you could move all your plugins in the bundle directory. They should keep
 working fine. This is a good starting point to make your configuration modern
@@ -124,7 +126,7 @@ directory I type:
 
 ```sh
 rake
-```
+````
 
 and when I want to update my plugins I type:
 
@@ -201,7 +203,6 @@ things clean:
 Now you have some information to clean your vim directory and you can focus on _cleaning and removing_ stuff. Let me tell you what helped me a lot:
 
 - Divide your mapping in two types
-
   - General mappings
 
     Mappings you will use in all files.

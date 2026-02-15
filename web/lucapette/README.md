@@ -4,7 +4,7 @@ Migrated from Hugo to 11ty+Liquid.
 
 ## SEO
 
-- [x] Create all /tags/* pages (they existed but weren't in sitemap - FIXED)
+- [x] Create all /tags/\* pages (they existed but weren't in sitemap - FIXED)
 - [x] Add Twitter card metadata (twitter:title, twitter:description, twitter:image) to all pages
 - [x] Add Open Graph image (og:image) to yearly book posts
 - [x] Fix truncated descriptions (e.g., "Fourth article of the series")
@@ -30,6 +30,7 @@ Migrated from Hugo to 11ty+Liquid.
 7. [x] Update npm scripts to copy CSS instead of compile
 
 **Sass features replaced:**
+
 - `@use` modules → flat CSS file
 - `sass:color.adjust()` → hardcoded hex values
 - Variables → CSS custom properties

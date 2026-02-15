@@ -246,7 +246,7 @@ painful read but you really shouldn't miss it.
 {% book "218537050", "The Destruction of Palestine Is the Destruction of the Earth", "the-destruction-of-palestine-is-the-destruction-of-the-earth.jpg", "200" %}
 
 This may be the first political book written by a white man I completely agree
-with. In fact, top book just for that.  But there's obviously more to it, I
+with. In fact, top book just for that. But there's obviously more to it, I
 learned about the year 1840 and gained one more connection on the colonialism is
 capitalism is climate crisis map.
 

@@ -6,17 +6,17 @@
     document.documentElement.className = newTheme;
   }
   try {
-    preferredTheme = localStorage.getItem("theme");
+    preferredTheme = localStorage.getItem('theme');
   } catch (err) {}
   window.__setPreferredTheme = function (newTheme) {
     setTheme(newTheme);
     try {
-      localStorage.setItem("theme", newTheme);
+      localStorage.setItem('theme', newTheme);
     } catch (err) {}
   };
-  const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  darkQuery.addEventListener("change", function (e) {
-    window.__setPreferredTheme(e.matches ? "dark" : "light");
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  darkQuery.addEventListener('change', function (e) {
+    window.__setPreferredTheme(e.matches ? 'dark' : 'light');
   });
-  setTheme(preferredTheme || (darkQuery.matches ? "dark" : "light"));
+  setTheme(preferredTheme || (darkQuery.matches ? 'dark' : 'light'));
 </script>

@@ -24,7 +24,7 @@ author: Jason Hickel
 
 Since I read this book (and Gosh work as well), I've been thinking about this a
 lot and more than answers I have questions. One in particular: how can close
-this gap? We're so obviously *not* disconnected from the rest of the living
+this gap? We're so obviously _not_ disconnected from the rest of the living
 creatures of this planet!
 
 ## p. 35
@@ -74,8 +74,8 @@ speculate on (or, how I like to say, "make money with money") should be legal.
 > steady-state economy follows two key principles in order to stay in balance
 > with the living world:
 >
-> 1) Never extract more than ecosystems can regenerate.
-> 2) Never waste or pollute more than ecosystems can safely absorb.
+> 1. Never extract more than ecosystems can regenerate.
+> 2. Never waste or pollute more than ecosystems can safely absorb.
 >
 > To get to a steady-state economy, we need to have clear caps on resource use
 > and waste. For decades, economists have told us that such caps are impossible,

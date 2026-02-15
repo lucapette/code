@@ -67,8 +67,7 @@ community, the tooling around the language was already advanced compared to Ruby
 (with the obvious exception of dependency management).
 
 I then went back and forth between Ruby and Go for a few years. In 2017, I
-summarised [my experience with Go](/writing/my-experience-with-go
-"my experience with go") in a longish article.
+summarised [my experience with Go](/writing/my-experience-with-go "my experience with go") in a longish article.
 
 Around that time, my interest for Apache Kafka and streaming systems started to
 grow. I had already written Kafka applications in C, Ruby, JavaScript, and Go so

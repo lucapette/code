@@ -708,7 +708,7 @@ copy(
       const img = e.querySelector("img");
       return `${e.href.match(/\d+/)[0]},${img.src}`;
     })
-    .join("\n")
+    .join("\n"),
 );
 ```
 

@@ -5,7 +5,7 @@ const distDir = "_site/assets/js";
 
 const isProd = process.env.NODE_ENV === "production";
 
-async function build() {
+async function build(): Promise<void> {
   if (isProd) {
     await esbuild.build({
       entryPoints: [srcDir],
@@ -27,7 +27,7 @@ async function build() {
   }
 }
 
-async function watch() {
+async function watch(): Promise<void> {
   const ctx = await esbuild.context({
     entryPoints: [srcDir],
     bundle: true,

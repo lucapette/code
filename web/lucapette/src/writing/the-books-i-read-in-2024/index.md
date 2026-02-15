@@ -22,7 +22,7 @@ maybe should I just share the books?
 The truth is I'm deciding _right now_ as I type these words on my laptop.
 
 2024 was a horrible year for the world. Among the darkest chapters of our short,
-dumb, violent  history on this planet. Watching a live-streamed genocide has
+dumb, violent history on this planet. Watching a live-streamed genocide has
 changed many people forever but I have no intention to centre anyone but
 Palestinians. As horrible as it was watching it, I can't even begin to imagine
 what living it and surviving it means or feels. I can't imagine the pain
@@ -124,7 +124,6 @@ It also thought me it's really important to _never_ idolise people. What I mean
 is that I was _very_ disappointed to read about her endorsement of Kamala
 Harris.
 
-
 {% endbook %}
 
 ## Interpreter of Maladies
@@ -160,7 +159,6 @@ writing topic?)
 ## The Mothers
 
 {% book "28815371", "The Mothers", "the-mothers.jpg", "200" %}
-
 
 I loved the vanishing half so I was very much looking forward to the mothers. I
 probably read it in the wrong state of mind because I can tell the quality is
@@ -332,7 +330,6 @@ to mix and match the very small and the very big of our universe is just
 incredible. This is a short collection of essays and stories. I thought I'd like
 the stories more but in fact I liked the essays much better.
 
-
 {% endbook %}
 
 ## The Great Derangement
@@ -477,8 +474,7 @@ several suggestions our geopolitical order could use like water in the desert.
 {% book "208580653", "Recognizing the Stranger", "recognizing-the-stranger.jpg", "200" %}
 
 A short, intense book. I felt fate was playing me some trick with me as I
-pre-ordered the book as soon as I found out about it and I got it on Oct. 7
-2024.
+pre-ordered the book as soon as I found out about it and I got it on Oct. 7 2024.
 
 Hammad is an incredible writer and I'm gonna have to read more from her soon.
 

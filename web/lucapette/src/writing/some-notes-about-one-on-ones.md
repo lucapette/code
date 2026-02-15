@@ -18,7 +18,7 @@ A few premises:
 - Nowadays, I consider one-on-ones one of the most powerful tools I have to to
   help my direct reports.
 - Don't take this article as a set of rules, I'm just sharing my opinion and
-what I learned about the matter in the past few years.
+  what I learned about the matter in the past few years.
 
 In my experience, the following are the key factors to successful one-on-one
 meetings:
@@ -49,7 +49,7 @@ My only requirement is an upper bound: not less than once per month. It can be
 once per month, once per week, every day or whatever. It does not really matter;
 what does matter is that I am not the one who needs the meeting.
 
-You also *never* want to skip a one-on-one meeting. The reason is
+You also _never_ want to skip a one-on-one meeting. The reason is
 two-fold:
 
 - You want to create a habit. And repetition is key.
@@ -65,7 +65,7 @@ agenda of things I want to discuss.
 My primary function in this meeting is listening so that kind of agenda wouldn't
 work anyway.
 
-It's  tool for my direct reports so I ask them how they want to use the meeting.
+It's tool for my direct reports so I ask them how they want to use the meeting.
 
 We want to get to a point where both parties look forward to the meeting. It's a
 meeting to clarify doubts, misunderstandings. It's helpful.
@@ -92,7 +92,7 @@ outcomes:
 
 - Let's figure out together how to decrease bugs.
 - Please tell me next time I get angry and I don't notice so I can improve.
-- I will help you setup project X with person Y  because you both can benefit
+- I will help you setup project X with person Y because you both can benefit
   from the experience.
 
 It can be pretty much anything. The only thing that really matters though if

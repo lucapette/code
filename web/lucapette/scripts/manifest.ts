@@ -3,7 +3,7 @@ import path from "path";
 
 const assetsDir = path.join(process.cwd(), "_site/assets");
 
-const manifest = {};
+const manifest: Record<string, string> = {};
 
 const cssDir = path.join(assetsDir, "css");
 const jsDir = path.join(assetsDir, "js");

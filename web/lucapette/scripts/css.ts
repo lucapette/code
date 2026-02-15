@@ -9,7 +9,7 @@ const distDir = path.join(process.cwd(), "_site/assets/css");
 
 const isProd = process.env.NODE_ENV === "production";
 
-async function build() {
+async function build(): Promise<void> {
   const mainCss = path.join(srcDir, "main.css");
   const css = fs.readFileSync(mainCss, "utf8");
   const result = await postcss([postcssImport()]).process(css, {

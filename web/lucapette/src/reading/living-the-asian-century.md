@@ -77,7 +77,6 @@ The cancer is the Empire, the rapist colony is just its most violent symptom.
 Their relationship is symbiotic of course. But the head of the stake is the US.
 Don't fall for it.
 
-
 ## p. 206
 
 > I believe that I learned more about the state of affairs of our world, and the

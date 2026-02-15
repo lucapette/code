@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "src/assets/js/main.ts",
   "scripts": {
-    "build": "NODE_ENV=production node scripts/css.js && NODE_ENV=production node scripts/js.js && NODE_ENV=production node scripts/manifest.js && NODE_ENV=production npx tsx ./node_modules/.bin/eleventy --config=eleventy.config.ts",
-    "dev": "node scripts/css.js && concurrently \"node scripts/js.js watch\" \"NODE_ENV=development npx tsx ./node_modules/.bin/eleventy --config=eleventy.config.ts --serve --incremental\"",
+    "build": "NODE_ENV=production tsx scripts/css.ts && NODE_ENV=production tsx scripts/js.ts && NODE_ENV=production tsx scripts/manifest.ts && NODE_ENV=production tsx ./node_modules/.bin/eleventy --config=eleventy.config.ts",
+    "dev": "tsx scripts/css.ts && concurrently \"tsx scripts/js.ts watch\" \"NODE_ENV=development tsx ./node_modules/.bin/eleventy --config=eleventy.config.ts --serve --incremental\"",
     "typecheck": "tsc --noEmit",
-    "prettier:check": "prettier --check '**/*.{ts,js,css,scss,html}'",
-    "prettier:write": "prettier --write '**/*.{ts,js,css,scss,html}'"
+    "prettier:check": "prettier --check .",
+    "prettier:write": "prettier --write ."
   },
   "type": "module",
   "devDependencies": {
@@ -17,6 +17,7 @@
     "@shopify/prettier-plugin-liquid": "^1.10.0",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^25.2.3",
+    "@types/postcss-import": "^14.0.3",
     "concurrently": "^9.2.1",
     "esbuild": "^0.27.3",
     "lucide": "0.381.0",

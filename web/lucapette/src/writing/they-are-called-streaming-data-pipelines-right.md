@@ -1,5 +1,5 @@
 ---
-title: "They are called streaming data \"pipe\"lines... right?"
+title: 'They are called streaming data "pipe"lines... right?'
 description: A brief history of TypeStream
 date: 2023-12-12T10:32:28+01:00
 tags:
@@ -127,7 +127,7 @@ Nowadays, the experience got much better. Thanks to amazing progress of
 technology like [Kafka
 Streams](https://kafka.apache.org/documentation/streams/),
 [ksqlDB](https://ksqldb.io/), and [flink](https://flink.apapche.org), you can
-reason about streaming data pipelines at a much higher level.  The Kafka
+reason about streaming data pipelines at a much higher level. The Kafka
 community made great progress. We made big abstraction jumps from "here is the
 consumer group api javadoc" to Kafka Streams, ksqlDB, flink (to name a few). The
 thing is though... it's not high-level enough 🙃
@@ -159,7 +159,7 @@ Because I'm a pretty sceptical person that likes to sabotage their own plans
 two-step self-feeding feedback loop:
 
 1. I asked myself something along the lines of "well if TypeStream were a good
-idea, then you could do X but sure you can't, right?"
+   idea, then you could do X but sure you can't, right?"
 2. I immediately found solid answers via the "UNIX metaphor". I was happy for a
    minute and then back to 1.
 

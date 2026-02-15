@@ -1,7 +1,6 @@
 ---
 layout: base.liquid
 ---
-
 <section>
   <h1 class="title">{{ title }}</h1>
 
@@ -11,7 +10,8 @@ layout: base.liquid
         Published in
         {% if tags %}
           {% for tag in tags %}
-            <a href="/tags/{{ tag }}">#{{ tag }}</a>{% unless forloop.last %}, {% endunless %}
+            <a href="/tags/{{ tag }}">#{{ tag }}</a>
+            {%- unless forloop.last %}, {% endunless %}
           {% endfor %}
         {% endif %}
         on
@@ -19,7 +19,7 @@ layout: base.liquid
       </p>
     </div>
   </nav>
-  <hr />
+  <hr>
 
   <div class="content">
     {{ content }}
@@ -28,35 +28,35 @@ layout: base.liquid
 
 {% assign related = collections.relatedWritings[page.url] %}
 {% if related %}
-<section>
-  <h3 class="year">See also</h3>
-  <ul class="articles">
-    {% for item in related %}
-      <li class="article">
-        <a href="{{ item.url }}">
-          <span>{{ item.data.title }}</span>
-          <span class="date">{{ item.date | formatDate }}</span>
-        </a>
-      </li>
-    {% endfor %}
-  </ul>
-</section>
+  <section>
+    <h3 class="year">See also</h3>
+    <ul class="articles">
+      {% for item in related %}
+        <li class="article">
+          <a href="{{ item.url }}">
+            <span>{{ item.data.title }}</span>
+            <span class="date">{{ item.date | formatDate }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
 {% endif %}
 <script>
-  document.querySelectorAll("pre > code").forEach((codeBlock) => {
-    const copyButton = document.createElement("button");
-    copyButton.classList.add("copy-code");
-    copyButton.innerHTML = "copy";
+  document.querySelectorAll('pre > code').forEach((codeBlock) => {
+    const copyButton = document.createElement('button');
+    copyButton.classList.add('copy-code');
+    copyButton.innerHTML = 'copy';
 
     function copyingDone() {
-      copyButton.innerHTML = "copied!";
+      copyButton.innerHTML = 'copied!';
       setTimeout(() => {
-        copyButton.innerHTML = "copy";
+        copyButton.innerHTML = 'copy';
       }, 2000);
     }
 
-    copyButton.addEventListener("click", (cb) => {
-      if ("clipboard" in navigator) {
+    copyButton.addEventListener('click', (cb) => {
+      if ('clipboard' in navigator) {
         navigator.clipboard.writeText(codeBlock.textContent);
         copyingDone();
         return;
@@ -68,7 +68,7 @@ layout: base.liquid
       selection.removeAllRanges();
       selection.addRange(range);
       try {
-        document.execCommand("copy");
+        document.execCommand('copy');
         copyingDone();
       } catch (e) {}
       selection.removeRange(range);

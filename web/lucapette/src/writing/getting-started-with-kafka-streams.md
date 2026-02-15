@@ -314,8 +314,8 @@ val extractor = Extractor()
 val countByHashtag = mutableMapOf<String, Long>()
 tweets.flatMap { tweet ->
     extractor.extractHashtags(tweet)
-}.forEach { hashtag -> 
-    countByHashtag[hashtag] = countByHashtag.getOrDefault(hashtag, 0) + 1 
+}.forEach { hashtag ->
+    countByHashtag[hashtag] = countByHashtag.getOrDefault(hashtag, 0) + 1
 }
 
 println(countByHashtag)
@@ -456,7 +456,7 @@ For the sake of this discussion, say we need to enhance our "Trendy hashtags"
 list with a description of each hashtag. Something like this:
 
 | Hashtag   | Description                  | Tweet count |
-|-----------|------------------------------|-------------|
+| --------- | ---------------------------- | ----------- |
 | Kafka     | The best database out there! | 2           |
 | Book      | Reading improves your life   | 2           |
 | Severance | Sci-fi at its best           | 1           |

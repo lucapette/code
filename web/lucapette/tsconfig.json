@@ -15,13 +15,6 @@
     "rootDir": ".",
     "types": ["node"]
   },
-  "include": [
-    "src/**/*",
-    "eleventy.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "_site",
-    "dist"
-  ]
+  "include": ["src/**/*", "eleventy.config.ts", "scripts/**/*"],
+  "exclude": ["node_modules", "_site", "dist"]
 }

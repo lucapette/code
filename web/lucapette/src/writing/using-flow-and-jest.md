@@ -1,6 +1,6 @@
 ---
 title: "Using Flow and jest"
-description: "Fourth article of the series \"my journey with React and its ecosystem\""
+description: 'Fourth article of the series "my journey with React and its ecosystem"'
 date: 2017-03-21T00:00:00Z
 tags:
   - react

@@ -3,18 +3,17 @@ layout: base.liquid
 title: Writing
 permalink: /writing/
 ---
-
 <h1>Writing</h1>
 {% for yearGroup in collections.writingsByYear %}
-<h2 class="year">{{ yearGroup.year }}</h2>
-<ul class="articles">
-{% for item in yearGroup.articles %}
-    <li class="article">
+  <h2 class="year">{{ yearGroup.year }}</h2>
+  <ul class="articles">
+    {% for item in yearGroup.articles %}
+      <li class="article">
         <a href="{{ item.postUrl }}">
-            <span>{{ item.title }}</span>
-            <span class="date">{{ item.formattedDate }}</span>
+          <span>{{ item.title }}</span>
+          <span class="date">{{ item.formattedDate }}</span>
         </a>
-    </li>
-{% endfor %}
-</ul>
+      </li>
+    {% endfor %}
+  </ul>
 {% endfor %}
