@@ -38,9 +38,7 @@ export function writingsByYear(collectionApi: { getFilteredByGlob: (path: string
 }
 
 export function favouriteWritings(collectionApi: { getFilteredByGlob: (path: string) => CollectionItem[] }) {
-  return writings(collectionApi)
-    .filter((item) => item.data.favourite === true)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  return writings(collectionApi).filter((item) => item.data.favourite === true);
 }
 
 function normalizeToArray(value: unknown): string[] {
