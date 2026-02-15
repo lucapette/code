@@ -1,22 +1,35 @@
-export function formatDate(dateObj: unknown): string {
-  if (!dateObj) return "";
+function parseDate(dateObj: unknown): { month: string; day: number; year: number } | null {
+  if (!dateObj) return null;
   const date = new Date(dateObj as string | Date);
-  const month = date.toLocaleString("en-US", { month: "short" });
-  const day = date.getDate();
-  const year = date.getFullYear();
+  return {
+    month: date.toLocaleString("en-US", { month: "short" }),
+    day: date.getDate(),
+    year: date.getFullYear(),
+  };
+}
+
+export function formatDate(dateObj: unknown): string {
+  const parsed = parseDate(dateObj);
+  if (!parsed) return "";
+  const { month, day, year } = parsed;
   return `${month} ${day}, ${year}`;
 }
 
 export function formatDateShort(dateObj: unknown): string {
-  if (!dateObj) return "";
-  const date = new Date(dateObj as string | Date);
-  const month = date.toLocaleString("en-US", { month: "short" });
-  const year = date.getFullYear();
+  const parsed = parseDate(dateObj);
+  if (!parsed) return "";
+  const { month, year } = parsed;
   return `${month} ${year}`;
+}
+
+export function formatDateDayMonth(dateObj: unknown): string {
+  const parsed = parseDate(dateObj);
+  if (!parsed) return "";
+  const { month, day } = parsed;
+  return `${month} ${day.toString().padStart(2, "0")}`;
 }
 
 export function dateToRfc3339(dateObj: unknown): string {
   if (!dateObj) return "";
-  const date = new Date(dateObj as string | Date);
-  return date.toISOString();
+  return new Date(dateObj as string | Date).toISOString();
 }

@@ -1,4 +1,5 @@
 import { CollectionItem } from "./index";
+import { formatDateDayMonth } from "../_filters/date";
 
 export function writings(collectionApi: { getFilteredByGlob: (path: string) => CollectionItem[] }) {
   return collectionApi.getFilteredByGlob("./src/writing/**/*.md");
@@ -14,8 +15,6 @@ export function writingsByYear(collectionApi: { getFilteredByGlob: (path: string
   items.forEach((article) => {
     const date = new Date(article.date);
     const year = date.getFullYear();
-    const month = date.toLocaleString("en-US", { month: "short" });
-    const day = date.getDate();
 
     if (!grouped[year]) {
       grouped[year] = [];
@@ -24,7 +23,7 @@ export function writingsByYear(collectionApi: { getFilteredByGlob: (path: string
     grouped[year].push({
       postUrl: article.url,
       title: article.data.title as string,
-      formattedDate: `${month} ${day.toString().padStart(2, "0")}`,
+      formattedDate: formatDateDayMonth(article.date),
     });
   });
 
