@@ -8,10 +8,10 @@ eleventyExcludeFromCollections: true
     <subtitle>Writing about software development, management, and learning</subtitle>
     <link href="{{ site.url }}/atom.xml" rel="self" type="application/atom+xml"/>
     <link href="{{ site.url }}/" rel="alternate" type="text/html"/>
-    <updated>{{ collections.writings | getNewestItemDate | dateToRfc3339 }}</updated>
+    <updated>{{ collections.all | getNewestItemDate | dateToRfc3339 }}</updated>
     <id>{{ site.url }}/</id>
     <generator uri="https://www.11ty.dev/">Eleventy</generator>
-    {% for item in collections.writings limit: 20 %}
+    {% for item in collections.writings %}
     <entry>
         <title>{{ item.data.title }}</title>
         <link href="{{ site.url }}{{ item.url }}?utm_source=atom_feed" rel="alternate" type="text/html"/>
@@ -21,9 +21,19 @@ eleventyExcludeFromCollections: true
         <content type="html"><![CDATA[{% if item.data.description %}{{ item.data.description }}{% else %}{{ item.data.title }}{% endif %}]]></content>
         {% if item.data.tags %}
         {% for tag in item.data.tags %}
-        <category term="{{ tag }}" scheme="{{ site.url }}/writing/tags/" label="{{ tag }}"/>
+        <category term="{{ tag }}" scheme="{{ site.url }}/tags/" label="{{ tag }}"/>
         {% endfor %}
         {% endif %}
+    </entry>
+    {% endfor %}
+    {% for item in collections.reading %}
+    <entry>
+        <title>{{ item.data.title }}</title>
+        <link href="{{ site.url }}{{ item.url }}?utm_source=atom_feed" rel="alternate" type="text/html"/>
+        <id>{{ site.url }}{{ item.url }}</id>
+        <published>{{ item.date | dateToRfc3339 }}</published>
+        <updated>{{ item.date | dateToRfc3339 }}</updated>
+        <content type="html"><![CDATA[{% if item.data.description %}{{ item.data.description }}{% else %}{{ item.data.title }}{% endif %}]]></content>
     </entry>
     {% endfor %}
 </feed>
