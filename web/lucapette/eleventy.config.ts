@@ -47,15 +47,6 @@ export default function (eleventyConfig: EleventyConfig) {
   eleventyConfig.addFilter("formatDateShort", formatDateShort);
   eleventyConfig.addFilter("dateToRfc3339", dateToRfc3339);
   eleventyConfig.addFilter("asset", asset);
-  eleventyConfig.addFilter(
-    "getNewestItemDate",
-    function (items: { date: string | Date }[]) {
-      if (!items || items.length === 0) return new Date();
-      return items.sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-      )[0].date;
-    },
-  );
 
   eleventyConfig.addPreprocessor("drafts", "md,liquid", drafts);
 
