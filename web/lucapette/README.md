@@ -30,7 +30,7 @@ src/
 
 ### Writing (Blog)
 
-Articles in `src/writing/*.md` with frontmatter:
+Articles in `src/writing/*.md` (or directories with `index.md` for image-heavy posts) with frontmatter:
 
 - `title` - Article title
 - `date` - Publication date
@@ -40,11 +40,11 @@ Articles in `src/writing/*.md` with frontmatter:
 
 ### Reading
 
-Books tracked in yearly articles (e.g., `the-books-i-read-in-2025/index.md`). Each book uses the `{% book %}` shortcode.
+Notes on books I've read. Each book is a separate markdown file in `src/reading/*.md` with frontmatter containing book metadata (author, ISBN, etc.). The body contains quotes and commentary organized by page numbers.
 
 ## Shortcodes
 
-- `{% book %}` - Embed book cover with link to Goodreads
+- `{% book %}` - Embed book cover with link to Goodreads (used in articles, not reading collection)
 - `{% image %}` - Optimized image with srcset
 - `{% lucide %}` - SVG icon
 - `{% message %}` - Callout box
