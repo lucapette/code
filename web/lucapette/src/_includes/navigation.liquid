@@ -3,10 +3,10 @@
     <div class="navbar-menu">
       <div class="navbar-start">
         <a href="/" class="navbar-item {% if page.url == '/' %}is-active{% endif %}">Home</a>
-        <a href="/writing/" class="navbar-item {% if page.url == '/writing/' %}is-active{% endif %}">Writing</a>
-        <a href="/reading/" class="navbar-item {% if page.url == '/reading/' %}is-active{% endif %}">Reading</a>
+        <a href="/writing/" class="navbar-item {% if page.url startswith '/writing/' %}is-active{% endif %}">Writing</a>
+        <a href="/reading/" class="navbar-item {% if page.url startswith '/reading/' %}is-active{% endif %}">Reading</a>
         <a href="/hire/" class="navbar-item {% if page.url == '/hire/' %}is-active{% endif %}">Hire me</a>
-        <a href="/about/" class="navbar-item {% if page.url == '/about/' %}is-active{% endif %}">About</a>
+        <a href="/about/" class="navbar-item {% if page.url startswith '/about/' or page.url startswith '/credits/' %}is-active{% endif %}">About</a>
       </div>
       <div class="navbar-end">
         <button id="toggle" class="navbar-item">
