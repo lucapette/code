@@ -11,7 +11,7 @@ import {
   favouriteWritings,
   relatedWritings,
 } from "./src/_collections/writings.js";
-import { reading, readingByYear } from "./src/_collections/reading.js";
+import { reading } from "./src/_collections/reading.js";
 import { tagList, tagPosts } from "./src/_collections/tags.js";
 import { drafts } from "./src/_preprocessors/drafts.js";
 import { lucideShortcode } from "./src/_shortcodes/lucide.js";
@@ -61,7 +61,6 @@ export default function (eleventyConfig: EleventyConfig) {
   eleventyConfig.addCollection("favouriteWritings", favouriteWritings);
   eleventyConfig.addCollection("relatedWritings", relatedWritings);
   eleventyConfig.addCollection("reading", reading);
-  eleventyConfig.addCollection("readingByYear", readingByYear);
   eleventyConfig.addCollection("tagList", tagList);
   eleventyConfig.addCollection("tagPosts", tagPosts);
 
