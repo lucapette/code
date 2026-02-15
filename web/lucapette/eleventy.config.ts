@@ -1,4 +1,5 @@
 import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
+import { IdAttributePlugin } from "@11ty/eleventy";
 import {
   formatDate,
   formatDateShort,
@@ -25,6 +26,9 @@ import type { EleventyConfig } from "@11ty/eleventy";
 
 export default function (eleventyConfig: EleventyConfig) {
   eleventyConfig.addPlugin(syntaxHighlight);
+  eleventyConfig.addPlugin(IdAttributePlugin, {
+    selector: "h1,h2,h3,h4,h5,h6",
+  });
 
   eleventyConfig.addShortcode("lucide", lucideShortcode);
   eleventyConfig.addPairedShortcode("message", messageShortcode);
