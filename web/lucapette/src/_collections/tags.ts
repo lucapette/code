@@ -1,11 +1,4 @@
-interface CollectionItem {
-  data: {
-    tags?: string | string[];
-    [key: string]: unknown;
-  };
-  date: Date;
-  url?: string;
-}
+import { CollectionItem } from "./index";
 
 export function tagList(collectionApi: { getAll: () => CollectionItem[] }) {
   const tags = new Set<string>();

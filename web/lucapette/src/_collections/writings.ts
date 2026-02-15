@@ -1,41 +1,17 @@
-import { getFiles } from "./helper";
+import { CollectionItem } from "./index";
 
-interface CollectionItem {
-  fileSlug: string;
-  date: Date;
-  url: string;
-  data: {
-    [key: string]: unknown;
-    title?: string;
-    tags?: string | string[];
-    favourite?: boolean;
-    keywords?: string;
-    page?: { url: string };
-  };
+export function writings(collectionApi: { getFilteredByGlob: (path: string) => CollectionItem[] }) {
+  return collectionApi.getFilteredByGlob("./src/writing/**/*.md");
 }
 
-function getWritings(collectionApi: {
-  getFilteredByGlob: (path: string) => CollectionItem[];
-}) {
-  return getFiles(collectionApi, "./src/writing/**/*.md");
-}
-
-export function writings(collectionApi: {
-  getFilteredByGlob: (path: string) => CollectionItem[];
-}) {
-  return getWritings(collectionApi);
-}
-
-export function writingsByYear(collectionApi: {
-  getFilteredByGlob: (path: string) => CollectionItem[];
-}) {
-  const writings = getWritings(collectionApi);
+export function writingsByYear(collectionApi: { getFilteredByGlob: (path: string) => CollectionItem[] }) {
+  const items = writings(collectionApi);
 
   const grouped: Record<
     string,
     { postUrl: string; title: string; formattedDate: string }[]
   > = {};
-  writings.forEach((article) => {
+  items.forEach((article) => {
     const date = new Date(article.date);
     const year = date.getFullYear();
     const month = date.toLocaleString("en-US", { month: "short" });
@@ -60,10 +36,8 @@ export function writingsByYear(collectionApi: {
     }));
 }
 
-export function favouriteWritings(collectionApi: {
-  getFilteredByGlob: (path: string) => CollectionItem[];
-}) {
-  return getWritings(collectionApi).filter(
+export function favouriteWritings(collectionApi: { getFilteredByGlob: (path: string) => CollectionItem[] }) {
+  return writings(collectionApi).filter(
     (item) => item.data.favourite === true,
   );
 }
@@ -99,15 +73,13 @@ function calculateScore(
   return score;
 }
 
-export function relatedWritings(collectionApi: {
-  getFilteredByGlob: (path: string) => CollectionItem[];
-}) {
-  const writings = getWritings(collectionApi);
+export function relatedWritings(collectionApi: { getFilteredByGlob: (path: string) => CollectionItem[] }) {
+  const items = writings(collectionApi);
 
   const related: Record<string, CollectionItem[]> = {};
 
-  writings.forEach((article) => {
-    const otherArticles = writings.filter((w) => w.url !== article.url);
+  items.forEach((article) => {
+    const otherArticles = items.filter((w) => w.url !== article.url);
 
     const scored = otherArticles.map((other) => ({
       article: other,
@@ -116,9 +88,8 @@ export function relatedWritings(collectionApi: {
 
     const filtered = scored.filter((s) => s.score >= 80);
     const sorted = filtered.sort((a, b) => b.score - a.score);
-    const top5 = sorted.slice(0, 5).map((s) => s.article);
 
-    related[article.url] = top5;
+    related[article.url] = sorted.slice(0, 5).map((s) => s.article);
   });
 
   return related;

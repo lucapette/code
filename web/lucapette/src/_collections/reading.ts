@@ -1,38 +1,19 @@
+import { CollectionItem } from "./index";
 import { formatDate } from "../_filters/date";
-import { getFiles } from "./helper";
 
-interface CollectionItem {
-  fileSlug: string;
-  date: Date;
-  url: string;
-  data: {
-    [key: string]: unknown;
-    title?: string;
-    page?: { url: string };
-  };
+export function reading(collectionApi: { getFilteredByGlob: (path: string) => CollectionItem[] }) {
+  return collectionApi
+    .getFilteredByGlob("./src/reading/**/*.md")
+    .filter((item) => !item.fileSlug.includes("_index"));
 }
 
-function getReading(collectionApi: {
-  getFilteredByGlob: (path: string) => CollectionItem[];
-}) {
-  return getFiles(collectionApi, "./src/reading/**/*.md");
-}
-
-export function reading(collectionApi: {
-  getFilteredByGlob: (path: string) => CollectionItem[];
-}) {
-  return getReading(collectionApi);
-}
-
-export function readingByYear(collectionApi: {
-  getFilteredByGlob: (path: string) => CollectionItem[];
-}) {
-  const reading = getReading(collectionApi);
+export function readingByYear(collectionApi: { getFilteredByGlob: (path: string) => CollectionItem[] }) {
+  const items = reading(collectionApi);
   const grouped: Record<
     string,
     { postUrl: string; title: string; formattedDate: string }[]
   > = {};
-  reading.forEach((item) => {
+  items.forEach((item) => {
     const date = new Date(item.date);
     const year = date.getFullYear();
     if (!grouped[year]) {
