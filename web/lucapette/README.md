@@ -14,6 +14,6 @@ npm install
 npm run build
 npm run dev
 npm run typecheck
-npm run prettier:check
+npm run lint
 npm run prettier:write
 ```
