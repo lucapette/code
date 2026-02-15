@@ -17,7 +17,7 @@
   aspect-ratio: 2/3;
   overflow: hidden;
   border-radius: var(--radius);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-card);
   margin-bottom: 1rem;
 }
 
@@ -41,7 +41,7 @@
 }
 
 .book-card-author {
-  color: var(--black-bis);
+  color: var(--author-color);
   font-size: 0.9rem;
   margin: 0.25rem 0;
 }
@@ -50,7 +50,7 @@
   width: 100%;
   height: auto;
   border-radius: 8px;
-  box-shadow: 0 8px 24px var(--black-bis);
+  box-shadow: var(--shadow-image);
 }
 
 .book {
@@ -64,7 +64,7 @@
 
 .book-cover img {
   border-radius: 8px;
-  box-shadow: 0 8px 24px var(--black-bis);
+  box-shadow: var(--shadow-image);
   transition: transform 0.2s ease;
 }
 

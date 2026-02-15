@@ -81,7 +81,7 @@ h4.subtitle {
 }
 
 .content blockquote {
-  background-color: var(--white-bis);
+  background-color: var(--blockquote-bg);
   border-left: 8px solid var(--white-ter);
   border-radius: var(--radius);
   padding: 1rem;
@@ -108,7 +108,7 @@ pre {
 }
 
 p code {
-  background-color: var(--white-ter);
+  background-color: var(--code-bg);
   color: var(--black);
   font-weight: 700;
   padding: 0.25em;
@@ -127,8 +127,13 @@ p code {
   border-style: solid;
   border-width: 0 0 0 6px;
   border-color: var(--white-ter);
-  background-color: var(--white-bis);
-  color: var(--black-ter);
+  background-color: var(--message-bg);
+  color: var(--message-color);
+}
+
+.message .message-body em,
+.message .message-body a {
+  color: var(--message-link-color);
 }
 
 .is-info .message-body {

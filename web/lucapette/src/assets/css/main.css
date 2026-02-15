@@ -4,8 +4,12 @@
 @import "elements.css";
 @import "layout.css";
 @import "content.css";
-@import "dark.css";
 @import "reading.css";
+
+html {
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
 
 .year {
   margin-bottom: 1rem;
@@ -19,7 +23,7 @@ ul.articles {
 
 ul.articles li {
   margin-bottom: 0.5rem;
-  border-bottom: 1px solid var(--white-ter);
+  border-bottom: 1px solid var(--border-color);
 }
 
 ul.articles li:last-child {
@@ -39,7 +43,7 @@ ul.articles li a {
 }
 
 ul.articles li a .date {
-  color: var(--black);
+  color: var(--text-color);
   font-family: var(--font-family-monospace);
   font-size: 0.9rem;
   font-weight: 500;
@@ -170,9 +174,23 @@ pre {
   width: 1px;
 }
 
-.sun {
-  visibility: hidden;
+.sun,
+.moon {
   display: none;
+}
+
+/* Default: show moon (light mode) */
+button#toggle .moon {
+  display: block;
+}
+
+/* Override for dark mode */
+:root[data-theme="dark"] button#toggle .moon {
+  display: none;
+}
+
+:root[data-theme="dark"] button#toggle .sun {
+  display: block;
 }
 
 .me:hover {
@@ -192,4 +210,16 @@ figure.me {
 .anchor:hover a {
   opacity: 1;
   transition: opacity 0.2s ease-in;
+}
+
+img {
+  filter: var(--image-filter);
+}
+
+.book-cover img {
+  filter: var(--book-cover-filter);
+}
+
+figure.me img {
+  transform: scaleX(-1);
 }

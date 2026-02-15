@@ -1,13 +1,20 @@
 :root {
+  color-scheme: light dark;
+
+  /* Layout */
   --wrap-width: 780px;
   --radius: 4px;
+
+  /* Typography */
   --font-family-primary: "Iowan Old Style", "Palatino Linotype", serif;
   --font-size-primary: 1.2em;
   --font-family-monospace:
-    ui-monospace, "Cascadia Code", "Source Code Pro", menlo, consolas,
+    ui-monospace, "Cascadia Code", "Source Code Pro", menlo, consola,
     "DejaVu Sans Mono", monospace;
   --font-size-code: 1em;
   --font-weight-normal: 500;
+
+  /* Palette */
   --orange: #d08770;
   --yellow: #ebcb8b;
   --green: #a3be8c;
@@ -16,6 +23,9 @@
   --blue: #81a1c1;
   --purple: #b48ead;
   --red: #bf616a;
+  --gray: #6c6f74;
+
+  /* Base colors */
   --black: #2e3440;
   --black-bis: #3b4252;
   --black-ter: #434c5e;
@@ -23,12 +33,46 @@
   --white: #eceff4;
   --white-bis: #e5e9f0;
   --white-ter: #d8dee9;
-  --text-color: #4c566a;
-  --background-color: #eceff4;
+
+  /* Theme-aware colors */
+  --text-color: light-dark(#4c566a, #eceff4);
+  --background-color: light-dark(#eceff4, #3b4252);
   --accent-color: #c07a60;
-  --link-color: #465a7a;
-  --info-bg: #f6fafb;
+  --link-color: light-dark(#465a7a, #d8dee9);
+
+  /* Elements */
+  --border-color: light-dark(#d8dee9, #4c566a);
+  --code-bg: light-dark(#d8dee9, #4c566a);
+  --blockquote-bg: light-dark(#e5e9f0, #4c566a);
+  --message-bg: light-dark(#e5e9f0, #4c566a);
+  --message-color: light-dark(#434c5e, #eceff4);
+  --message-link-color: light-dark(#2e3440, #eceff4);
+  --table-header-color: light-dark(#4c566a, #eceff4);
+
+  /* Components */
+  --title-color: light-dark(#4c566a, #eceff4);
+  --strong-color: light-dark(#2e3440, #eceff4);
+  --tag-color: light-dark(#eceff4, #eceff4);
+  --post-bg: light-dark(#e5e9f0, #4c566a);
+  --footer-bg: light-dark(#e5e9f0, #3b4252);
+  --author-color: light-dark(#3b4252, #d8dee9);
+
+  /* Navbar */
+  --navbar-item-bg: light-dark(#e5e9f0, #4c566a);
+  --button-bg: light-dark(#eceff4, #3b4252);
+  --button-color: light-dark(#465a7a, #d8dee9);
+  --button-hover-bg: light-dark(#4c566a, #d8dee9);
+  --button-hover-color: light-dark(#e5e9f0, #3b4252);
+
+  /* Alerts */
+  --info-bg: light-dark(#f6fafb, #a8c6e0);
   --warning-bg: #faf2e2;
-  --info-bg-dark: #a8c6e0;
-  --gray: #6c6f74;
+
+  /* Shadows */
+  --shadow-card: 0 4px 8px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
+  --shadow-image: 0 8px 24px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
+
+  /* Filters */
+  --image-filter: brightness(0.8);
+  --book-cover-filter: brightness(1);
 }

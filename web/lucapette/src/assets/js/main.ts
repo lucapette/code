@@ -24,11 +24,11 @@ const toggle = document.getElementById("toggle");
 if (toggle) {
   toggle.addEventListener("click", function (e) {
     e.preventDefault();
-    document.documentElement.classList.toggle("dark");
-    localStorage.setItem(
-      "theme",
-      localStorage.getItem("theme") === "light" ? "dark" : "light",
-    );
+    const newTheme =
+      localStorage.getItem("theme") === "light" ? "dark" : "light";
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.style.setProperty("color-scheme", newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
   });
 }
 

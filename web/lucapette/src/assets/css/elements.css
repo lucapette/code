@@ -55,11 +55,12 @@ table {
 
 th {
   text-align: left;
+  color: var(--table-header-color);
 }
 
 th,
 td {
-  border: 1px solid var(--white-ter);
+  border: 1px solid var(--border-color);
   padding: 0.5rem;
 }
 
@@ -83,7 +84,7 @@ em {
 }
 
 hr {
-  background-color: var(--white-ter);
+  background-color: var(--border-color);
   border: none;
   display: block;
   height: 2px;
