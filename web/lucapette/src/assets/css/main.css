@@ -214,6 +214,8 @@ figure.me {
 
 img {
   filter: var(--image-filter);
+  max-width: 100%;
+  height: auto;
 }
 
 .book-cover img {

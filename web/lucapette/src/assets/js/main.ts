@@ -6,6 +6,8 @@ import {
   Github,
   Moon,
   Sun,
+  Menu,
+  X,
 } from "lucide";
 
 createIcons({
@@ -16,6 +18,8 @@ createIcons({
     Github,
     Moon,
     Sun,
+    Menu,
+    X,
   },
 });
 
@@ -86,6 +90,17 @@ document.querySelectorAll("pre[class*='language-']").forEach((pre) => {
   htmlPre.style.position = "relative";
   htmlPre.appendChild(copyButton);
 });
+
+const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
+const navbarMenu = document.getElementById("navbar-menu");
+
+if (mobileMenuToggle && navbarMenu) {
+  mobileMenuToggle.addEventListener("click", function () {
+    const isOpen = navbarMenu.classList.contains("is-open");
+    navbarMenu.classList.toggle("is-open");
+    mobileMenuToggle.setAttribute("aria-expanded", String(!isOpen));
+  });
+}
 
 console.info(
   " 👋👋👋\n Grab the code here: https://github.com/lucapette/web/tree/main/main\n 👋👋👋",

@@ -53,6 +53,11 @@ table {
   width: 100%;
 }
 
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 th {
   text-align: left;
   color: var(--table-header-color);
@@ -92,6 +97,10 @@ hr {
 }
 
 @media (max-width: 767px) {
+  :root {
+    --font-size-primary: 1rem;
+  }
+
   h1 {
     font-size: 1.75rem;
   }
