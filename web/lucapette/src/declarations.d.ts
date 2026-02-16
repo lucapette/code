@@ -1,6 +1,14 @@
 declare module "@11ty/eleventy" {
+  export interface IdAttributePluginOptions {
+    selector?: string;
+  }
+
+  export const IdAttributePlugin: {
+    (eleventyConfig: unknown, options?: IdAttributePluginOptions): void;
+  };
+
   export interface EleventyConfig {
-    addPlugin: (plugin: unknown) => void;
+    addPlugin: (plugin: unknown, options?: unknown) => void;
     addShortcode: (name: string, fn: unknown) => void;
     addPairedShortcode: (name: string, fn: unknown) => void;
     addAsyncShortcode: (name: string, fn: unknown) => void;
