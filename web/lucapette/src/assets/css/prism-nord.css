@@ -1,13 +1,36 @@
-/**
- * Nord Theme Originally by Arctic Ice Studio
- * https://nordtheme.com
- *
- * Ported for PrismJS by Zane Hitchcoxc (@zwhitchcox) and Gabriel Ramos (@gabrieluizramos)
- */
+:root {
+  --prism-bg: #2e3440;
+  --prism-comment: #636f88;
+  --prism-number: #b48ead;
+  --prism-punctuation: #81a1c1;
+  --prism-property: #81a1c1;
+  --prism-string: #a3be8c;
+  --prism-function: #88c0d0;
+  --prism-keyword: #81a1c1;
+  --prism-regex: #ebcb8b;
+  --prism-operator: #81a1c1;
+  --prism-text: #f8f8f2;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --prism-bg: #2e3440;
+    --prism-comment: #9aa8be;
+    --prism-number: #d087a0;
+    --prism-punctuation: #c2cbe6;
+    --prism-property: #c2cbe6;
+    --prism-string: #a3c978;
+    --prism-function: #c2cbe6;
+    --prism-keyword: #c2cbe6;
+    --prism-regex: #ebcb8b;
+    --prism-operator: #c2cbe6;
+    --prism-text: #f8f8f2;
+  }
+}
 
 code[class*="language-"],
 pre[class*="language-"] {
-  color: #f8f8f2;
+  color: var(--prism-text);
   background: none;
   font-family:
     "Fira Code", Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
@@ -36,7 +59,7 @@ pre[class*="language-"] {
 
 :not(pre) > code[class*="language-"],
 pre[class*="language-"] {
-  background: #2e3440;
+  background: var(--prism-bg);
 }
 
 /* Inline code */
@@ -50,11 +73,11 @@ pre[class*="language-"] {
 .token.prolog,
 .token.doctype,
 .token.cdata {
-  color: #636f88;
+  color: var(--prism-comment);
 }
 
 .token.punctuation {
-  color: #81a1c1;
+  color: var(--prism-punctuation);
 }
 
 .namespace {
@@ -66,15 +89,15 @@ pre[class*="language-"] {
 .token.constant,
 .token.symbol,
 .token.deleted {
-  color: #81a1c1;
+  color: var(--prism-property);
 }
 
 .token.number {
-  color: #b48ead;
+  color: var(--prism-number);
 }
 
 .token.boolean {
-  color: #81a1c1;
+  color: var(--prism-property);
 }
 
 .token.selector,
@@ -83,7 +106,7 @@ pre[class*="language-"] {
 .token.char,
 .token.builtin,
 .token.inserted {
-  color: #a3be8c;
+  color: var(--prism-string);
 }
 
 .token.operator,
@@ -92,23 +115,23 @@ pre[class*="language-"] {
 .language-css .token.string,
 .style .token.string,
 .token.variable {
-  color: #81a1c1;
+  color: var(--prism-operator);
 }
 
 .token.atrule,
 .token.attr-value,
 .token.function,
 .token.class-name {
-  color: #88c0d0;
+  color: var(--prism-function);
 }
 
 .token.keyword {
-  color: #81a1c1;
+  color: var(--prism-keyword);
 }
 
 .token.regex,
 .token.important {
-  color: #ebcb8b;
+  color: var(--prism-regex);
 }
 
 .token.important,

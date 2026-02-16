@@ -37,7 +37,7 @@
   /* Theme-aware colors */
   --text-color: light-dark(#4c566a, #eceff4);
   --background-color: light-dark(#eceff4, #3b4252);
-  --accent-color: #c07a60;
+  --accent-color: light-dark(#a55a40, #d08770);
   --link-color: light-dark(#465a7a, #d8dee9);
 
   /* Elements */
@@ -66,7 +66,7 @@
 
   /* Alerts */
   --info-bg: light-dark(#f6fafb, #a8c6e0);
-  --warning-bg: #faf2e2;
+  --warning-bg: light-dark(#faf2e2, #5c4a28);
 
   /* Shadows */
   --shadow-card: 0 4px 8px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));

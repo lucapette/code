@@ -109,7 +109,7 @@ pre {
 
 p code {
   background-color: var(--code-bg);
-  color: var(--black);
+  color: light-dark(var(--black), var(--white));
   font-weight: 700;
   padding: 0.25em;
   border-radius: var(--radius);
