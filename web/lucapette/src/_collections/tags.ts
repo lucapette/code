@@ -1,8 +1,16 @@
 import { CollectionItem } from "./index";
 
-export function tagList(collectionApi: { getAll: () => CollectionItem[] }) {
+export function tagList(collectionApi: {
+  getFilteredByGlob: (path: string) => CollectionItem[];
+}) {
   const tags = new Set<string>();
-  collectionApi.getAll().forEach((item) => {
+
+  // Get writings and notes
+  const writings = collectionApi.getFilteredByGlob("./src/writing/**/*.md");
+  const notes = collectionApi.getFilteredByGlob("./src/notes/**/*.md");
+  const allItems = [...writings, ...notes];
+
+  allItems.forEach((item) => {
     if ("tags" in item.data) {
       const itemTags = item.data.tags;
       if (typeof itemTags === "string") {
@@ -15,9 +23,17 @@ export function tagList(collectionApi: { getAll: () => CollectionItem[] }) {
   return [...tags].sort();
 }
 
-export function tagPosts(collectionApi: { getAll: () => CollectionItem[] }) {
+export function tagPosts(collectionApi: {
+  getFilteredByGlob: (path: string) => CollectionItem[];
+}) {
   const tagMap: Record<string, CollectionItem[]> = {};
-  collectionApi.getAll().forEach((item) => {
+
+  // Get writings and notes
+  const writings = collectionApi.getFilteredByGlob("./src/writing/**/*.md");
+  const notes = collectionApi.getFilteredByGlob("./src/notes/**/*.md");
+  const allItems = [...writings, ...notes];
+
+  allItems.forEach((item) => {
     if (item.data.tags) {
       const tags = Array.isArray(item.data.tags)
         ? item.data.tags

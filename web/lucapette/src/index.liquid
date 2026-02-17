@@ -8,7 +8,10 @@ description: Luca Pette's website
   <div class="hero">
     <div class="description">
       <h1>Hi, I'm Luca :)</h1>
-      <p>I'm an independent software developer. I use this website to share my <a href="/writing">writing</a>.</p>
+      <p>
+        I'm an independent software developer. I use this website to share my <a href="/writing">writing</a> and
+        <a href="/notes">notes</a>.
+      </p>
     </div>
     <div class="decoration">
       <figure class="me image">
@@ -23,6 +26,21 @@ description: Luca Pette's website
       <h2 class="year">Latest writing</h2>
       <ul class="articles">
         {% for item in collections.writings limit: 5 %}
+          <li class="article">
+            <a href="{{ item.url }}">
+              <span>{{ item.data.title }}</span>
+              <span class="date">{{ item.date | formatDateShort }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="columns">
+    <div class="column">
+      <h2 class="year">Latest notes</h2>
+      <ul class="articles">
+        {% for item in collections.notes limit: 5 %}
           <li class="article">
             <a href="{{ item.url }}">
               <span>{{ item.data.title }}</span>

@@ -1,7 +1,19 @@
 interface TagPageData {
   tag: string;
-  posts: { url: string; data: { title: string } }[];
+  posts: {
+    url: string;
+    data: {
+      title: string;
+      tags?: string[];
+    };
+  }[];
   title: string;
+}
+
+function getContentType(url: string): string {
+  if (url.startsWith("/writing/")) return "📝";
+  if (url.startsWith("/notes/")) return "📋";
+  return "";
 }
 
 export default {
@@ -32,13 +44,21 @@ export default {
     const postsHtml =
       posts.length > 0
         ? posts
-            .map(
-              (post) => `          <li class="article">
+            .map((post) => {
+              const contentType = getContentType(post.url);
+              const tags = post.data.tags || [];
+              const tagsHtml =
+                tags.length > 0
+                  ? `<span class="tags">${tags.map((tag) => `<a href="/tags/${tag}" class="tag">#${tag}</a>`).join(" ")}</span>`
+                  : "";
+
+              return `          <li class="article">
             <a href="${post.url}">
-              <span>${post.data.title}</span>
+              <span>${contentType} ${post.data.title}</span>
             </a>
-          </li>`,
-            )
+            ${tagsHtml}
+          </li>`;
+            })
             .join("\n")
         : "";
 

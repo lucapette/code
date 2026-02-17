@@ -13,6 +13,13 @@ permalink: /writing/
           <span>{{ item.title }}</span>
           <span class="date">{{ item.formattedDate }}</span>
         </a>
+        {% if item.tags %}
+          <span class="tags">
+            {% for tag in item.tags %}
+              <a href="/tags/{{ tag }}" class="tag">#{{ tag }}</a>
+            {% endfor %}
+          </span>
+        {% endif %}
       </li>
     {% endfor %}
   </ul>

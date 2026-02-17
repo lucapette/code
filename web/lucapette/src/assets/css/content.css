@@ -180,3 +180,30 @@ p code {
 .dropcap:after {
   margin-bottom: -0.15em;
 }
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.tag {
+  background-color: var(--tag-color);
+  color: var(--black-ter);
+  border-radius: var(--radius);
+  padding: 0.125rem 0.375rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tag:hover {
+  background-color: var(--accent-color);
+  color: var(--white);
+}
+
+ul.articles li .tags {
+  margin-top: 0.125rem;
+  margin-bottom: 0.125rem;
+}

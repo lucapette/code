@@ -26,6 +26,21 @@ eleventyExcludeFromCollections: true
         {% endif %}
     </entry>
     {% endfor %}
+    {% for item in collections.notes %}
+    <entry>
+        <title>{{ item.data.title }}</title>
+        <link href="{{ site.url }}{{ item.url }}?utm_source=atom_feed" rel="alternate" type="text/html"/>
+        <id>{{ site.url }}{{ item.url }}</id>
+        <published>{{ item.date | dateToRfc3339 }}</published>
+        <updated>{{ item.date | dateToRfc3339 }}</updated>
+        <content type="html"><![CDATA[{% if item.data.description %}{{ item.data.description }}{% else %}{{ item.data.title }}{% endif %}]]></content>
+        {% if item.data.tags %}
+        {% for tag in item.data.tags %}
+        <category term="{{ tag }}" scheme="{{ site.url }}/tags/" label="{{ tag }}"/>
+        {% endfor %}
+        {% endif %}
+    </entry>
+    {% endfor %}
     {% for item in collections.reading %}
     <entry>
         <title>{{ item.data.title }}</title>

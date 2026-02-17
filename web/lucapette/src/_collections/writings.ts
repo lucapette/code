@@ -16,7 +16,7 @@ export function writingsByYear(collectionApi: {
 
   const grouped: Record<
     string,
-    { postUrl: string; title: string; formattedDate: string }[]
+    { postUrl: string; title: string; formattedDate: string; tags: string[] }[]
   > = {};
   items.forEach((article) => {
     const date = new Date(article.date);
@@ -26,10 +26,17 @@ export function writingsByYear(collectionApi: {
       grouped[year] = [];
     }
 
+    const tags = Array.isArray(article.data.tags)
+      ? article.data.tags
+      : article.data.tags
+        ? [article.data.tags]
+        : [];
+
     grouped[year].push({
       postUrl: article.url,
       title: article.data.title as string,
       formattedDate: formatDateDayMonth(article.date),
+      tags: tags as string[],
     });
   });
 
