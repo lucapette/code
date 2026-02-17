@@ -3,13 +3,12 @@ layout: note.liquid
 title: Tomato Soup
 description: A spicy-sweet tomato soup perfect for winter evenings.
 tags:
-  - recipe
-  - cooking
   - soup
-  - food
 ---
 
-I invented this recipe after playing around with a few blog posts I found on tomato soups. I like that it's neither too spicy nor too sweet, but both characteristics are very present in the taste. It's easy and fast to prepare - a perfect soup for a winter evening. If you drink wine, then a strong red is the perfect companion.
+I invented this recipe after playing around with a few blog posts I found on tomato soups. I like that it's neither too
+spicy nor too sweet, but both characteristics are very present in the taste. It's easy and fast to prepare - a perfect
+soup for a winter evening. If you drink wine, then a strong red is the perfect companion.
 
 ## Ingredients
 
@@ -19,7 +18,7 @@ _Serves four_
 - 1 garlic clove
 - 2 big carrots
 - 2 medium onions
-- 4-5 large red tomatoes
+- 4–5 large red tomatoes
 - A spoonful of tomato paste
 - 1 litre of vegetable broth
 - A spoonful of Ras el hanout

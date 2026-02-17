@@ -4,10 +4,8 @@ title: Change Data Capture
 description: Notes on Change Data Capture with Debezium and Kafka.
 tags:
   - kafka
-  - data
   - debezium
   - cdc
-  - reference
 ---
 
 Change data capture (CDC) is a data integration technique that allows you to track all the changes made to one or more tables in a relational database.

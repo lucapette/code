@@ -49,14 +49,14 @@ export default {
               const tags = post.data.tags || [];
               const tagsHtml =
                 tags.length > 0
-                  ? `<span class="tags">${tags.map((tag) => `<a href="/tags/${tag}" class="tag">#${tag}</a>`).join(" ")}</span>`
+                  ? `<span class="date"></span><span class="separator">·</span>` + tags.map((tag) => `<span class="tag">#${tag}</span>`).join(" ")
                   : "";
 
               return `          <li class="article">
             <a href="${post.url}">
-              <span>${contentType} ${post.data.title}</span>
+              <span class="title">${contentType} ${post.data.title}</span>
+              <span class="meta">${tagsHtml}</span>
             </a>
-            ${tagsHtml}
           </li>`;
             })
             .join("\n")

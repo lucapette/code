@@ -1,10 +1,8 @@
 ---
-layout: base.liquid
+layout: section.liquid
 title: Notes
 permalink: /notes/
 ---
-<h1>Notes</h1>
-
 <p>
   A collection of permanent notes about things I'm learning. 
   I keep them in public so I can refer back to them when I need to.
@@ -14,16 +12,15 @@ permalink: /notes/
   {% for item in collections.notes %}
     <li class="article">
       <a href="{{ item.url }}">
-        <span>{{ item.data.title }}</span>
-        <span class="date">{{ item.date | formatDateShort }}</span>
-      </a>
-      {% if item.data.tags %}
-        <span class="tags">
-          {% for tag in item.data.tags %}
-            <a href="/tags/{{ tag }}" class="tag">#{{ tag }}</a>
-          {% endfor %}
+        <span class="title">{{ item.data.title }}</span>
+        <span class="meta">
+          {% if item.data.tags %}
+            {% for tag in item.data.tags %}
+              <span class="tag">#{{ tag }}</span>
+            {% endfor %}
+          {% endif %}
         </span>
-      {% endif %}
+      </a>
     </li>
   {% endfor %}
 </ul>

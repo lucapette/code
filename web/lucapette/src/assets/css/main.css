@@ -22,7 +22,7 @@ ul.articles {
 }
 
 ul.articles li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -40,15 +40,6 @@ ul.articles li a {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-ul.articles li a .date {
-  color: var(--text-color);
-  font-family: var(--font-family-monospace);
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-left: auto;
-  white-space: nowrap;
 }
 
 .highlight {

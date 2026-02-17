@@ -5,8 +5,6 @@ description: Notes from learning Kotlin since March 2022.
 tags:
   - kotlin
   - jvm
-  - programming
-  - reference
 ---
 
 Since March 2022, I've been learning [Kotlin](https://kotlinlang.org).

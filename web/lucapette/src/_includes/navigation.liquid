@@ -9,8 +9,8 @@
         {% assign section = page.url | split: '/' %}
         <a href="/" class="navbar-item {% if page.url == '/' %}is-active{% endif %}">Home</a>
         <a href="/writing/" class="navbar-item {% if section[1] == 'writing' %}is-active{% endif %}">Writing</a>
-        <a href="/reading/" class="navbar-item {% if section[1] == 'reading' %}is-active{% endif %}">Reading</a>
         <a href="/notes/" class="navbar-item {% if section[1] == 'notes' %}is-active{% endif %}">Notes</a>
+        <a href="/reading/" class="navbar-item {% if section[1] == 'reading' %}is-active{% endif %}">Reading</a>
         <a
           href="/about/"
           class="navbar-item {% if section[1] == 'about' or section[1] == 'credits' %}is-active{% endif %}"

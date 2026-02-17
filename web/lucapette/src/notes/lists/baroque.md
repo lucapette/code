@@ -6,7 +6,6 @@ tags:
   - music
   - baroque
   - classical
-  - recommendations
 ---
 
 You may or not may know I love classical music. In fact, one of the articles I enjoyed writing the most was [an illiterate's guide to classical music](https://lucapette.me/writing/an-illiterate-guide-to-classical-music).

@@ -1,9 +1,8 @@
 ---
-layout: base.liquid
+layout: section.liquid
 title: Writing
 permalink: /writing/
 ---
-<h1>Writing</h1>
 {% for yearGroup in collections.writingsByYear %}
   <h2 class="year">{{ yearGroup.year }}</h2>
   <ul class="articles">
@@ -13,13 +12,6 @@ permalink: /writing/
           <span>{{ item.title }}</span>
           <span class="date">{{ item.formattedDate }}</span>
         </a>
-        {% if item.tags %}
-          <span class="tags">
-            {% for tag in item.tags %}
-              <a href="/tags/{{ tag }}" class="tag">#{{ tag }}</a>
-            {% endfor %}
-          </span>
-        {% endif %}
       </li>
     {% endfor %}
   </ul>
