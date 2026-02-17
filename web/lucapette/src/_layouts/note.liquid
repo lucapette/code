@@ -14,7 +14,7 @@ layout: base.liquid
           {% endfor %}
         {% endif %}
         {% assign parts = page.url | split: '/' %}
-        in <a href="/notes/">{{ parts[2] | capitalize }}</a>
+        in <a href="/notes/{{ parts[2] }}/">{{ parts[2] | capitalize }}</a>
       </p>
     </div>
   </nav>

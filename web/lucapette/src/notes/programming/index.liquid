@@ -1,0 +1,30 @@
+---
+layout: section.liquid
+title: Programming
+permalink: /notes/programming/
+---
+<p>
+  Notes on programming topics I work with or find interesting.
+  These are living documents I update as I learn more.
+</p>
+
+{% for group in collections.notesByCategory %}
+  {% if group.category == "programming" %}
+    <ul class="articles">
+      {% for item in group.notes %}
+        <li class="article">
+          <a href="{{ item.postUrl }}">
+            <span class="title">{{ item.title }}</span>
+            <span class="meta">
+              {% if item.tags %}
+                {% for tag in item.tags %}
+                  <span class="tag">#{{ tag }}</span>
+                {% endfor %}
+              {% endif %}
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endfor %}

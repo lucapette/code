@@ -9,7 +9,7 @@ permalink: /notes/
 </p>
 
 {% for group in collections.notesByCategory %}
-  <h2 class="year">{{ group.category | capitalize }}</h2>
+  <h2 class="year"><a href="/notes/{{ group.category }}/">{{ group.category | capitalize }}</a></h2>
   <ul class="articles">
     {% for item in group.notes %}
       <li class="article">

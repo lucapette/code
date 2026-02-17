@@ -1,0 +1,34 @@
+---
+layout: section.liquid
+title: Lists
+permalink: /notes/lists/
+---
+<p>
+  Inspired by <a href="https://lists.eatonphil.com/">Phil Eaton's</a> lists, I've decided to
+  start my own. He's right, some things don't make sense as blog posts but you
+  still want to share. Lists is it.
+</p>
+<p>
+  These notes will probably be even more random than the rest.
+</p>
+
+{% for group in collections.notesByCategory %}
+  {% if group.category == "lists" %}
+    <ul class="articles">
+      {% for item in group.notes %}
+        <li class="article">
+          <a href="{{ item.postUrl }}">
+            <span class="title">{{ item.title }}</span>
+            <span class="meta">
+              {% if item.tags %}
+                {% for tag in item.tags %}
+                  <span class="tag">#{{ tag }}</span>
+                {% endfor %}
+              {% endif %}
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endfor %}
