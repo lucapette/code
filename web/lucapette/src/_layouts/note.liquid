@@ -13,8 +13,8 @@ layout: base.liquid
             {%- unless forloop.last %}, {% endunless %}
           {% endfor %}
         {% endif %}
-        on
-        {{ date | formatDate }}
+        {% assign parts = page.url | split: '/' %}
+        in <a href="/notes/">{{ parts[2] | capitalize }}</a>
       </p>
     </div>
   </nav>

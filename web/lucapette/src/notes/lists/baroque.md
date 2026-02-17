@@ -8,7 +8,7 @@ tags:
   - classical
 ---
 
-You may or not may know I love classical music. In fact, one of the articles I enjoyed writing the most was [an illiterate's guide to classical music](https://lucapette.me/writing/an-illiterate-guide-to-classical-music).
+You may or not may know I love classical music. In fact, one of the articles I enjoyed writing the most was [an illiterate's guide to classical music](/writing/an-illiterate-guide-to-classical-music).
 
 A note (about a note, yeah that's me) about this list: you'll definitely notice Bach isn't present in the list. It's because he deserves a list of his own. Ask and I'll deliver one.
 

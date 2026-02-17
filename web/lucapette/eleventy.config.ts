@@ -12,7 +12,7 @@ import {
   favouriteWritings,
   relatedWritings,
 } from "./src/_collections/writings.js";
-import { notes, notesByYear } from "./src/_collections/notes.js";
+import { notes, notesByCategory } from "./src/_collections/notes.js";
 import { reading } from "./src/_collections/reading.js";
 import { tagList, tagPosts } from "./src/_collections/tags.js";
 import { drafts } from "./src/_preprocessors/drafts.js";
@@ -67,7 +67,7 @@ export default function (eleventyConfig: EleventyConfig) {
   eleventyConfig.addCollection("relatedWritings", relatedWritings);
   eleventyConfig.addCollection("reading", reading);
   eleventyConfig.addCollection("notes", notes);
-  eleventyConfig.addCollection("notesByYear", notesByYear);
+  eleventyConfig.addCollection("notesByCategory", notesByCategory);
   eleventyConfig.addCollection("tagList", tagList);
   eleventyConfig.addCollection("tagPosts", tagPosts);
 
