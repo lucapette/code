@@ -3,13 +3,10 @@ layout: section.liquid
 title: Programming
 permalink: /notes/programming/
 ---
-<p>
-  Notes on programming topics I work with or find interesting.
-  These are living documents I update as I learn more.
-</p>
+<p>Notes on programming topics I work with or find interesting. These are living documents I update as I learn more.</p>
 
 {% for group in collections.notesByCategory %}
-  {% if group.category == "programming" %}
+  {% if group.category == 'programming' %}
     <ul class="articles">
       {% for item in group.notes %}
         <li class="article">

@@ -4,12 +4,14 @@ title: Notes
 permalink: /notes/
 ---
 <p>
-  A collection of permanent notes about things I'm learning. 
-  I keep them in public so I can refer back to them when I need to.
+  A collection of permanent notes about things I'm learning. I keep them in public so I can refer back to them when I
+  need to.
 </p>
 
 {% for group in collections.notesByCategory %}
-  <h2 class="year"><a href="/notes/{{ group.category }}/">{{ group.category | capitalize }}</a></h2>
+  <h2 class="year">
+    <a href="/notes/{{ group.category }}/">{{ group.category | capitalize }}</a>
+  </h2>
   <ul class="articles">
     {% for item in group.notes %}
       <li class="article">

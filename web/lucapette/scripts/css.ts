@@ -9,6 +9,12 @@ const distDir = path.join(process.cwd(), "_site/assets/css");
 
 const isProd = process.env.NODE_ENV === "production";
 
+function ensureDir(dir: string): void {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
 async function build(): Promise<void> {
   const mainCss = path.join(srcDir, "main.css");
   const css = fs.readFileSync(mainCss, "utf8");
@@ -41,6 +47,7 @@ async function build(): Promise<void> {
     fs.unlinkSync(tempFile);
     console.log("CSS built for production");
   } else {
+    ensureDir(distDir);
     fs.writeFileSync(path.join(distDir, "main.css"), result.css);
     console.log("CSS built for development");
   }

@@ -13,6 +13,83 @@ html {
 
 .year {
   margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.year .lucide-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.year.writing-icon .lucide-icon {
+  color: var(--blue);
+}
+
+.year.notes-icon .lucide-icon {
+  color: var(--orange);
+}
+
+.year.highlights-icon .lucide-icon {
+  color: var(--yellow);
+}
+
+ul.articles.notes li {
+  margin-bottom: 1rem;
+}
+
+ul.articles.notes li.note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+ul.articles.notes li.note .title {
+  font-weight: var(--font-weight-normal);
+}
+
+ul.articles.notes li.note .title-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+ul.articles.notes .category {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-transform: capitalize;
+  font-size: 0.875rem;
+  color: var(--text-color-light);
+  text-decoration: none;
+}
+
+ul.articles.notes .category:hover {
+  text-decoration: underline;
+}
+
+ul.articles.notes .category .lucide-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--purple);
+}
+
+ul.articles.notes .tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+ul.articles.notes .tag {
+  color: var(--text-color-light);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+ul.articles.notes .tag:hover {
+  text-decoration: underline;
 }
 
 ul.articles {
@@ -146,12 +223,20 @@ pre {
     order: 1;
   }
 
-  ul.articles li a {
-    white-space: preserve;
-  }
-
   ul.articles li a .date {
     display: none;
+  }
+
+  ul.articles.notes li.note {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  ul.articles.notes li.note .title-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.125rem;
   }
 }
 

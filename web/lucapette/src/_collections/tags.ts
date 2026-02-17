@@ -5,7 +5,7 @@ export function tagList(collectionApi: {
 }) {
   const tags = new Set<string>();
 
-  // Get writings and notes
+  //TODO use "official" way to get these collections
   const writings = collectionApi.getFilteredByGlob("./src/writing/**/*.md");
   const notes = collectionApi.getFilteredByGlob("./src/notes/**/*.md");
   const allItems = [...writings, ...notes];
@@ -28,7 +28,7 @@ export function tagPosts(collectionApi: {
 }) {
   const tagMap: Record<string, CollectionItem[]> = {};
 
-  // Get writings and notes
+  // TODO Same here: use "official" way to get these collections
   const writings = collectionApi.getFilteredByGlob("./src/writing/**/*.md");
   const notes = collectionApi.getFilteredByGlob("./src/notes/**/*.md");
   const allItems = [...writings, ...notes];

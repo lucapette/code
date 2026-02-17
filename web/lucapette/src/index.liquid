@@ -9,8 +9,7 @@ description: Luca Pette's website
     <div class="description">
       <h1>Hi, I'm Luca :)</h1>
       <p>
-        I'm an independent software developer. I use this website to share my <a href="/writing">writing</a> and
-        <a href="/notes">notes</a>.
+        I'm an independent software developer. I use this website to share my writing.
       </p>
     </div>
     <div class="decoration">
@@ -23,7 +22,7 @@ description: Luca Pette's website
 <section>
   <div class="columns">
     <div class="column">
-      <h2 class="year">Latest writing</h2>
+      <h2 class="year writing-icon">{% lucide "pen-tool" %} Latest writing</h2>
       <ul class="articles">
         {% for item in collections.writings limit: 5 %}
           <li class="article">
@@ -38,14 +37,25 @@ description: Luca Pette's website
   </div>
   <div class="columns">
     <div class="column">
-      <h2 class="year">Latest notes</h2>
-      <ul class="articles">
+      <h2 class="year notes-icon">{% lucide "sticky-note" %} Latest notes</h2>
+      <ul class="articles notes">
         {% for item in collections.notes limit: 5 %}
-          <li class="article">
-            <a href="{{ item.url }}">
-              <span>{{ item.data.title }}</span>
-              <span class="date">{{ item.date | formatDateShort }}</span>
-            </a>
+          <li class="note">
+            {% assign category = item.url | split: '/' | slice: 2 %}
+            <div class="title-line">
+              <a href="{{ item.url }}" class="title">{{ item.data.title }}</a>
+              <a href="/notes/{{ category }}/" class="category">
+                {% lucide "folder" %}
+                {{ category }}
+              </a>
+            </div>
+            {% if item.data.tags %}
+              <span class="tags">
+                {% for tag in item.data.tags limit: 3 %}
+                  <a href="/tags/{{ tag }}" class="tag">#{{ tag }}</a>
+                {% endfor %}
+              </span>
+            {% endif %}
           </li>
         {% endfor %}
       </ul>
@@ -53,13 +63,12 @@ description: Luca Pette's website
   </div>
   <div class="columns">
     <div class="column">
-      <h2 class="year">Highlights</h2>
-      <ul class="articles">
+      <h2 class="year highlights-icon">{% lucide "star" %} Highlights</h2>
+      <ul class="articles highlights">
         {% for item in collections.favouriteWritings %}
           <li class="article">
             <a href="{{ item.url }}">
               <span>{{ item.data.title }}</span>
-              <span class="date">{{ item.date | formatDateShort }}</span>
             </a>
           </li>
         {% endfor %}

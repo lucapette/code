@@ -4,16 +4,13 @@ title: Lists
 permalink: /notes/lists/
 ---
 <p>
-  Inspired by <a href="https://lists.eatonphil.com/">Phil Eaton's</a> lists, I've decided to
-  start my own. He's right, some things don't make sense as blog posts but you
-  still want to share. Lists is it.
+  Inspired by <a href="https://lists.eatonphil.com/">Phil Eaton's</a> lists, I've decided to start my own. He's right,
+  some things don't make sense as blog posts but you still want to share. Lists is it.
 </p>
-<p>
-  These notes will probably be even more random than the rest.
-</p>
+<p>These notes will probably be even more random than the rest.</p>
 
 {% for group in collections.notesByCategory %}
-  {% if group.category == "lists" %}
+  {% if group.category == 'lists' %}
     <ul class="articles">
       {% for item in group.notes %}
         <li class="article">

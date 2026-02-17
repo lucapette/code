@@ -69,4 +69,4 @@ npm run prettier:write
 - [ ] Add Leading Developers section
 - [ ] Move books article links from Goodreads to TheStoryGraph
 - [ ] Update all content that refers to my repos (moved to monorepo)
-- [ ] Clean up _site directory on build
+- [ ] Clean up \_site directory on build

@@ -49,7 +49,10 @@ export default {
               const tags = post.data.tags || [];
               const tagsHtml =
                 tags.length > 0
-                  ? `<span class="date"></span><span class="separator">·</span>` + tags.map((tag) => `<span class="tag">#${tag}</span>`).join(" ")
+                  ? `<span class="date"></span><span class="separator">·</span>` +
+                    tags
+                      .map((tag) => `<span class="tag">#${tag}</span>`)
+                      .join(" ")
                   : "";
 
               return `          <li class="article">

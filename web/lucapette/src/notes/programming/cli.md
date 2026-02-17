@@ -6,7 +6,6 @@ tags:
   - cli
   - terminal
   - tooling
-  - reference
 ---
 
 A collection of command line related notes. Mostly things I can't quite remember.

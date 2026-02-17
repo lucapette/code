@@ -3,12 +3,10 @@ layout: section.liquid
 title: Recipes
 permalink: /notes/recipes/
 ---
-<p>
-  I love cooking so here I'm noting down recipes I perfected over time.
-</p>
+<p>I love cooking so here I'm noting down recipes I perfected over time.</p>
 
 {% for group in collections.notesByCategory %}
-  {% if group.category == "recipes" %}
+  {% if group.category == 'recipes' %}
     <ul class="articles">
       {% for item in group.notes %}
         <li class="article">
