@@ -1,0 +1,36 @@
+---
+layout: section.liquid
+title: Books
+permalink: /notes/books/
+description: Notes on books I've read
+---
+<p>
+  I take a lot of notes about the books I read and I find myself often in a place where I'd like to share a particular
+  passage from a book, hence this section.
+</p>
+
+<div class="books-grid">
+  {% for group in collections.notesByCategory %}
+    {% if group.category == 'books' %}
+      {% for item in group.notes %}
+        <a href="{{ item.postUrl }}">
+          <article class="book-card">
+            <div class="book-card-cover">
+              <img
+                src="/assets/notes/reading/{{ item.postUrl | split: '/' | last }}.jpg"
+                alt="Cover of {{ item.title }}"
+                loading="lazy"
+              >
+            </div>
+            <footer class="book-card-info">
+              <h3>{{ item.title }}</h3>
+              {% if item.author %}
+                <p class="book-card-author">{{ item.author }}</p>
+              {% endif %}
+            </footer>
+          </article>
+        </a>
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+</div>

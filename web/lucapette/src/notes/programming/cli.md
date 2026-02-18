@@ -3,7 +3,6 @@ layout: note.liquid
 title: CLI
 description: A collection of command line related notes. Mostly things I can't quite remember.
 tags:
-  - cli
   - terminal
   - tooling
 ---

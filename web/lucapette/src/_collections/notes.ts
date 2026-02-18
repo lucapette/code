@@ -15,7 +15,7 @@ export function notesByCategory(collectionApi: {
 
   const grouped: Record<
     string,
-    { postUrl: string; title: string; tags: string[] }[]
+    { postUrl: string; title: string; tags: string[]; author: string }[]
   > = {};
 
   items.forEach((note) => {
@@ -36,6 +36,7 @@ export function notesByCategory(collectionApi: {
       postUrl: note.url,
       title: note.data.title as string,
       tags: tags as string[],
+      author: (note.data.author as string) || "",
     });
   });
 

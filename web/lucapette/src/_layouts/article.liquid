@@ -7,6 +7,10 @@ layout: base.liquid
   <nav class="level">
     <div class="left">
       <p class="is-size-6">
+        {% if author -%}
+          By {{ author -}}
+          <br>
+        {% endif %}
         Published in
         {% if tags %}
           {% for tag in tags %}

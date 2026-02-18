@@ -13,7 +13,6 @@ import {
   relatedWritings,
 } from "./src/_collections/writings.js";
 import { notes, notesByCategory } from "./src/_collections/notes.js";
-import { reading } from "./src/_collections/reading.js";
 import { tagList, tagPosts } from "./src/_collections/tags.js";
 import { drafts } from "./src/_preprocessors/drafts.js";
 import { lucideShortcode } from "./src/_shortcodes/lucide.js";
@@ -58,14 +57,13 @@ export default function (eleventyConfig: EleventyConfig) {
   eleventyConfig.addPassthroughCopy("./src/assets/css/prism-nord.css");
   eleventyConfig.addPassthroughCopy("./src/assets/css/prism-line-numbers.css");
   eleventyConfig.addPassthroughCopy("./src/assets/img");
-  eleventyConfig.addPassthroughCopy("./src/assets/reading");
+  eleventyConfig.addPassthroughCopy("./src/assets/notes/reading");
   eleventyConfig.addPassthroughCopy("./src/static");
 
   eleventyConfig.addCollection("writings", writings);
   eleventyConfig.addCollection("writingsByYear", writingsByYear);
   eleventyConfig.addCollection("favouriteWritings", favouriteWritings);
   eleventyConfig.addCollection("relatedWritings", relatedWritings);
-  eleventyConfig.addCollection("reading", reading);
   eleventyConfig.addCollection("notes", notes);
   eleventyConfig.addCollection("notesByCategory", notesByCategory);
   eleventyConfig.addCollection("tagList", tagList);
