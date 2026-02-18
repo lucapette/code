@@ -35,6 +35,20 @@ description: Luca Pette's website
   </div>
   <div class="columns">
     <div class="column">
+      <h2 class="year highlights-icon">{% lucide "star" %} Highlights</h2>
+      <ul class="articles highlights">
+        {% for item in collections.favouriteWritings %}
+          <li class="article">
+            <a href="{{ item.url }}">
+              <span>{{ item.data.title }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="columns">
+    <div class="column">
       <h2 class="year notes-icon">{% lucide "sticky-note" %} Latest notes</h2>
       <ul class="articles notes">
         {% for item in collections.notes limit: 5 %}
@@ -54,20 +68,6 @@ description: Luca Pette's website
                 {% endfor %}
               </span>
             {% endif %}
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-  </div>
-  <div class="columns">
-    <div class="column">
-      <h2 class="year highlights-icon">{% lucide "star" %} Highlights</h2>
-      <ul class="articles highlights">
-        {% for item in collections.favouriteWritings %}
-          <li class="article">
-            <a href="{{ item.url }}">
-              <span>{{ item.data.title }}</span>
-            </a>
           </li>
         {% endfor %}
       </ul>
