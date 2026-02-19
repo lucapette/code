@@ -1,8 +1,8 @@
 <section>
   <nav class="navbar" role="navigation" aria-label="main navigation">
     <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
-      <i data-lucide="menu" class="menu-icon" aria-hidden="true"></i>
-      <i data-lucide="x" class="close-icon" aria-hidden="true"></i>
+      <span class="menu-icon" aria-hidden="true">{% lucide "menu" %}</span>
+      <span class="close-icon" aria-hidden="true">{% lucide "x" %}</span>
     </button>
     <div class="navbar-menu" id="navbar-menu">
       <div class="navbar-start">
@@ -18,8 +18,8 @@
       </div>
       <div class="navbar-end">
         <button id="toggle" class="navbar-item">
-          <i data-lucide="moon" class="moon" aria-hidden="true"></i>
-          <i data-lucide="sun" class="sun" aria-hidden="true"></i>
+          <span class="moon" aria-hidden="true">{% lucide "moon" %}</span>
+          <span class="sun" aria-hidden="true">{% lucide "sun" %}</span>
           <span class="sr-only">toggle theme</span>
         </button>
       </div>

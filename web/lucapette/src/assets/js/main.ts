@@ -1,28 +1,3 @@
-import {
-  createIcons,
-  Mail,
-  Twitter,
-  Linkedin,
-  Github,
-  Moon,
-  Sun,
-  Menu,
-  X,
-} from "lucide";
-
-createIcons({
-  icons: {
-    Mail,
-    Twitter,
-    Linkedin,
-    Github,
-    Moon,
-    Sun,
-    Menu,
-    X,
-  },
-});
-
 const toggle = document.getElementById("toggle");
 
 if (toggle) {

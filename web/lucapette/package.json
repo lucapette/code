@@ -7,7 +7,7 @@
     "build": "npm run clean && NODE_ENV=production tsx scripts/css.ts && NODE_ENV=production tsx scripts/js.ts && NODE_ENV=production tsx scripts/manifest.ts && NODE_ENV=production tsx ./node_modules/.bin/eleventy --config=eleventy.config.ts",
     "dev": "npm run clean && tsx scripts/css.ts && concurrently \"tsx scripts/js.ts watch\" \"NODE_ENV=development tsx ./node_modules/.bin/eleventy --config=eleventy.config.ts --serve --incremental\"",
     "typecheck": "tsc --noEmit",
-    "lint": "prettier --check .",
+    "lint": "npm run typecheck && prettier --check .",
     "prettier:check": "prettier --check .",
     "prettier:write": "prettier --write ."
   },
@@ -22,7 +22,6 @@
     "@types/postcss-import": "^14.0.3",
     "concurrently": "^9.2.1",
     "esbuild": "^0.27.3",
-    "lucide": "0.381.0",
     "lucide-static": "^0.563.0",
     "postcss": "^8.5.6",
     "postcss-import": "^16.1.1",

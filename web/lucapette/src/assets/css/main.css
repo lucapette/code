@@ -260,6 +260,10 @@ button#toggle .moon {
   display: block;
 }
 
+button#toggle:hover {
+  cursor: pointer;
+}
+
 /* Override for dark mode */
 :root[data-theme="dark"] button#toggle .moon {
   display: none;
