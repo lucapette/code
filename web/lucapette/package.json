@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "npm run typecheck && prettier --check .",
     "prettier:check": "prettier --check .",
-    "prettier:write": "prettier --write ."
+    "prettier:write": "prettier --write .",
+    "writing:new": "tsx scripts/new-article.ts"
   },
   "type": "module",
   "devDependencies": {
