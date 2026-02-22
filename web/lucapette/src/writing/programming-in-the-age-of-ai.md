@@ -1,5 +1,5 @@
 ---
-title: Programming at the age of ai
+title: Programming in the age of ai
 description: or, as I like to call it, a much much faster horse
 date: "2026-02-21"
 tags:
@@ -38,10 +38,14 @@ Lastly, inspired by Mitchel Hashimoto in [My AI Adoption
 Journey](https://mitchellh.com/writing/my-ai-adoption-journey) (worthy read!), a
 necessary disclaimer:
 
-> This article was entirely hand-written by me. In fact, I have a whole editor
-> setup with no integrations, plugins, etc. to avoid even the temptation of
-> using AI for my writing. There should be no need to say this, but I know there
-> it.
+{% message "is-warning" %}
+
+This article was entirely hand-written by me. In fact, I have a whole editor
+setup with no integrations, plugins, etc. to avoid even the temptation of
+using AI for my writing. There should be no need to say this, but I know there
+it.
+
+{% endmessage %}
 
 ## What changed
 
@@ -85,7 +89,7 @@ editor more than once which, honestly, is quite disorienting as a programmer.
 This conceptually tiny change in my workflow has all kind of implications so let
 me try to give this some structure in the next paragraph.
 
-## A much much faster horse
+## How it changed
 
 It's time to make something clear: I don't vibe code. Where the definition of
 vibe coding is: "I ship code without looking at it". Now, to be fair, I've
@@ -241,81 +245,163 @@ migration. The plan was so solid it gave me the confidence to try right away.
 Two days after, I shipped the new website. I now have a much much faster horse
 and that changed the picture for ever.
 
-Another example of how productivity dramatically increased for me: write it
-twice became so cheap you can do it all the time. "Write it twice" is my way of
-saying that in order to achieve a great design you have to see the pain of a
-design that doesn't work, the first time to solve a problem the solution is
-always bad. In practice, the best way to do this is to write a system once
-entirely, then throw all the code away and start again. The second time around
-you design a system in a much more conscious way: you understand trade-offs
-better, you know where you can cut corners and where you have to get it really
-right. Traditionally, you don't get many chances of experiencing this. In fact,
+Another example of how my productivity increased: "write it twice" became so
+cheap I can do it all the time. "Write it twice" is my way of saying that, in
+order to achieve a great design, you have to solve a problem end to end just to
+understand what if you chose the right trade-offs, constraints, and so on. My
+experience has been that the first solution is always suboptimal. Therefore, the
+best design often comes from solving the same problem twice back to back. In
+practice, the dream strategy is to write a whole solution and then throw the
+code away to immediately start again. Then you'll design a system in a much more
+conscious way: you understand trade-offs better, you know where you can cut
+corners and where you have to get it really right, you know what needs an
+extensive test suite... you get it.
+
+In the real world, you don't get many chances of experiencing this. In fact,
 last it has happened to me it was at [airy](https://airy.co/), already almost a
-decade ago. And the reason it's obvious: it's stupidly expensive to proceed this
-way. So most times we just put our MVPs in production.
+decade ago. The reason is obvious: it's often stupidly expensive to implement
+this strategy. Let's be honest like my friend
+[Thomas](https://www.linkedin.com/in/tenyako/) would say: "most times we just
+put our MVPs in production and forget they're MVPs".
 
-In the past two months though, I used this approach already more than once. In
-one case (I can't really disclosure details as it's clients' work), I wrote a
-whole MVP in Golang and then threw it away to rewrite it TypeScript (which was a
-much better fit). The rewrite took a day. This would have been a weeks long
-project because, well, we'd have to type all the code again! Instead here I took
-all the specs, docs, tests with me. The rewrite became a detail.
+In the past two months though, I "wrote it twice" more than once already. In one
+case (I can't really disclosure details as it's clients' work), I wrote a whole
+MVP in Golang and then threw it away to rewrite it TypeScript (which was a much
+better fit). This would have been a week long project because, well, we'd have
+to type all the code again, in a different language. Most likely, we would have
+just kept going with the suboptimal solution. Instead, knowing there was going
+to be no typing involved, I took all the specs, docs, types, tests with me into
+a long (maybe a hour?) planning sessions in opencode to do a full rewrite and
+then had the agent go over each step of the plan under my active supervision The
+rewrite became a detail.
 
-I could probably make many more examples but I think it's pointless in a way
-since we're collectively unable to quantify the productivity gains. What I know
-for sure is that there's no coming back to manually typing out code. It's a
-question of what should we do about it. Hence the next paragraph.
+I could make more examples but it's pointless in a way because I know most would
+just want me to say something dumb like "I'm 2.7x faster" but I'm not gonna play
+that game. What I know for sure is that there's no going back to manually type
+out code like a caveman. It's a question of what should we do about it. Hence
+the next paragraph.
 
-## How do we adapt
+## What am I doing about it
 
 As I said, no reason to believe we're ever going to back to manually typing out
-code. In fact, to make a point I often find myself telling people "we're all
+code. In fact, to make this point I often find myself telling people "we're all
 assembly programmers now". What I mean is that most of our tooling is built for
 a process that is disappearing quite quickly.
 
 Here's an example: after a long planning session with the agent (I literally
 have the agent to interview me in depth), I ask the agent to write the plan into
-a markdown file and track the progress into a txt file.
-[AiHero](https://www.aihero.dev/) thought me this approach, it's stupidly simple
-and works quite well in practice but, let's be honest, this isn't tooling, this
-is coping with the reality we do not need to type out code any longer. And the
-biggest challenge is that, wherever you look, the tooling is deficient (just
-have a look at the kind of insanity popular open source projects are dealing
-with at the moment).
+a markdown file and have the agent track progress with a plain txt file.
+[AiHero](https://www.aihero.dev/) taught me this approach. It's stupidly simple
+and works quite well in practice but, let's be honest, this isn't tooling. This
+is us coping with the reality we do not need to type out code any longer _and_
+the tooling is deficient. The biggest challenge is that, wherever you look, the
+tooling is deficient. Just have a look at the kind of insanity popular open
+source projects are dealing with at the moment.
 
-I have no long-term answer to this and I'm sure I'll come back to tooling in my
-articles in the future many times (I can see myself writing the tooling that
-ain't there yet) but I do want to share how I'm coping with some obvious
-deficiencies of 2026 automatic programming.
+I have no long-term answers to this but I'm sure I'll come back to tooling in my
+articles in the future many times (I can see myself writing some of this
+tooling...) but I do want to share how I'm coping with some obvious deficiencies
+of early 2026 automatic programming.
 
 Let's proceed with the most obvious bit: the output may or may not be great. In
-my experience, there's quite some variance so you still need to know the code
-base to product good output. The job is changing radically around workflow and
-production but the conceptual mapping, the strategies and tactics are all there.
-Because the problem is that even the best models are messy:
+my experience, there's quite some variance and probably too many reasons why the
+output quality varies so badly. Even in the most mundane tasks, the agents are
+often messy:
 
-- they leave code around
-- they don't do any gardening even the most obvious
-- they're too biased toward duplicationk
+- They leave dead code around all the time.
+- They don't do any gardening even the most obvious.
+- They're too biased toward duplication.
+- They're also too biased toward local problems, there's no big picture
+  solution.
 
-- loop checks are the most important bit. What kind of guardrails should we put in place. is spec driven better
-  - I’m thinking each project should have a “ai check loop” task maybe as simple as “npm run eslint && prettier && typecheck && test”. Without that, the agent leaves way too much dead code, broken things behind. Goes often full cowboy (they do have personality though so different agents/different behaviour)
-- [Beyond agentic coding](https://haskellforall.com/2026/02/beyond-agentic-coding) I agree with this. It’s harder to be in flow state with agentic programming but 1) the agents will get much much faster (I can already stay in flow in some situations like kimi 2.5 and websites, qwen and refactoring) 2) the agents UI doesn’t feel final. We’re gonna need a more thightly integrated environment (I suppose that’s what entire.io wants to do? I have similar ideas but don’t have 60 mil 😉)
+In short, they don't do any design and they don't care. They're pretty much he
+worst programmer you worked with that instead of showing up half naked and drunk
+at work (true story...), they just can't ever stop tying. It's is easy to forget
+they're not smart at all because we, the humans, experience "intelligence" via
+language and these models are very good at mimicking language. But of course
+they've got no clue which part of your system needs to change soon because you
+have to accommodate for that upcoming feature. They're glorified, stupidly
+resource hungry parrots so the design is up to you.
 
-å- I feel like we need to store prompts with their commits so we have a history of how the machines solved a problem.
+The way I approach this mess is by trying my best to mitigate risk from both sides of
+the production process.
 
-- [A Language For Agents](https://lucumr.pocoo.org/2026/2/9/a-language-for-agents/) when are we gonna see an “ai native” programming language? Will it be a derivative of go/typescript?
+_Before_ the agent produces any code, I try my best to give it enough context so
+they don't get lost and produce total nonsense. I believe things will change a
+lot here too rapidly in the next 12/24 months so going into the details too much
+doesn't help. It's probably also quite personal as it does depend on the
+existing context after all. A few really obvious things that work well for me
+right now:
 
-Very interesting concept I already feel it: [Jeremy \(@jeremytwei\) 324 likes · 10 replies](https://x.com/jeremytwei/status/2015886793955229705?s=20) “comphrension debt”. Fantastic.
+- Progressive disclosure (again
+  [aihero.dev](https://www.aihero.dev/a-complete-guide-to-agents-md#use-progressive-disclosure)
+  taught me that) does make rules much more effective. Having said that, they're
+  still hit and miss. For example, I really can't stand the comments models
+  produce so I have shouting rules about it. The comments are almost gone but
+  not totally gone.
+- [Context7](https://context7.com/dashboard) mcp clearly improves the quality of
+  the output of most code. Especially in TypeScript. I do have to remind the
+  agent with "use context7 for api docs" often enough.
+- Planning first then building obviously leads to higher quality output. But
+  even here I'm quickly developing an intuition for situation in which I think
+  the plan means something and the agent understands something else. So I ask
+  the agent for a bit more details. By default my instructions for planning are
+  something along the lines of "be super brief".
 
-(nowhere where it should be, true especially for mono repo imo)
+As for the _after_ the agent produces any code, the key improvement is somewhat
+obvious: what's the automated feedback process you have in place you can use to
+check your codebase after you make a change?
 
-## Emotionally
+To me, this is the main argument in favour of "ai tooling amplifies your
+fundamentals". The more your codebase speaks you to, the less mistakes the
+agents make. How talkative your codebase is depends entirely on you. Here's some
+obvious things:
 
-- Emotionally as soon as you let go of the need to type, you realise that only the fun part of the job is staying: the beauty of imagining a solution. Thinking bing doesn’t tire you or scare you because there’s a lot less effort into actually producing the result. It ain’t perfect. Far from it. But you can already see a future where you can just talk to your agent about code. You don’t even need to see it anymore.
-- Emotionally, it’s also easier to take design decisions. I’ve always had a personal answer between two but more than often I’d refrain from stating clearly because, unfortunately, I was almost always leading the team having such a conversation. Saying “A”. Not even saying “A is better” feels way too good not to say something about me.
+- Statically typed languages are better (if this annoys you, you should know
+  it's the reason why I wrote it this way) because the compiler... speaks a lot.
+- Tests that actually test things are very very helpful because they break when
+  you actually break something.
+- Aggressive automated linting also speaks a lot.
 
-## Will programmers still have a job?
+So I found that being super explicit with the agent at every step (think like
+"when you're done, run this command to check your work) greatly improves the
+quality of your automated typing.
 
-- Generalists vs specialists
-- I think there's a long term "problem" with this approach (and with ai this may means months not years). The models abilities are gonna slow down (ironically because they're useful the internet will produce less training data by virtue of people asking less questions on websites) but their speed is gonna grow significantly (are we gonna see a new moore law?). At some point soon, the agents will produce code so fast it'll be detrimental reading it all (or reading it at all??)
+This conversation makes me think we're got to rethink the tooling from the
+ground up. Right now we're using the agents to automatically type all of our
+code but there's no integration with the rest of the tool chain. More than once
+I've already found myself thinking I should automate the commit process
+completely so that I can have the agent automatically add context for itself as
+metadata in in each commit. Not to mention a bit more of a vertical integration
+with the rest of the product development value chain. I suppose that's what
+[entire.io](https://entire.io) wants to do. I have similar ideas but I don't
+have 60 millions 😉.
+
+As I mentioned before, I do believe we're all assembly programmers. Every
+language feels low level now to me because, well, I can go from how I imagine
+something should work to the thing being in production without typing. So the
+question is how does an "AI native" language look like? I'm [not the only
+one](https://lucumr.pocoo.org/2026/2/9/a-language-for-agents/)  asking this
+question.
+
+## How do I feel about it
+
+
+
+Very interesting concept I already feel it: [Jeremy \(@jeremytwei\) 324 likes ·
+10 replies](https://x.com/jeremytwei/status/2015886793955229705?s=20)
+“comprehension debt”. Fantastic.
+
+- Emotionally as soon as you let go of the need to type, you realise that only
+  the fun part of the job is staying: the beauty of imagining a solution.
+  Thinking bing doesn’t tire you or scare you because there’s a lot less effort
+  into actually producing the result. It ain’t perfect. Far from it. But you can
+  already see a future where you can just talk to your agent about code. You
+  don’t even need to see it anymore.
+
+
+- Emotionally, it’s also easier to take design decisions. I’ve always had a
+  personal answer between two but more than often I’d refrain from stating
+  clearly because, unfortunately, I was almost always leading the team having
+  such a conversation. Saying “A”. Not even saying “A is better” feels way too
+  good not to say something about me.
