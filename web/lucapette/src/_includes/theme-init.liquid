@@ -3,6 +3,7 @@
   function setTheme(newTheme) {
     window.__theme = newTheme;
     preferredTheme = newTheme;
+    document.documentElement.style.setProperty('color-scheme', newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
   }
   try {
