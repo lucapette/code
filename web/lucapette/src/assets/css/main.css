@@ -1,5 +1,6 @@
 @charset "UTF-8";
 
+@import "variables.css";
 @import "reset.css";
 @import "elements.css";
 @import "layout.css";
@@ -61,12 +62,7 @@ ul.articles.notes .category {
   gap: 0.25rem;
   text-transform: capitalize;
   font-size: 0.875rem;
-  color: var(--text-color-light);
-  text-decoration: none;
-}
-
-ul.articles.notes .category:hover {
-  text-decoration: underline;
+  color: var(--link-color);
 }
 
 ul.articles.notes .category .lucide-icon {
@@ -83,13 +79,8 @@ ul.articles.notes .tags {
 }
 
 ul.articles.notes .tag {
-  color: var(--text-color-light);
-  text-decoration: none;
+  color: var(--link-color);
   font-size: 0.875rem;
-}
-
-ul.articles.notes .tag:hover {
-  text-decoration: underline;
 }
 
 ul.articles {
@@ -108,7 +99,6 @@ ul.articles li:last-child {
 }
 
 ul.articles li a {
-  text-decoration: none;
   display: flex;
   gap: 0.5rem;
   padding: 0.4rem 0;

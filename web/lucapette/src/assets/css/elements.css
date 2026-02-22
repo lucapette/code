@@ -1,5 +1,3 @@
-@import "variables.css";
-
 :root {
   --wrap-width: 780px;
 }
@@ -12,7 +10,7 @@ body {
 body {
   display: flex;
   flex-direction: column;
-  font-family: var(--font-family-primary);
+  font-family: var(--font-family-primary), serif;
   font-size: var(--font-size-primary);
   font-weight: var(--font-weight-normal);
   line-height: 1.5;
@@ -70,17 +68,18 @@ td {
 }
 
 pre code {
-  font-family: var(--font-family-monospace);
+  font-family: var(--font-family-monospace), monospace;
   font-size: var(--font-size-code);
 }
 
 a {
   color: var(--link-color);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 a:hover {
   color: var(--accent-color);
+  text-decoration: underline;
 }
 
 em {

@@ -81,7 +81,7 @@
 .navbar .navbar-menu a.navbar-item.is-active {
   background-color: var(--navbar-item-bg);
   color: var(--text-color);
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 .navbar .navbar-menu a.navbar-item:hover {

@@ -189,11 +189,9 @@ p code {
 
 .tag {
   color: var(--link-color);
-  text-decoration: none;
   white-space: nowrap;
 }
 
 .tag:hover {
   color: var(--accent-color);
-  text-decoration: underline;
 }
