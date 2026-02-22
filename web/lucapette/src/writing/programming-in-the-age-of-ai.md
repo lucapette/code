@@ -61,8 +61,7 @@ every day. It felt very much incremental change up to this point. I sum it up as
 "a much smarter autocomplete".
 
 Things changed quite radically a few weeks ago when I decided to try coding
-agents again. I say again because I had tried a few at the end of the summer of
-2025. At the time, nothing impressed me. Then at the end of January 2026, I
+agents again. I say again because I had tried a few at the end of the summer of 2025. At the time, nothing impressed me. Then at the end of January 2026, I
 downloaded [opencode](https://opencode.ai/), hooked my
 [[DeepSeek](https://chat.deepseek.com)
 api](<https://api-docs.[deepseek](https://chat.deepseek.com).com/>) keys and
@@ -93,7 +92,7 @@ me try to give this some structure in the next paragraph.
 
 It's time to make something clear: I don't vibe code. Where the definition of
 vibe coding is: "I ship code without looking at it". Now, to be fair, I've
- managed a lot of vibe coders in my career. People that ship code that I would
+managed a lot of vibe coders in my career. People that ship code that I would
 barely consider a draft so I think the tooling here is acting as an amplifier.
 Having said that, I'm in also in that weird spot where I don't trust vibe coders
 at all but also those who say "I don't use any AI in my programming tasks"
@@ -381,12 +380,10 @@ As I mentioned before, I do believe we're all assembly programmers. Every
 language feels low level now to me because, well, I can go from how I imagine
 something should work to the thing being in production without typing. So the
 question is how does an "AI native" language look like? I'm [not the only
-one](https://lucumr.pocoo.org/2026/2/9/a-language-for-agents/)  asking this
+one](https://lucumr.pocoo.org/2026/2/9/a-language-for-agents/) asking this
 question.
 
 ## How do I feel about it
-
-
 
 Very interesting concept I already feel it: [Jeremy \(@jeremytwei\) 324 likes ·
 10 replies](https://x.com/jeremytwei/status/2015886793955229705?s=20)
@@ -398,7 +395,6 @@ Very interesting concept I already feel it: [Jeremy \(@jeremytwei\) 324 likes ·
   into actually producing the result. It ain’t perfect. Far from it. But you can
   already see a future where you can just talk to your agent about code. You
   don’t even need to see it anymore.
-
 
 - Emotionally, it’s also easier to take design decisions. I’ve always had a
   personal answer between two but more than often I’d refrain from stating
