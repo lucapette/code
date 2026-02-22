@@ -1,11 +1,13 @@
 @charset "UTF-8";
 
 @import "variables.css";
+@import "colors.css";
 @import "reset.css";
 @import "elements.css";
 @import "layout.css";
 @import "content.css";
 @import "reading.css";
+@import "mobile.css";
 
 html {
   background-color: var(--background-color);
@@ -170,64 +172,6 @@ pre {
 
 .hero .decoration {
   justify-self: right;
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  :root {
-    --wrap-width: 740px;
-  }
-
-  .hero .description {
-    order: 1;
-  }
-
-  .hero .description h1 {
-    font-size: 2.5rem;
-  }
-
-  .hero .decoration {
-    order: 2;
-  }
-}
-
-@media (max-width: 767px) {
-  :root {
-    --wrap-width: 95%;
-  }
-
-  .hero {
-    grid-template-columns: none;
-    gap: 1rem;
-  }
-
-  .hero .description {
-    order: 2;
-  }
-
-  .hero .description h1 {
-    font-size: 2rem;
-  }
-
-  .hero .decoration {
-    justify-self: left;
-    order: 1;
-  }
-
-  ul.articles li a .date {
-    display: none;
-  }
-
-  ul.articles.notes li.note {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-  }
-
-  ul.articles.notes li.note .title-line {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.125rem;
-  }
 }
 
 .sr-only:not(:focus):not(:active) {
