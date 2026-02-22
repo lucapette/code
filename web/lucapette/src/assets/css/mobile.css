@@ -158,18 +158,6 @@
     display: none;
   }
 
-  ul.articles.notes li.note {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-  }
-
-  ul.articles.notes li.note .title-line {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.125rem;
-  }
-
   /* reading.css */
   .book {
     flex-direction: column;

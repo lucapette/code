@@ -55,4 +55,5 @@
 
   --info-bg: light-dark(var(--ice), var(--sky-blue));
   --warning-bg: light-dark(var(--cream), var(--amber));
+  --hover-bg: light-dark(var(--white-ter), var(--black-quad));
 }

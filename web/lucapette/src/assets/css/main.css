@@ -38,54 +38,6 @@ html {
   color: var(--yellow);
 }
 
-ul.notes li {
-  margin-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-ul.notes li.note {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-ul.notes li.note .title {
-  font-weight: var(--font-weight-normal);
-}
-
-ul.notes li.note .title-line {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-ul.notes .category {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  text-transform: capitalize;
-  font-size: 0.875rem;
-  color: var(--link-color);
-}
-
-ul.notes .category .lucide-icon {
-  width: 0.875rem;
-  height: 0.875rem;
-  color: var(--purple);
-}
-
-ul.notes .tags {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-top: 0.25rem;
-}
-
-ul.notes .tag {
-  color: var(--link-color);
-  font-size: 0.875rem;
-}
-
 ul.articles {
   padding: 0;
   margin: 0;
@@ -94,22 +46,29 @@ ul.articles {
 
 ul.articles li {
   margin-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-ul.articles li:last-child {
-  border-bottom: none;
 }
 
 ul.articles li a {
   display: flex;
   gap: 0.5rem;
-  padding: 0.4rem 0;
+  padding: 0.5rem 0.75rem;
+  margin: 0 -0.75rem;
   align-items: center;
   justify-content: space-between;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  border-radius: var(--radius);
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.15s ease;
+}
+
+ul.articles li a:hover {
+  background-color: var(--hover-bg);
+}
+
+ul.articles li:last-child a {
+  border-bottom: none;
 }
 
 ul.articles li a .date {
