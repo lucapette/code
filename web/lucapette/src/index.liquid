@@ -20,7 +20,7 @@ description: Luca Pette's website
 <section>
   <div class="columns">
     <div class="column">
-      <h2 class="year writing-icon">{% lucide "pen-tool" %} Latest writing</h2>
+      <h2 class="feed-title writing-icon">{% lucide "pen-tool" %} Latest writing</h2>
       <ul class="articles">
         {% for item in collections.writings limit: 5 %}
           <li class="article">
@@ -35,7 +35,7 @@ description: Luca Pette's website
   </div>
   <div class="columns">
     <div class="column">
-      <h2 class="year highlights-icon">{% lucide "star" %} Highlights</h2>
+      <h2 class="feed-title highlights-icon">{% lucide "star" %} Highlights</h2>
       <ul class="articles highlights">
         {% for item in collections.favouriteWritings %}
           <li class="article">
@@ -49,8 +49,8 @@ description: Luca Pette's website
   </div>
   <div class="columns">
     <div class="column">
-      <h2 class="year notes-icon">{% lucide "sticky-note" %} Latest notes</h2>
-      <ul class="articles notes">
+      <h2 class="feed-title notes-icon">{% lucide "sticky-note" %} Latest notes</h2>
+      <ul class="notes">
         {% for item in collections.notes limit: 5 %}
           <li class="note">
             {% assign category = item.url | split: '/' | slice: 2 %}

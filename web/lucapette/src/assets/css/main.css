@@ -14,51 +14,52 @@ html {
   color: var(--text-color);
 }
 
-.year {
+.feed-title {
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.year .lucide-icon {
+.feed-title .lucide-icon {
   width: 1.25rem;
   height: 1.25rem;
 }
 
-.year.writing-icon .lucide-icon {
+.feed-title.writing-icon .lucide-icon {
   color: var(--blue);
 }
 
-.year.notes-icon .lucide-icon {
+.feed-title.notes-icon .lucide-icon {
   color: var(--orange);
 }
 
-.year.highlights-icon .lucide-icon {
+.feed-title.highlights-icon .lucide-icon {
   color: var(--yellow);
 }
 
-ul.articles.notes li {
-  margin-bottom: 1rem;
+ul.notes li {
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
-ul.articles.notes li.note {
+ul.notes li.note {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-ul.articles.notes li.note .title {
+ul.notes li.note .title {
   font-weight: var(--font-weight-normal);
 }
 
-ul.articles.notes li.note .title-line {
+ul.notes li.note .title-line {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-ul.articles.notes .category {
+ul.notes .category {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -67,20 +68,20 @@ ul.articles.notes .category {
   color: var(--link-color);
 }
 
-ul.articles.notes .category .lucide-icon {
+ul.notes .category .lucide-icon {
   width: 0.875rem;
   height: 0.875rem;
   color: var(--purple);
 }
 
-ul.articles.notes .tags {
+ul.notes .tags {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
   margin-top: 0.25rem;
 }
 
-ul.articles.notes .tag {
+ul.notes .tag {
   color: var(--link-color);
   font-size: 0.875rem;
 }
@@ -92,7 +93,7 @@ ul.articles {
 }
 
 ul.articles li {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -109,6 +110,10 @@ ul.articles li a {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+ul.articles li a .date {
+  font-size: small;
 }
 
 .highlight {
@@ -189,7 +194,6 @@ pre {
   display: none;
 }
 
-/* Default: show moon (light mode) */
 button#toggle .moon {
   display: block;
 }
@@ -198,7 +202,6 @@ button#toggle:hover {
   cursor: pointer;
 }
 
-/* Override for dark mode */
 :root[data-theme="dark"] button#toggle .moon {
   display: none;
 }
