@@ -18,6 +18,11 @@ declare module "@11ty/eleventy" {
     addPreprocessor: (name: string, formats: string, fn: unknown) => void;
     addPassthroughCopy: (path: string) => void;
     addCollection: (name: string, fn: unknown) => void;
+    addWatchTarget: (
+      target: string,
+      options?: { resetConfig?: boolean },
+    ) => void;
+    on: (event: string, fn: (data?: unknown) => void | Promise<void>) => void;
   }
 }
 

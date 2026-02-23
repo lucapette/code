@@ -21,6 +21,13 @@ import { leadingDevelopersShortcode } from "./src/_shortcodes/leading-developers
 import { typestreamShortcode } from "./src/_shortcodes/typestream.js";
 import { imageShortcode } from "./src/_shortcodes/image.js";
 import { bookShortcode } from "./src/_shortcodes/book.js";
+import {
+  buildCss,
+  buildJs,
+  generateManifest,
+  hasChanged,
+  buildAll,
+} from "./scripts/build.js";
 
 import type { EleventyConfig } from "@11ty/eleventy";
 
@@ -59,6 +66,30 @@ export default function (eleventyConfig: EleventyConfig) {
   eleventyConfig.addPassthroughCopy("./src/assets/img");
   eleventyConfig.addPassthroughCopy("./src/assets/notes/reading");
   eleventyConfig.addPassthroughCopy("./src/static");
+
+  eleventyConfig.addWatchTarget("./src/assets/css/");
+  eleventyConfig.addWatchTarget("./src/assets/js/");
+
+  let isFirstBuild = true;
+
+  eleventyConfig.on("eleventy.before", async () => {
+    const isProd = process.env.NODE_ENV === "production";
+    if (isProd || isFirstBuild) {
+      await buildAll();
+      isFirstBuild = false;
+    }
+  });
+
+  eleventyConfig.on("eleventy.beforeWatch", async (changedFiles: unknown) => {
+    const files = changedFiles as string[] | undefined;
+    if (hasChanged(files, "css")) {
+      await buildCss();
+    }
+    if (hasChanged(files, "js")) {
+      await buildJs();
+    }
+    generateManifest();
+  });
 
   eleventyConfig.addCollection("writings", writings);
   eleventyConfig.addCollection("writingsByYear", writingsByYear);
