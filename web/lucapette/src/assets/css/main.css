@@ -44,10 +44,6 @@ ul.articles {
   list-style: none;
 }
 
-ul.articles li {
-  margin-bottom: 0.5rem;
-}
-
 ul.articles li a {
   display: flex;
   gap: 0.5rem;
@@ -58,7 +54,6 @@ ul.articles li a {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-radius: var(--radius);
   border-bottom: 1px solid var(--border-color);
   transition: background-color 0.15s ease;
 }
