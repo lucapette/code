@@ -61,7 +61,8 @@ every day. It felt very much incremental change up to this point. I sum it up as
 "a much smarter autocomplete".
 
 Things changed quite radically a few weeks ago when I decided to try coding
-agents again. I say again because I had tried a few at the end of the summer of 2025. At the time, nothing impressed me. Then at the end of January 2026, I
+agents again. I say again because I had tried a few at the end of the summer of
+2025. At the time, nothing impressed me. Then at the end of January 2026, I
 downloaded [opencode](https://opencode.ai/), hooked my
 [[DeepSeek](https://chat.deepseek.com)
 api](<https://api-docs.[deepseek](https://chat.deepseek.com).com/>) keys and
@@ -92,7 +93,7 @@ me try to give this some structure in the next paragraph.
 
 It's time to make something clear: I don't vibe code. Where the definition of
 vibe coding is: "I ship code without looking at it". Now, to be fair, I've
-managed a lot of vibe coders in my career. People that ship code that I would
+ managed a lot of vibe coders in my career. People that ship code that I would
 barely consider a draft so I think the tooling here is acting as an amplifier.
 Having said that, I'm in also in that weird spot where I don't trust vibe coders
 at all but also those who say "I don't use any AI in my programming tasks"
@@ -376,28 +377,57 @@ with the rest of the product development value chain. I suppose that's what
 [entire.io](https://entire.io) wants to do. I have similar ideas but I don't
 have 60 millions 😉.
 
-As I mentioned before, I do believe we're all assembly programmers. Every
-language feels low level now to me because, well, I can go from how I imagine
-something should work to the thing being in production without typing. So the
+As I mentioned before, I do believe we're all assembly programmers and, maybe
+the only actual "bold prediction" I'll make in this article, we're going to see
+new, higher level, languages come out in the next few years. Every existing
+language feels kinda low level now because, well, you can go from how you
+imagine something should work to the thing being in production without typing
+once. That makes you feel you're not so attacked to syntax anymore. So the
 question is how does an "AI native" language look like? I'm [not the only
 one](https://lucumr.pocoo.org/2026/2/9/a-language-for-agents/) asking this
-question.
+question. I have some guesses and some biases but that's probably good content
+for a different article.
 
 ## How do I feel about it
 
-Very interesting concept I already feel it: [Jeremy \(@jeremytwei\) 324 likes ·
-10 replies](https://x.com/jeremytwei/status/2015886793955229705?s=20)
-“comprehension debt”. Fantastic.
+I thought I'd conclude this article writing about my (our?) emotional state
+toward this mess we're in.
 
-- Emotionally as soon as you let go of the need to type, you realise that only
-  the fun part of the job is staying: the beauty of imagining a solution.
-  Thinking bing doesn’t tire you or scare you because there’s a lot less effort
-  into actually producing the result. It ain’t perfect. Far from it. But you can
-  already see a future where you can just talk to your agent about code. You
-  don’t even need to see it anymore.
+Let's get on with the most obvious, jarring question: will we have a job in a
+few years? Assuming that no one actually knows the answer there's a couple of
+things I want to say here because I don't seem them mentioned often enough.
 
-- Emotionally, it’s also easier to take design decisions. I’ve always had a
-  personal answer between two but more than often I’d refrain from stating
-  clearly because, unfortunately, I was almost always leading the team having
-  such a conversation. Saying “A”. Not even saying “A is better” feels way too
-  good not to say something about me.
+The bad part: the number of available jobs is bound to go down. At least
+for a while, maybe quite a while if you take into account the geopolitical
+implications of the AI race which... we shouldn't do this here otherwise this
+article will be a book by the time I'm done. The reason is unfortunately obvious
+in my opinion. Imagine CEOs, especially in western cultures, hear developers all
+over the place say "OMG man this AI stuff is amazing, we don't need to type
+anymore we can focus on the good stuff". Well your avg John Smith CEO is going
+to hear "I don't need developers anymore". In fact, I think this is already
+happening.
+
+Now I don't want to speculate too much in this context (I'll write more on this
+if asked to) but I believe we'll reach a critical mass of [comprehension
+debt](https://x.com/jeremytwei/status/2015886793955229705) and then realise we
+need to slow down and hire again. There's a lot more to say about this but,
+again, wrong place. The TLDR is: it'll get worse, probably much worse, before it
+gets better again. And, anyway, we've been way too privileged in our profession.
+We do deserve the pain now.
+
+The good part: honestly it's wild I don't see people mentioning this more often
+but, really, the job was never about typing? Typing was always the most tedious,
+error-prone part of the job. As soon as you let go of the need to type, aka your
+ego of being fully in charge of the process, you realise that only the fun part
+of the job is staying: the beauty of imagining a solution and seeing it come
+together.
+
+More fun: thinking big doesn't tire you or scare you that much anymore because
+there's a lot less effort into actually producing the artifact. Yes, it's not
+perfect. Far from it. But I can see a future where you can just talk to your
+agent about code like they're sitting next to you.
+
+My conclusion at the time of writing is that AI tooling is the biggest change in
+for programmers since the introduction of C. It's wild and crazy and scary and
+fun but I'm grateful I'm around for this. If you made it this far, thank you! I
+hope you get to enjoy this ride as much as I am.
