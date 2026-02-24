@@ -292,27 +292,25 @@ Hence the next paragraph.
 As I said, no reason to believe we're ever going to back to manually typing out
 code. In fact, to make this point I often find myself telling people "we're all
 assembly programmers now". What I mean is that most of our tooling is built for
-a process that is disappearing quite quickly.
+a process (typing) that is disappearing quite quickly.
 
-Here's an example: after a long planning session with the agent (I literally
-have the agent to interview me in depth), I ask the agent to write the plan into
-a markdown file and have the agent track progress with a plain txt file.
+Here's an example: after a long planning session with the agent (I have the
+agent to interview me in depth for larger features), I ask the agent to write
+the plan into a markdown file and have it track progress with a plain txt file.
 [AiHero](https://www.aihero.dev/) taught me this approach. It's stupidly simple
 and works quite well in practice but, let's be honest, this isn't tooling. This
 is us coping with the reality we do not need to type out code any longer _and_
-the tooling is deficient. The biggest challenge is that, wherever you look, the
-tooling is deficient. Just have a look at the kind of insanity popular open
-source projects are dealing with at the moment.
+the tooling is deficient.
 
 I have no long-term answers to this but I'm sure I'll come back to tooling in my
 articles in the future many times (I can see myself writing some of this
 tooling...) but I do want to share how I'm coping with some obvious deficiencies
 of early 2026 automatic programming.
 
-Let's proceed with the most obvious bit: the output may or may not be great. In
-my experience, there's considerable variance and probably too many reasons why
-the output quality varies so badly. Even in the most mundane tasks, the agents
-are often messy:
+Let's proceed with the most obvious bit: the output produced by the agent may or
+may not be great. In my experience, there's considerable variance and probably
+too many reasons why the output quality varies so badly. Even in the most
+mundane tasks, the agents are often messy:
 
 - They leave dead code around all the time.
 - They don't do any gardening even the most obvious.
@@ -321,15 +319,15 @@ are often messy:
   solution.
 
 In short, they don't do any design and they don't care. They're pretty much the
-worst programmer you worked with that instead of showing up half naked and drunk
-at work (true story...), they just can't ever stop typing. It's easy to forget
-they're not smart at all because we, the humans, experience "intelligence" via
-language and these models are very good at mimicking language. But of course
-they've got no clue which part of your system needs to change soon because you
-have to accommodate for that upcoming feature. They're glorified, stupidly
-resource hungry parrots so the design is up to you.
+worst programmer you worked with. But instead of showing up half naked and drunk
+at work (true story...), they just can't ever stop typing random code. It's easy
+to forget they're not smart at all because we, the humans, experience
+"intelligence" via language and these models are very good at mimicking
+language. But of course they've got no clue which part of your system needs to
+change soon because you have to accommodate for that upcoming feature. They're
+glorified, stupidly resource hungry parrots so the design is up to you.
 
-The way I approach this mess is by trying my best to mitigate risk from both sides of
+The way I approach this mess is by trying to mitigate risk from both sides of
 the production process.
 
 _Before_ the agent produces any code, I try my best to give it enough context so
@@ -343,43 +341,42 @@ right now:
   [aihero.dev](https://www.aihero.dev/a-complete-guide-to-agents-md#use-progressive-disclosure)
   taught me that) does make rules much more effective. Having said that, they're
   still hit and miss. For example, I really can't stand the comments models
-  produce so I have shouting rules about it. The comments are almost gone but
-  not totally gone.
-- [Context7](https://context7.com/dashboard) mcp clearly improves the quality of
-  the output of most code. Especially in TypeScript. I do have to remind the
-  agent with "use context7 for api docs" often enough.
+  produce so I have shouting rules about it. The comments are almost totally
+  gone.
+- The [Context7](https://context7.com) mcp improves the quality of most code.
+  Especially in TypeScript. I do have to remind the agent with "use context7 for
+  api docs" often enough.
 - Planning first then building obviously leads to higher quality output. But
-  even here I'm quickly developing an intuition for situation in which I think
+  even here I'm quickly developing an intuition for situations in which I think
   the plan means something and the agent understands something else. So I ask
-  the agent for a bit more details. By default my instructions for planning are
-  something along the lines of "be super brief".
+  the agent for a bit more details sometimes as my default instructions for
+  planning are something along the lines of "be super brief".
 
-As for what happens after the agent produces any code, the key improvement is somewhat
-obvious: what's the automated feedback process you have in place you can use to
-check your codebase after you make a change?
-
+As for what happens after the agent produces any code, the key improvement is
+somewhat obvious: the automated feedback process you have in place you can use
+to check your codebase after you make a change needs to be as good as possible.
 To me, this is the main argument in favour of "ai tooling amplifies your
 fundamentals". The more your codebase speaks you to, the less mistakes the
-agents make. How talkative your codebase is depends entirely on you. Here's some
+agents make. And how talkative your codebase is entirely on you. Here's some
 obvious things:
 
 - Statically typed languages are better (if this annoys you, you should know
-  it's the reason why I wrote it this way) because the compiler... speaks a lot.
+  it's the reason why I wrote it this way) because the compiler speaks a lot.
 - Tests that actually test things are very very helpful because they break when
   you actually break something.
 - Aggressive automated linting also speaks a lot.
+›
+I found that being super explicit with the agent at every step (think like "when
+you're done, run this command to check your work) greatly improves the quality
+of your automated typing.
 
-So I found that being super explicit with the agent at every step (think like
-"when you're done, run this command to check your work) greatly improves the
-quality of your automated typing.
-
-This conversation makes me think we've got to rethink the tooling from the
-ground up. Right now we're using the agents to automatically type all of our
-code but there's no integration with the rest of the tool chain. More than once
-I've already found myself thinking I should automate the commit process
-completely so that I can have the agent automatically add context for itself as
-metadata in in each commit. Not to mention a bit more of a vertical integration
-with the rest of the product development value chain. I suppose that's what
+This conversation makes me think we need to rethink the tooling from the ground
+up. Right now we're using agents to automatically type all of our code but
+there's no integration with the rest of the tool chain. For example, I've
+already found myself thinking I should automate the commit process completely so
+that I can have the agent automatically add context for itself as metadata in in
+each commit. Not to mention a bit of a vertical integration with the rest of the
+product development value chain. I suppose that's what
 [entire.io](https://entire.io) wants to do. I have similar ideas but I don't
 have 60 millions 😉.
 
@@ -403,33 +400,33 @@ Let's get on with the most obvious, jarring question: will we have a job in a
 few years? Assuming that no one actually knows the answer there's a couple of
 things I want to say here because I don't seem them mentioned often enough.
 
-The bad part: the number of available jobs is bound to go down. At least
-for a while, maybe quite a while if you take into account the geopolitical
-implications of the AI race which... we shouldn't do this here otherwise this
-article will be a book by the time I'm done. The reason is unfortunately obvious
-in my opinion. Imagine CEOs, especially in western cultures, hear developers all
-over the place say "OMG man this AI stuff is amazing, we don't need to type
-any more we can focus on the good stuff". Well your avg John Smith CEO is going
-to hear "I don't need developers any more". In fact, I think this is already
-happening.
+The bad part: the number of available jobs is bound to go down. At least for a
+while, maybe even quite a while. Especially if you take into account the
+geopolitical implications of the AI race which... we shouldn't do this here
+otherwise this article will be a book by the time I'm done. The reason is
+unfortunately obvious in my opinion. Imagine CEOs, especially in western
+cultures, hear developers say "OMG man this AI stuff is amazing, we don't need
+to type any more. We can finally focus on the good stuff!". Your avg John Smith
+CEO is going to hear "I don't need developers any more". In fact, this is
+already happening.
 
 Now I don't want to speculate too much in this context (I'll write more on this
 if asked to) but I believe we'll reach a critical mass of [comprehension
 debt](https://x.com/jeremytwei/status/2015886793955229705) and then realise we
 need to slow down and hire again. There's a lot more to say about this but,
-again, this is wrong article. The TLDR is: it'll get worse, probably much worse,
-before it gets better again. And, anyway, we've been way too privileged in our
-profession. We do deserve the pain now.
+again, this wrong article. The TLDR is: it'll get worse, probably much worse,
+before it gets better again. Anyway, we've been way too privileged in our
+profession. We do deserve the pain.
 
-More bad: this is hilariously because in theory it's a good thing but in
-practice it's not. In the past two months I have had some of the most fun
-programming sessions of my life. How is this bad? Well, it's way too addictive.
-I have not figured out how to deal with this in a structured way so right now
-I'm dealing it by forcing myself to do something else. I think I know why it's
-so addictive: the flow state you reach when going back and forth with the agent
-for a while is "purer" than your average programming session. It makes sense to
-me: you're operating at a higher level. It's closer to actual thought than
-typing them down. It feels good but it also makes you tired faster.
+More bad: this is hilarious because in theory it's a good thing but in practice
+it's not. In the past two months I have had some of the most fun programming
+sessions of my life. How is this bad? Well, it's way too addictive. I have not
+figured out how to deal with this in a structured way so right now I'm dealing
+it by forcing myself to do something else. I think I know why it's so addictive:
+the flow state you reach when going back and forth with the agent for a while is
+"purer" than your average programming session. It makes sense: you're operating
+at a higher level. It's closer to actual thinking. It feels good but it also
+makes you tired faster.
 
 The good part: honestly it's wild I don't see people mentioning this more often
 but, really, the job was never about typing? Typing was always the most tedious,
