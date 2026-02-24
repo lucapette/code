@@ -11,161 +11,163 @@ draft: true
 
 AI grew on me slowly at first and then very quickly: in the past 8 weeks my
 programming workflow has changed more than the past 20 years put together. I do
-know this sounds like an exaggeration but it is true. In fact that's the primary
-reason I'm writing this article: I'm just trying to make sense of this mess.
+know this sounds like an exaggeration but it is true. In fact, that's the reason
+I'm writing this article: I'm just trying to make sense of this mess.
 
 Before I dive into this, let's go over some basic premises.
 
 First of all, I'm specifically talking about AI tooling for developers in this
 article and, while I also use a lot AI chats
 ([DeepSeek](https://chat.deepseek.com) with search is my thing), my personal
-workflow has not changed that radically yet. I say yet because I literally got
-interrupted by the postman while writing this article as he kindly delivered a
-tiny sipeed LicheeRV Nano. I have a bunch of ideas I want to test with
-[picoclaw](https://github.com/sipeed/picoclaw). If that leads to a change
+workflow has not changed that radically yet. I said yet because I just got a
+sipeed LicheeRV Nano. I have a bunch of ideas I want to test with
+[picoclaw](https://github.com/sipeed/picoclaw) abd If that leads to a change
 anywhere close to the one I just went through as a programmer, you can expect a
-"life at the age of ai" article in a couple of weeks.
+"life at the age of ai" article in a few weeks.
 
-Another maybe less obvious premise: No one knows what's going on or how
-programming will look like next year, let alone in 5 years or a decade. So
-writing is a mitigation function: writing is how I deal with uncertainty. To be
-clear, I'm not trying to tell you what to use, how to use it, or if you'll have
-a job or not in a few years (although I do have opinions on this and will touch
-upon it). I'm just trying to make sense of this mess (yes, that's gonna be a
-recurring theme).
+Then, let's be honest about this, no one knows what's going on or how
+programming will look like next year, let alone in 5 years or a decade. Those
+who say they do are the ones that understand this the least. So writing about
+this is a mitigation function: it's is how I deal with uncertainty. To be
+extra-clear, I'm not going to tell you what to use, how to use it, or if you'll
+have a job or not in a few years; although I do have opinions on this and will
+briefly touch upon it. I'm just trying to make sense of this mess by going over
+what has changed for me and how I'm dealing with it.
 
-Lastly, inspired by Mitchel Hashimoto in [My AI Adoption
-Journey](https://mitchellh.com/writing/my-ai-adoption-journey) (worthy read!), a
-necessary disclaimer:
+Lastly, inspired by Mitchel Hashimoto worthy read [My AI Adoption
+Journey](https://mitchellh.com/writing/my-ai-adoption-journey), a necessary
+disclaimer:
 
 {% message "is-warning" %}
 
 This article was entirely hand-written by me. In fact, I have a whole editor
-setup with no integrations, plugins, etc. to avoid even the temptation of using
-AI for my writing. There should be no need to say this, but I know there is.
+setup with no integrations, plugins, etc. to avoid even the temptation and the
+distraction of using AI for my writing. There should be no need to say this, but
+I know there is.
 
 {% endmessage %}
 
 ## What changed
 
-Let's start by addressing the genuinely insane claim I made in the opening
-paragraph of the article: my workflow has changed more in the past 8 weeks than
-in the past 20 years.
+At first, say mid 2023, I had some pretty mixed results with AI tooling. I used
+github copilot for a while with then moved on to jetbrains AI offering. Some of
+it was excellent, and it was improving so quickly I had already to say "there's
+no way back from this". Especially the autocompletion stuff, truly excellent
+results. But none of this lead to a radical change to the way I approach code.
+It felt very much incremental change up to this point.
 
-I also said AI grew slowly on me and that's because in the past two years, I've
-had mixed results with ai tooling. I've used github copilot for a while with
-then I moved on to jetbrains ai offering. Clearly there was some excellent stuff
-into this tooling but no radical change to the way I actually approach code
-every day. It felt very much incremental change up to this point. I sum it up as
-"a much smarter autocomplete".
-
-Things changed quite radically a few weeks ago when I decided to try coding
-agents again. I say again because I had tried a few at the end of the summer of
-2025. At the time, nothing impressed me. Then at the end of January 2026, I
-downloaded [opencode](https://opencode.ai/), hooked my
+Things changed quite radically a few weeks ago when I gave coding agents a try
+again. I say again because I had tried a few at the end of the summer of
+2025. At the time, nothing impressed me about it. Then at the end of January
+2026, I downloaded [opencode](https://opencode.ai/), hooked my
 [DeepSeek](https://chat.deepseek.com) API keys and gave it a try.
 
-The rest of this story feels like magic: without even realising it, I almost
+The rest of this story feels like magic: without realising it, I almost
 _completely_ stopped writing code manually. It happened so quickly I realised
 this was the case only when a friend asked me about how I had integrated
-opencode with IntelliJ (I didn't). I'll dig more into this in a minute because
-there's a lot to say but let me put this differently: a tool I never used
-before, a tool that is not even a year old has got me to a place where I almost
-type no code myself in less than a month. Nonsense.
+opencode with IntelliJ (I had not!). I'll dig more into this in a minute because
+there's a lot to say but let me put this differently for a bit of perspective: a
+tool I had never used before, a tool that is not even a year old got me to a
+place where I almost type no code myself in less than a month. Nonsense.
 
-Why it happened is key: the tooling produced _usable_ output from the get-go. I
-said usable because most of what I can extract from these [automatic
-programming](https://antirez.com/news/159) sessions is nowhere near to what I
-consider production grade code. But the point is that it's almost always usable
-and therefore I can iterate on in to get it quickly to get it into production
-grade code.
+Why it happened is key: the tooling produced _usable_  and coherent output from
+the get-go. I said usable because most of what I can extract from these
+[automatic programming](https://antirez.com/news/159) sessions is nowhere near
+to what I consider production grade code. The point though is that it's almost
+always usable so I can iterate on in quickly to get production grade code out of
+the agent work.
 
-In short, what changed is conceptually very small: I just don't type much code
-anymore. In the past few weeks, I asked myself if I still need a fully-featured
-editor more than once which, honestly, is quite disorienting as a programmer.
-This conceptually tiny change in my workflow has all kinds of implications so
-let me try to give this some structure in the next paragraph.
+In short, what changed is conceptually very small: I just don't type code
+anymore. In the past few weeks, I've asked myself more than once if I still need
+a fully-featured editor. Honestly disorienting question as a programmer.
+
+This conceptually tiny change to my workflow has had all kinds of implications
+on how I do things now. So let me try to give this some structure to that in the
+next paragraph.
 
 ## How it changed
 
 It's time to make something clear: I don't vibe code. Where the definition of
-vibe coding is: "I ship code without looking at it". Now, to be fair, I've
-managed a lot of vibe coders in my career. People that ship code that I would
-barely consider a draft so I think the tooling here is acting as an amplifier.
-Having said that, I'm in also in that weird spot where I don't trust vibe coders
-at all but also those who say "I don't use any AI in my programming tasks"
-because I do know how helpful the tooling is now if you know how to leverage it.
+vibe coding is: "I ship code without looking at it". Now, to be fair, I managed
+many vibe coders in my career. People ship code that I would barely consider a
+draft so I think the tooling here is only acting as an amplifier of pre-existing
+(or lack of) fundamentals. Having said that, I'm in also in that weird spot
+where I don't trust vibe coders at all but also those who say "I don't use any
+AI in my programming tasks" because I do know how helpful the tooling is now if
+you know how to leverage it. Be aware though: I'm not trying to say "I'm better
+than those who vibe code" (I know you internet strangers, that's what you're
+thinking right now), I'm underlining that my goals as a programmer have not
+changed. I do care about the craft as much as I did 8 weeks ago so I'm not gonna
+ship code I don't understand or, worse, haven't even read. I get why some (most?
+honestly I can't tell) vibe code all day. I don't judge but I also don't share
+the approach.
 
-Be aware though: I'm not trying to say "I'm better than those who vibe code" (I
-know you internet strangers, that's what you're thinking right now), I'm
-underlining that my goals as a programmer have not changed. I do care about the
-craft as much as I did 8 weeks ago so I'm not gonna ship code I don't understand
-or, worse, haven't even read. I get why some (most? honestly I can't tell) vibe
-code all day. I don't judge but I also don't share the approach.
+The point is that this conversation around what changed only makes sense if you
+don't vibe code either. "What now that we don't need to type code any longer?"
+is a relevant question only if you'd rather know what you're shipping. If that's
+the case, then this workflow poses several questions and I will try to answer
+some. Otherwise, I'm afraid this whole article won't resonate much with you.
 
-The point I'm trying to make is that this whole conversation around "what now
-that we don't need to type code any longer?" only makes sense if, as a
-programmer, you'd rather know what you're shipping. If that's the case, then
-this workflow poses several questions.
+The craft has not changed structurally. One small but time-consuming piece of
+the puzzle got much much faster: we've got much much faster horse now and if you
+had to go from A to B a much much faster horse would only get you from point A
+to point B several times quicker than your average horse. The questions around
+your trip wouldn't change: do I know where B is? Is B the right place? Should I
+have been in A in the first place?
 
-The tooling does feel a lot like a much much faster horse to me. The craft as a
-whole has not changed but one small, but time-consuming, piece of the puzzle got
-much much faster, hence a much much faster horse. If you had to go from A to B a
-much much faster horse would only get you from point A to point B several times
-quicker than your average horse. The structural questions around your trip
-wouldn't change: do I know where B is? Is B the right place? Should I have been
-in A?
-
-Now that the ai tooling is so good, I've got to answer these structural
+Now that the AI tooling is so good, I've got to answer these structural
 questions a lot more often than I did before because I waste no time typing
-code. In fact, I type no code. This is an enormously deceptive change. On one
-side, it simplified the job very much. There's a whole category of tasks I don't
-have to deal with. Opening files, browsing around just to type one line, make
-some stupid change because some library api has decided to change their public
-interface for no reason. All of this is taken care by a tool that never gets
-tired, never gets annoyed, very rarely gives up (yeah some models actually do
-that!). On the other hand though, this change exposes the weakness of your
-fundamentals much faster. Now more than ever small commits, solid testing, a
-sound understanding of how different components of a system interact and depend
-on each, all the professional practices are more needed than ever. It should be
-obvious really: we can all produce much much more code, very very quickly. So
-everything gets amplified.
+code. In fact, I type no code.
+
+This is an enormously deceptive change. On one side, it simplified the job very
+much. There's a whole category of tasks I don't have to deal with. Opening
+files, browsing around just to type one line, make some stupid change because
+some library api has decided to change their public interface for no reason. All
+of this is taken care by a tool that never gets tired, never gets annoyed, very
+rarely gives up (yeah some models actually do that!). On the other hand though,
+this change exposes the weakness of your fundamentals much faster. Now more than
+ever small commits, solid testing, a sound understanding of how different
+components of a system interact and depend on each and all the professional
+practices you're familiar with are more needed than ever before. It should be
+obvious really: we can and are producing a lot more code at an increasingly
+higher pace. Everything gets amplified.
 
 When I first started using opencode on a daily basis, I made many obvious
-mistakes (obvious in retrospect that is) and found myself nowhere close to where
-I wanted to go. It's like learning to drive a car when you only know how to ride
-a horse. Which makes the famous quote kinda funny, doesn't it? A car _is_ a much
-much faster horse. That's my point. The best part: the quote is fake. I feel
+mistakes (obvious in retrospect that is) and often found myself nowhere close to
+where I wanted to go. In a way, itt's like learning to drive a car when you only
+know how to ride a horse which makes the famous quote kinda funny, doesn't it? A
+car _is_ a much much faster horse. That's the point I'm trying to make. That's
+how it changed in my opinion. The best part of this: the quote is fake. I feel
 like there's another AI metaphor in that. But I digress.
 
 Shipping code without typing any of it requires a very different modus operandi.
 The challenge is that it's somewhat easy (maybe even natural) to reach flow
 state while typing code. The workflow is also very rewarding: you write code,
 you test, you ship. A very addictive loop. Programming with a coding agent is a
-whole different world. First of all, you're operating at a different level since
-your output as a programmer is mostly plain English. There's also no effort in
-producing code. You're not typing after all. I understand this may sound obvious
-but the lack of effort is critical: it makes it so much harder emotionally to
-reach flow state. It's half the excitement of not having to do the typing
-yourself, half the fact that you're not used to just reading code as a
-programmer.
+whole different game. First of all, you're operating at a "new" level since your
+main output as a programmer is mostly plain English. You write prompts now.
+There's also no active effort in producing code. You're not typing after all. I
+understand this may sound obvious but the lack of effort in the producing step
+is critical: it is so much harder emotionally to reach flow state. It's half the
+excitement of not having to do the typing yourself, half the fact that you're
+not used to just being a reader a programmer. The writer part is gone.
 
 Furthermore, large features take some time for the agents too so you can't stay
 around and stare at their work. I mean... you can, and I don't judge, but I
 surely can't reach flow state that way so this requires a different strategy.
 
-Before I explain that, let me share more details on how my programming sessions
-look nowadays. In short, I'm either:
+Before I explain my strategy, let me share more details on how my programming
+sessions look nowadays. In short, I'm either:
 
-- Planning a new feature with my agent in a new session.
+- Planning a new feature with my agent.
 - Reading the code the agent produced in my editor.
-- Quick-fixing things within an existing session with my agent.
+- Quick-fixing things with my agent.
 
-At a glance the most noticeable thing is that I spend 2/3 of my programming time
-inside opencode. Again, and I can stress this enough, I started using opencode
-less than two months ago.
+At a glance the most noticeable thing is that now I spend two thirds of my
+programming time inside opencode. Again, and I can stress this enough, I started
+using opencode less than two months ago.
 
-This approach is a child of trial and error sessions that are too tedious to
+This approach is a child of a trial and error process that is too tedious to
 explain and definitely not interesting to read. What matters is that this
 workflow gives me two things:
 
@@ -174,112 +176,116 @@ workflow gives me two things:
 - I move significantly quicker than I did before.
 
 I discussed that the first point is currently a red line for me (I say currently
-because who knows what programming will look like in 5 years right now?) so
-let's go over speed. Measuring productivity is some tricky business because it's
+because who knows what programming will look like in 5 years, right?) so let's
+go over speed. Measuring productivity is some tricky business because it's
 obviously hard to quantify and most, if not all, KPIs (like pull requests
-opened, lines of code, commits) make no sense at all. Fortunately, I'm a
-freelancer so I have quite a tight relationship with time as a professional
-since (not my choice) I charge my customers mostly by the hour.
+opened, lines of code, commits) make no sense. Fortunately, I'm a freelancer so
+I have quite a tight relationship with time as a professional since (not my
+choice) I charge my customers mostly by the hour.
 
 What I'm trying to say is that I can see my speed has changed significantly
 (which, short-term, may even be detrimental to my business. See why I don't like
-charging by the hour? It's a dumb incentive structure for both parties). I won't
-be putting a number on it because that makes no sense to me. What I can do
+charging by the hour? It's a dumb incentive structure for both parties...). I
+won't be putting a number on it because that makes no sense to me. What I can do
 though is to share examples of how my productivity has changed and what the
 tooling has unlocked.
 
 This may feel like a big detour from explaining my strategy to reach flow state
-but, in fact, increased productivity is a direct consequence of struggling to
-find flow state again.
+but, in fact, increased productivity is a direct consequence of the initial
+struggle to find flow state again.
 
 What I do is this: I run concurrent sessions in my coding agent. Key point: the
-sessions I work with are in completely different stage, often they're also from
-different projects. There are always a couple of sessions that I know will take
+sessions I work with are in completely different stages, often even from
+different projects. I always have a couple of sessions that I know will take
 some time. That gives me the opportunity to do a few things:
 
 - I can batch "reading time". I literally get into my editor and just read the
   code for a while. I often leave TODOs around. They're almost like mini prompts
   now. Funny (?) note: while writing this, I realised this is the _only_ typing
   I've done inside a coding editor in the past 2 months.
-- I spend much more time thinking about how I want a feature to look like.
-  Before I used to feel I was often rushing into a solution too early. I know
-  some (most?) of you would argue this is what makes TDD so helpful but that
-  never made sense to me, in fact writing the tests first always felt like
-  rushing into a specific design even earlier. In planning mode I do _not_ want
-  to think how the code looks like. Not being in the editor staring at a test
-  spec is a feature, not a bug. It allows me to operate at a more humane level.
-  This may as well be the most important point of the whole article: I now have
-  a planning tool I can use while in flow state. As a programmer, no tool was
+- I can spend much more time thinking about how I want a feature to look like.
+  In my allotted time for work, I don't have to budget typing! Before this, I
+  used to feel I was often rushing into a solution too early. I know some
+  (most?) of you would argue this is what makes TDD so helpful but that never
+  made sense to me, in fact writing the tests first always feels like rushing
+  into a specific design even earlier. In planning mode, I do _not_ want to
+  think how the code looks like so not being editor staring at a test spec is a
+  feature, not a bug. It allows me to operate at a more humane level. This may
+  as well be the most important point of the whole article: I now have a
+  planning tool I can use while I am in flow state. As a programmer, no tool was
   ever any good for planning and designing features for me.
-- I can choose to reward myself with a session of rapid fixes when I feel the
-  code base is drifting a bit. These sessions feel very very good: I can focus
-  on what to fix. I tell the agent exactly what I want. They're very good at
-  tiny fixes. A ton of tiny incremental changes in rapid succession are such a
-  gift to my mood during longer sessions.
+- I can reward myself with a session of rapid fixes when I feel the code base is
+  drifting a bit. These sessions feel very very good: I can focus on what to
+  fix. I tell the agent exactly what I want. They're very good at tiny fixes. A
+  ton of tiny incremental changes in rapid succession are such a gift to my mood
+  during longer sessions.
 
 Constantly switching, _when I want to switch_, between reading, quick fixing,
 and planning is what keeps me in flow state. Of course this works for me because
-I'm quite good at context switching. Maybe that's the best consequence of having
-been a manager so often in my career. I doubt this would work for me otherwise.
-And I have no clue if I had any answer on how to deal with the lack of flow
-state.
+I'm quite good at context switching. That's the best consequence of having been
+a manager so often in my career and I doubt this strategy would work for me
+otherwise. And I have no clue if I had any answer on how to deal with the lack
+of flow state.
 
 So, right now, you may be asking yourself "but Luca what's the gain in speed
 look like?". Well that's the thing: in order to reach flow state I have to force
-myself to work on more than one project at the same time. This used to be
-detrimental to my ability to keep up the quality of a codebase and now is
-instead very productive. It has allowed me, for example, to complete some
-personal projects I've been putting aside for years (almost a decade really) in
-a matter of days while not skipping one bit on my clients' projects.
+myself to work on more than one thing at the same time. This used to be
+detrimental to my ability to keep up the quality of a codebase and now it is
+instead necessary to ensure my productivity. Context-switching a lot has allowed
+me, for example, to complete some personal projects I've been putting aside for
+years (almost a decade really) in a matter of days while not skipping one bit on
+my clients' projects.
 
-The article you're reading is now on a [11ty.dev](https://11ty.dev) website. I
-migrated away from [hugo](https://gohugo.io), merged my notes website into this
-one, moved the code into a monorepo in two days while being high on pain because
-of an extremely annoying health problem _and_ working regularly for my clients.
-Also, I wrote literally zero lines of code for this. It's quite remarkable. This
-migration may have taken weeks otherwise (which is why I've been meaning to do
-it for years but never did). Automatic programming allowed me to do this without
-almost noticing. One evening I decided to give this migration a try, I launched
-opencode with [MiniMax](https://www.minimax.io/) and planned the whole
+For example, the article you're reading is now on a [11ty.dev](https://11ty.dev)
+website. I migrated away from [hugo](https://gohugo.io), merged my notes website
+into this one, moved the code into a monorepo in two days while being high on
+pain because of an extremely annoying health problem _and_ working regularly for
+my clients. Also, I wrote _zero_ lines of code for this migration. It's quite
+remarkable: this may have taken weeks otherwise which is why I've been meaning
+to do it for years but never didi. Automatic programming allowed me to do this
+without almost noticing. One evening I decided to give this migration a try, I
+launched opencode with [MiniMax](https://www.minimax.io/) and planned the whole
 migration. The plan was so solid it gave me the confidence to try right away.
-Two days after, I shipped the new website. I now have a much much faster horse
-and that changed the picture forever.
+Two days after that I shipped the new website.
 
 Another example of how my productivity increased: "write it twice" became so
 cheap I can do it all the time. "Write it twice" is my way of saying that, in
 order to achieve a great design, you have to solve a problem end to end just to
 understand whether you chose the right trade-offs, constraints, and so on. My
-experience has been that the first solution is always suboptimal. Therefore, the
-best design often comes from solving the same problem twice back to back. In
-practice, the dream strategy is to write a whole solution and then throw the
-code away to immediately start again. Then you'll design a system in a much more
+experience is that the first solution is always suboptimal. Therefore, the best
+design comes from solving the same problem twice back to back. The dream is to
+write a scoped but end to end solution only to throw the code away and then
+immediately start over. The second time you'll design a system in a much more
 conscious way: you understand trade-offs better, you know where you can cut
 corners and where you have to get it really right, you know what needs an
 extensive test suite... you get it.
 
 In the real world, you don't get many chances of experiencing this. In fact, the
 last time it happened to me it was at [airy](https://airy.co/), already almost a
-decade ago. The reason is obvious: it's often stupidly expensive to implement
-this strategy. Let's be honest like my friend
-[Thomas](https://www.linkedin.com/in/tenyako/) would say: "most times we just
-put our MVPs in production and forget they're MVPs".
+decade ago. In total, I got this chance in real world projects three times in
+two decades. The reason is obvious: it's often stupidly expensive to implement
+this strategy. Like my friend [Thomas](https://www.linkedin.com/in/tenyako/)
+would say: "most times we just put our MVPs in production and forget they're
+MVPs".
 
 In the past two months though, I "wrote it twice" more than once already. In one
 case (I can't really disclosure details as it's clients' work), I wrote a whole
-MVP in Golang and then threw it away to rewrite it TypeScript (which was a much
-better fit). This would have been a week long project because, well, we'd have
-to type all the code again, in a different language. Most likely, we would have
-just kept going with the suboptimal solution. Instead, knowing there was going
-to be no typing involved, I took all the specs, docs, types, tests along with me
-into a long (maybe a hour?) planning sessions in opencode to do a full rewrite
-and then had the agent go over each step of the plan under my active
-supervision. The rewrite became a detail.
+MVP in Go and then immediately threw it away to rewrite it TypeScript. This
+would have been a week long rewrite because, well, I'd have to type all the code
+again, in a different language too. Most likely, I would have just kept going
+with the suboptimal solution. Instead, knowing there was going to be no typing
+involved, I took all the specs, docs, types, tests along with me into a long
+(maybe a hour?) planning session in opencode to do a full rewrite and then had
+the agent go over each step of the plan under my active supervision. The rewrite
+became a detail.
 
 I could make more examples but it's pointless in a way because I know most would
 just want me to say something dumb like "I'm 2.7x faster" but I'm not gonna play
-that game. What I know for sure is that there's no going back to manually type
-out code like a caveman. It's a question of what should we do about it. Hence
-the next paragraph.
+that game. I can image some would say I executed this migration 5x faster than I
+would have without AI tooling. It's true but this isn't a valuable general
+number is it? What I know for sure is that there's no going back to manually
+type out code like a caveman. It's a question of what should I do about it.
+Hence the next paragraph.
 
 ## What am I doing about it
 
