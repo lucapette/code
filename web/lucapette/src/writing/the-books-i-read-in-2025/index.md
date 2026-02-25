@@ -5,8 +5,6 @@ date: 2026-01-03T23:21:38+01:00
 tags:
   - books
 keywords: lucapette, books
-images:
-  - cover.jpg
 ---
 
 I've been debating with myself if writing about the books I read in this

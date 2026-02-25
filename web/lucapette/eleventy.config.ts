@@ -7,6 +7,12 @@ import {
 } from "./src/_filters/date.js";
 import { asset } from "./src/_filters/asset.js";
 import {
+  coverImageFilter,
+  coverImageWebp,
+  coverImageJpeg,
+  hasCover,
+} from "./src/_filters/coverImage.js";
+import {
   writings,
   writingsByYear,
   favouriteWritings,
@@ -58,6 +64,10 @@ export default function (eleventyConfig: EleventyConfig) {
   eleventyConfig.addFilter("formatDateShort", formatDateShort);
   eleventyConfig.addFilter("dateToRfc3339", dateToRfc3339);
   eleventyConfig.addFilter("asset", asset);
+  eleventyConfig.addFilter("coverImage", coverImageFilter);
+  eleventyConfig.addFilter("coverImageWebp", coverImageWebp);
+  eleventyConfig.addFilter("coverImageJpeg", coverImageJpeg);
+  eleventyConfig.addFilter("hasCover", hasCover);
 
   eleventyConfig.addPreprocessor("drafts", "md,liquid", drafts);
 

@@ -1,4 +1,4 @@
 export default {
-  url: "https://lucapette.me",
+  url: process.env.NODE_ENV === "production" ? "https://lucapette.me" : "",
   description: "Luca Pette's website",
 };

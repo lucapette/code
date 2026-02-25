@@ -5,8 +5,6 @@ date: 2022-12-27T08:41:06+01:00
 tags:
   - books
 keywords: lucapette, books
-images:
-  - cover.jpg
 ---
 
 I love reading _and_ I love writing so this kind of article should come natural

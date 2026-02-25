@@ -23,9 +23,11 @@
     content="{% if description %}{{ description | escape }}{% else %}{{ site.description }}{% endif %}"
   >
   <meta property="og:url" content="{{ site.url }}{{ page.url }}">
-  <meta property="og:type" content="{% if images %}article{% else %}website{% endif %}">
+  {% comment %} TODO this needs improvement (the section a better factor to determine type){% endcomment %}
+  {% assign has_cover = '' | hasCover %}
+  <meta property="og:type" content="{% if has_cover %}article{% else %}website{% endif %}">
   <meta property="og:site_name" content="Luca Pette">
-  {% if images %}
+  {% if has_cover %}
     <meta name="twitter:card" content="summary_large_image">
   {% else %}
     <meta name="twitter:card" content="summary">
@@ -36,9 +38,13 @@
     name="twitter:description"
     content="{% if description %}{{ description | escape }}{% else %}{{ site.description }}{% endif %}"
   >
-  {% if images %}
-    <meta property="og:image" content="{{ site.url }}{{ page.url }}{{ images[0] }}">
-    <meta name="twitter:image" content="{{ site.url }}{{ page.url }}{{ images[0] }}">
+  {% assign has_cover = '' | hasCover %}
+  {% if has_cover %}
+    {% assign webp_url = '' | coverImageWebp %}
+    {% assign jpeg_url = '' | coverImageJpeg %}
+    <meta property="og:image" content="{{ site.url }}{{ webp_url }}">
+    <meta property="og:image:secure_url" content="{{ site.url }}{{ jpeg_url }}">
+    <meta name="twitter:image" content="{{ site.url }}{{ webp_url }}">
   {% endif %}
   <link rel="stylesheet" href="{{ "css/main.css" | asset }}">
   {% if node_env != 'production' %}

@@ -5,8 +5,6 @@ date: 2025-02-01T23:21:38+01:00
 tags:
   - books
 keywords: lucapette, books
-images:
-  - cover.jpg
 ---
 
 A tradition is a tradition but there are a few reasons why I find myself sharing
