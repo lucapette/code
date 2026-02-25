@@ -1,12 +1,11 @@
 ---
 title: Programming in the age of ai
 description: or, as I like to call it, a much much faster horse
-date: "2026-02-21"
+date: "2026-02-25"
 tags:
   - ai
   - programming
 keywords: ai, programming
-draft: true
 ---
 
 AI grew on me slowly at first and then very quickly: in the past 8 weeks my
@@ -57,8 +56,7 @@ results. But none of this lead to a radical change to the way I approach code.
 It felt very much incremental change up to this point.
 
 Things changed quite radically a few weeks ago when I gave coding agents a try
-again. I say again because I had tried a few at the end of the summer of
-2025. At the time, nothing impressed me about it. Then at the end of January
+again. I say again because I had tried a few at the end of the summer of 2025. At the time, nothing impressed me about it. Then at the end of January
 2026, I downloaded [opencode](https://opencode.ai/), hooked my
 [DeepSeek](https://chat.deepseek.com) API keys and gave it a try.
 
@@ -70,7 +68,7 @@ there's a lot to say but let me put this differently for a bit of perspective: a
 tool I had never used before, a tool that is not even a year old got me to a
 place where I almost type no code myself in less than a month. Nonsense.
 
-Why it happened is key: the tooling produced _usable_  and coherent output from
+Why it happened is key: the tooling produced _usable_ and coherent output from
 the get-go. I said usable because most of what I can extract from these
 [automatic programming](https://antirez.com/news/159) sessions is nowhere near
 to what I consider production grade code. The point though is that it's almost
@@ -365,10 +363,10 @@ obvious things:
 - Tests that actually test things are very very helpful because they break when
   you actually break something.
 - Aggressive automated linting also speaks a lot.
-›
-I found that being super explicit with the agent at every step (think like "when
-you're done, run this command to check your work) greatly improves the quality
-of your automated typing.
+  ›
+  I found that being super explicit with the agent at every step (think like "when
+  you're done, run this command to check your work) greatly improves the quality
+  of your automated typing.
 
 This conversation makes me think we need to rethink the tooling from the ground
 up. Right now we're using agents to automatically type all of our code but

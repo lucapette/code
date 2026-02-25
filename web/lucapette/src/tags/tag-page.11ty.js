@@ -1,16 +1,4 @@
-interface TagPageData {
-  tag: string;
-  posts: {
-    url: string;
-    data: {
-      title: string;
-      tags?: string[];
-    };
-  }[];
-  title: string;
-}
-
-function getContentType(url: string): string {
+function getContentType(url) {
   if (url.startsWith("/writing/")) return "📝";
   if (url.startsWith("/notes/")) return "📋";
   return "";
@@ -24,22 +12,18 @@ export default {
         size: 1,
         alias: "tag",
       },
-      permalink: (data: { tag: string }) => `/tags/${data.tag}/`,
+      permalink: (data) => `/tags/${data.tag}/`,
       layout: "base.liquid",
       eleventyComputed: {
-        title: (data: { tag: string }) =>
-          data.tag.charAt(0).toUpperCase() + data.tag.slice(1),
-        posts: (data: {
-          collections: { tagPosts?: Record<string, TagPageData["posts"]> };
-          tag: string;
-        }) => {
+        title: (data) => data.tag.charAt(0).toUpperCase() + data.tag.slice(1),
+        posts: (data) => {
           const tagPosts = data.collections.tagPosts;
           return tagPosts ? tagPosts[data.tag] || [] : [];
         },
       },
     };
   },
-  render(data: TagPageData): string {
+  render(data) {
     const posts = data.posts || [];
     const postsHtml =
       posts.length > 0

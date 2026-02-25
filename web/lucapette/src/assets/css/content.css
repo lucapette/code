@@ -187,6 +187,15 @@ p code {
   gap: 0.5rem;
 }
 
+.content a {
+  color: light-dark(var(--black), var(--yellow));
+  text-decoration: underline;
+}
+
+.content a:hover {
+  color: var(--accent-color);
+}
+
 .tag {
   color: var(--link-color);
   white-space: nowrap;
