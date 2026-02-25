@@ -132,7 +132,7 @@ higher pace. Everything gets amplified.
 
 When I first started using opencode on a daily basis, I made many obvious
 mistakes (obvious in retrospect that is) and often found myself nowhere close to
-where I wanted to go. In a way, itt's like learning to drive a car when you only
+where I wanted to go. In a way, it's like learning to drive a car when you only
 know how to ride a horse which makes the famous quote kinda funny, doesn't it? A
 car _is_ a much much faster horse. That's the point I'm trying to make. That's
 how it changed in my opinion. The best part of this: the quote is fake. I feel
