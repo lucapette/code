@@ -1,26 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "provider": {
-    "qwen": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Qwen Coding Plan",
-      "options": {
-        "baseURL": "https://coding-intl.dashscope.aliyuncs.com/v1",
-        "apiKey": "{env:QWEN_API_KEY}"
-      },
-      "models": {
-        "qwen3-coder-plus": {
-          "name": "qwen3-coder-plus"
-        },
-        "qwen3-max-2026-01-23": {
-          "name": "qwen3-max-2026-01-23"
-        },
-        "qwen3.5-plus": {
-          "name": "qwen3.5-plus"
-        }
-      }
-    }
-  },
   "mcp": {
     "context7": {
       "type": "remote",

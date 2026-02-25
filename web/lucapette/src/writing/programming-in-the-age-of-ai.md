@@ -19,8 +19,8 @@ First of all, I'm specifically talking about AI tooling for developers in this
 article and, while I also use a lot AI chats
 ([DeepSeek](https://chat.deepseek.com) with search is my thing), my personal
 workflow has not changed that radically yet. I said yet because I just got a
-sipeed LicheeRV Nano. I have a bunch of ideas I want to test with
-[picoclaw](https://github.com/sipeed/picoclaw) abd If that leads to a change
+sipeed LicheeRV Nano. I have some ideas I want to test with
+[picoclaw](https://github.com/sipeed/picoclaw) and if that leads to a change
 anywhere close to the one I just went through as a programmer, you can expect a
 "life at the age of ai" article in a few weeks.
 
