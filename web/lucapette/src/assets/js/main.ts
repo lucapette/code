@@ -52,6 +52,7 @@ document.querySelectorAll("pre[class*='language-']").forEach((pre) => {
         selection.removeAllRanges();
         selection.addRange(range);
         try {
+            //TODO remove deprecated execCommand
           document.execCommand("copy");
           copyingDone();
         } catch (e) {
@@ -67,12 +68,12 @@ document.querySelectorAll("pre[class*='language-']").forEach((pre) => {
 });
 
 const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
-const navbarMenu = document.getElementById("navbar-menu");
+const navMenu = document.getElementById("nav-menu");
 
-if (mobileMenuToggle && navbarMenu) {
+if (mobileMenuToggle && navMenu) {
   mobileMenuToggle.addEventListener("click", function () {
-    const isOpen = navbarMenu.classList.contains("is-open");
-    navbarMenu.classList.toggle("is-open");
+    const isOpen = navMenu.classList.contains("is-open");
+      navMenu.classList.toggle("is-open");
     mobileMenuToggle.setAttribute("aria-expanded", String(!isOpen));
   });
 }

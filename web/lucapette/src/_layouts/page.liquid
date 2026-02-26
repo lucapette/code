@@ -5,8 +5,9 @@ layout: base.liquid
 {% assign isArticleStyle = date %}
 {% assign isNoteStyle = page.url contains '/notes/' and  date %}
 
-<section>
-  <h1 class="title">{{ title }}</h1>
+<article>
+    <header>
+        <h1 class="title">{{ title }}</h1>
 
   {% if showMeta %}
     <nav class="meta">
@@ -39,15 +40,19 @@ layout: base.liquid
     </nav>
     <hr>
   {% endif %}
+    </header>
 
-  <div class="content">
+
+  <section class="content">
     {{ content }}
-  </div>
-</section>
+  </section>
+</article>
+
 
 {% assign related = collections.relatedWritings[page.url] %}
 {% if related %}
-  <section>
+  <aside>
+      <hr>
     <h3 class="year">See also</h3>
     <ul class="feed">
       {% for item in related %}
@@ -59,7 +64,7 @@ layout: base.liquid
         </li>
       {% endfor %}
     </ul>
-  </section>
+  </aside>
 {% endif %}
 
 {% include 'copy-code.liquid' %}

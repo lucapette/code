@@ -1,126 +1,102 @@
-.wrap {
-  flex: 1 0 auto;
-  margin-left: auto;
-  margin-right: auto;
-  width: var(--wrap-width);
-}
-
-.footer {
-  flex-shrink: 0;
-  padding: 1rem;
-  margin-left: auto;
-  margin-right: auto;
-  width: var(--wrap-width);
-}
-
-.footer .left {
-  float: left;
-}
-
-.footer .right {
-  float: right;
-  display: flex;
-  gap: 1em;
-}
-
-.nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-}
-
 .mobile-menu-toggle {
-  display: none;
-  padding: 0.5rem;
-  border: 1px solid var(--border-color);
-  background-color: var(--button-bg);
-  color: var(--button-color);
-  border-radius: 8px;
-  cursor: pointer;
+    display: none;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--button-bg);
+    color: var(--button-color);
+    border-radius: 8px;
+    cursor: pointer;
 }
 
 .mobile-menu-toggle .close-icon {
-  display: none;
+    display: none;
 }
 
 .mobile-menu-toggle[aria-expanded="true"] .menu-icon {
-  display: none;
+    display: none;
 }
 
 .mobile-menu-toggle[aria-expanded="true"] .close-icon {
-  display: block;
+    display: block;
+}
+
+/*TODO this should also move to elements*/
+.nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
 }
 
 .nav .nav-menu {
-  display: flex;
-  flex-grow: 1;
-  flex-shrink: 0;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 0.5rem;
+    display: flex;
+    flex-grow: 1;
+    flex-shrink: 0;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 0.5rem;
 }
 
 .nav .nav-menu .nav-start {
-  justify-content: flex-start;
-  display: flex;
-  align-items: stretch;
-  gap: 0.5rem;
+    justify-content: flex-start;
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
 }
 
 .nav .nav-menu .nav-end {
-  justify-content: flex-end;
+    justify-content: flex-end;
 }
 
 .nav .nav-menu a.nav-item {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
 }
 
 .nav .nav-menu a.nav-item.is-active {
-  background-color: var(--navbar-item-bg);
-  color: var(--text-color);
-  text-decoration: underline;
+    background-color: var(--navbar-item-bg);
+    color: var(--text-color);
+    text-decoration: underline;
 }
 
 .nav .nav-menu a.nav-item:hover {
-  background-color: var(--navbar-item-bg);
-  color: var(--text-color);
+    background-color: var(--navbar-item-bg);
+    color: var(--text-color);
 }
 
 .nav .nav-menu button.nav-item {
-  padding: 0.5rem;
-  border: 1px solid var(--border-color);
-  background-color: var(--button-bg);
-  color: var(--button-color);
-  border-radius: 50%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--button-bg);
+    color: var(--button-color);
+    border-radius: 50%;
 }
 
 .nav .nav-menu button.nav-item:hover {
-  background-color: var(--button-hover-bg);
-  color: var(--button-hover-color);
+    background-color: var(--button-hover-bg);
+    color: var(--button-hover-color);
 }
 
 .nav .nav-menu button.nav-item svg {
-  margin: 0;
-  width: 24px;
-  height: 24px;
+    margin: 0;
+    width: 24px;
+    height: 24px;
 }
 
 .meta {
-  display: flex;
-  justify-content: space-between;
+    display: flex;
+    justify-content: space-between;
 }
 
 .meta .left {
-  align-self: flex-start;
+    align-self: flex-start;
 }
 
 .meta .left p {
-  font-size: 1rem;
+    font-size: 1rem;
 }
 
 .meta .right {
-  align-self: flex-end;
+    align-self: flex-end;
 }

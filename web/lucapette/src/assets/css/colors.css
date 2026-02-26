@@ -1,7 +1,6 @@
 :root {
   color-scheme: light dark;
 
-  /* Palette */
   --orange: #d08770;
   --yellow: #ebcb8b;
   --green: #a3be8c;
@@ -26,7 +25,6 @@
   --cream: #faf2e2;
   --amber: #e89a02;
 
-  /* Theme-aware colors */
   --text-color: light-dark(var(--black-quad), var(--white));
   --background-color: light-dark(var(--white), var(--black-bis));
   --accent-color: light-dark(var(--terracotta), var(--orange));

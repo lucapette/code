@@ -47,6 +47,9 @@
     <meta name="twitter:image" content="{{ site.url }}{{ webp_url }}">
   {% endif %}
   <link rel="stylesheet" href="{{ "css/main.css" | asset }}">
+
+
+    {% comment %}TODO why do we need this?{% endcomment %}
   {% if node_env != 'production' %}
     <link rel="stylesheet" href="/assets/css/prism-nord.css">
     <link rel="stylesheet" href="/assets/css/prism-line-numbers.css">

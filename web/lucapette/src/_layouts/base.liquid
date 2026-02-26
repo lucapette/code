@@ -3,10 +3,10 @@
   {% include 'head.liquid' %}
   <body>
     {% include 'theme-init.liquid' %}
-    <div class="wrap">
-      {% include 'navigation.liquid' %}
+    {% include 'navigation.liquid' %}
+    <main>
       {{ content }}
-    </div>
+    </main>
     {% include 'footer.liquid' %}
     <script type="module" src="{{ "js/main.js" | asset }}"></script>
   </body>
