@@ -2,7 +2,7 @@ import markdownIt from "markdown-it";
 
 const md = markdownIt({
   html: true,
-  breaks: true,
+  breaks: false,
   linkify: true,
 });
 
