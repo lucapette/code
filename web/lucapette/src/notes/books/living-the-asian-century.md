@@ -1,5 +1,5 @@
 ---
-layout: article.liquid
+layout: page.liquid
 title: "Living the asian century"
 
 description: "excerpts from Living the asian century"

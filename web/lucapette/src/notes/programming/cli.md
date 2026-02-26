@@ -1,5 +1,5 @@
 ---
-layout: note.liquid
+layout: page.liquid
 title: CLI
 description: A collection of command line related notes. Mostly things I can't quite remember.
 tags:

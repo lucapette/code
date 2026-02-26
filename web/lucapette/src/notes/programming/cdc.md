@@ -1,5 +1,5 @@
 ---
-layout: note.liquid
+layout: page.liquid
 title: Change Data Capture
 description: Notes on Change Data Capture with Debezium and Kafka.
 tags:

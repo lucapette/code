@@ -1,5 +1,5 @@
 ---
-layout: note.liquid
+layout: page.liquid
 title: Napoli
 description: A list of places I recommend to people that have never been to my hometown.
 tags:

@@ -1,5 +1,5 @@
 ---
-layout: note.liquid
+layout: page.liquid
 title: Tomato Soup
 description: A spicy-sweet tomato soup perfect for winter evenings.
 tags:

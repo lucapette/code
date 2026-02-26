@@ -1,10 +1,69 @@
 ---
 layout: base.liquid
 ---
+{% comment %} Determine what to show {% endcomment %}
+{% assign showMeta = author or tags or date or page.url contains '/notes/' %}
+{% assign isArticleStyle = date %}
+{% assign isNoteStyle = page.url contains '/notes/' and not date %}
+
 <section>
-  <h1>{{ title }}</h1>
+  {% comment %} Title with conditional class {% endcomment %}
+  <h1 {% if showMeta %}class="title"{% endif %}>{{ title }}</h1>
+
+  {% comment %} Metadata section - only if we have metadata {% endcomment %}
+  {% if showMeta %}
+    <nav class="meta">
+      <div class="left">
+        <p class="is-size-6">
+          {% if author %}
+            By {{ author }}<br>
+          {% endif %}
+
+          {% if tags and isArticleStyle %}
+            Published in
+          {% endif %}
+
+          {% if tags %}
+            {% for tag in tags %}
+              <a href="/tags/{{ tag }}">#{{ tag }}</a>{% unless forloop.last %}, {% endunless %}
+            {% endfor %}
+          {% endif %}
+
+          {% if date %}
+            on {{ date | formatDate }}
+          {% endif %}
+
+          {% if isNoteStyle %}
+            {% assign parts = page.url | split: '/' %}
+            in <a href="/notes/{{ parts[2] }}/">{{ parts[2] | capitalize }}</a>
+          {% endif %}
+        </p>
+      </div>
+    </nav>
+    <hr>
+  {% endif %}
+
   <div class="content">
     {{ content }}
   </div>
 </section>
+
+{% comment %} Related writings - only for writing articles {% endcomment %}
+{% assign related = collections.relatedWritings[page.url] %}
+{% if related %}
+  <section>
+    <h3 class="year">See also</h3>
+    <ul class="feed">
+      {% for item in related %}
+        <li class="entry">
+          <a href="{{ item.url }}">
+            <span>{{ item.data.title }}</span>
+            <span class="date">{{ item.date | formatDate }}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+
 {% include 'copy-code.liquid' %}

@@ -1,5 +1,5 @@
 ---
-layout: article.liquid
+layout: page.liquid
 title: "The great derangement"
 description: "excerpts from the great derangement"
 date: 2024-01-12T06:12:55+01:00

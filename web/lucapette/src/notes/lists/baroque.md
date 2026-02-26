@@ -1,5 +1,5 @@
 ---
-layout: note.liquid
+layout: page.liquid
 title: Baroque music
 description: Some of my favorite baroque music pieces.
 tags:

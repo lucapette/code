@@ -1,5 +1,5 @@
 ---
-layout: article.liquid
+layout: page.liquid
 title: "Less is More"
 description: "excerpts from Less is More"
 date: 2024-01-12T06:12:55+01:00

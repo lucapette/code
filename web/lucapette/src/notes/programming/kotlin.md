@@ -1,5 +1,5 @@
 ---
-layout: note.liquid
+layout: page.liquid
 title: Kotlin
 description: Notes from learning Kotlin since March 2022.
 tags:
