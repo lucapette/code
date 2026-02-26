@@ -1,16 +1,13 @@
 ---
 layout: base.liquid
 ---
-{% comment %} Determine what to show {% endcomment %}
 {% assign showMeta = author or tags or date or page.url contains '/notes/' %}
 {% assign isArticleStyle = date %}
-{% assign isNoteStyle = page.url contains '/notes/' and not date %}
+{% assign isNoteStyle = page.url contains '/notes/' and  date %}
 
 <section>
-  {% comment %} Title with conditional class {% endcomment %}
   <h1 {% if showMeta %}class="title"{% endif %}>{{ title }}</h1>
 
-  {% comment %} Metadata section - only if we have metadata {% endcomment %}
   {% if showMeta %}
     <nav class="meta">
       <div class="left">
@@ -30,7 +27,7 @@ layout: base.liquid
           {% endif %}
 
           {% if date %}
-            on {{ date | formatDate }}
+            on {{ date | formatDateShort }}
           {% endif %}
 
           {% if isNoteStyle %}
@@ -48,7 +45,6 @@ layout: base.liquid
   </div>
 </section>
 
-{% comment %} Related writings - only for writing articles {% endcomment %}
 {% assign related = collections.relatedWritings[page.url] %}
 {% if related %}
   <section>
@@ -58,7 +54,7 @@ layout: base.liquid
         <li class="entry">
           <a href="{{ item.url }}">
             <span>{{ item.data.title }}</span>
-            <span class="entry-details">{{ item.date | formatDate }}</span>
+            <span class="entry-details">{{ item.date | formatDateShort }}</span>
           </a>
         </li>
       {% endfor %}
