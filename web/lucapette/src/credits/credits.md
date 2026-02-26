@@ -1,5 +1,5 @@
 ---
-layout: section.liquid
+layout: page.liquid
 permalink: /credits/
 title: "Credits"
 ---
