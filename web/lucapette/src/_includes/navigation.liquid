@@ -1,23 +1,23 @@
 <section>
-  <nav class="navbar" role="navigation" aria-label="main navigation">
+  <nav class="nav" role="navigation" aria-label="main navigation">
     <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
       <span class="menu-icon" aria-hidden="true">{% lucide "menu" %}</span>
       <span class="close-icon" aria-hidden="true">{% lucide "x" %}</span>
     </button>
-    <div class="navbar-menu" id="navbar-menu">
-      <div class="navbar-start">
+    <div class="nav-menu" id="nav-menu">
+      <div class="nav-start">
         {% assign section = page.url | split: '/' | shift | first %}
-        <a href="/" class="navbar-item {% if page.url == '/' %}is-active{% endif %}">Home</a>
-        <a href="/writing/" class="navbar-item {% if section == 'writing' %}is-active{% endif %}">Writing</a>
-        <a href="/notes/" class="navbar-item {% if section == 'notes' %}is-active{% endif %}">Notes</a>
+        <a href="/" class="nav-item {% if page.url == '/' %}is-active{% endif %}">Home</a>
+        <a href="/writing/" class="nav-item {% if section == 'writing' %}is-active{% endif %}">Writing</a>
+        <a href="/notes/" class="nav-item {% if section == 'notes' %}is-active{% endif %}">Notes</a>
         <a
           href="/about/"
-          class="navbar-item {% if section == 'about' or section == 'credits' %}is-active{% endif %}"
+          class="nav-item {% if section == 'about' or section == 'credits' %}is-active{% endif %}"
           >About</a
         >
       </div>
-      <div class="navbar-end">
-        <button id="toggle" class="navbar-item">
+      <div class="nav-end">
+        <button id="toggle" class="nav-item">
           <span class="moon" aria-hidden="true">{% lucide "moon" %}</span>
           <span class="sun" aria-hidden="true">{% lucide "sun" %}</span>
           <span class="sr-only">toggle theme</span>

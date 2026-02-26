@@ -4,7 +4,7 @@ layout: base.liquid
 <section>
   <h1 class="title">{{ title }}</h1>
 
-  <nav class="level">
+  <nav class="meta">
     <div class="left">
       <p class="is-size-6">
         {% if author -%}
@@ -30,6 +30,7 @@ layout: base.liquid
   </div>
 </section>
 
+{% comment %}TODO we want to generalise this into relatedPages so that we can effectively merge article and page{% endcomment %}
 {% assign related = collections.relatedWritings[page.url] %}
 {% if related %}
   <section>

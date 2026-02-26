@@ -23,7 +23,7 @@
   gap: 1em;
 }
 
-.navbar {
+.nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -52,7 +52,7 @@
   display: block;
 }
 
-.navbar .navbar-menu {
+.nav .nav-menu {
   display: flex;
   flex-grow: 1;
   flex-shrink: 0;
@@ -61,35 +61,35 @@
   gap: 0.5rem;
 }
 
-.navbar .navbar-menu .navbar-start {
+.nav .nav-menu .nav-start {
   justify-content: flex-start;
   display: flex;
   align-items: stretch;
   gap: 0.5rem;
 }
 
-.navbar .navbar-menu .navbar-end {
+.nav .nav-menu .nav-end {
   justify-content: flex-end;
 }
 
-.navbar .navbar-menu a.navbar-item {
+.nav .nav-menu a.nav-item {
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
 }
 
-.navbar .navbar-menu a.navbar-item.is-active {
+.nav .nav-menu a.nav-item.is-active {
   background-color: var(--navbar-item-bg);
   color: var(--text-color);
   text-decoration: underline;
 }
 
-.navbar .navbar-menu a.navbar-item:hover {
+.nav .nav-menu a.nav-item:hover {
   background-color: var(--navbar-item-bg);
   color: var(--text-color);
 }
 
-.navbar .navbar-menu button.navbar-item {
+.nav .nav-menu button.nav-item {
   padding: 0.5rem;
   border: 1px solid var(--border-color);
   background-color: var(--button-bg);
@@ -97,26 +97,26 @@
   border-radius: 50%;
 }
 
-.navbar .navbar-menu button.navbar-item:hover {
+.nav .nav-menu button.nav-item:hover {
   background-color: var(--button-hover-bg);
   color: var(--button-hover-color);
 }
 
-.navbar .navbar-menu button.navbar-item svg {
+.nav .nav-menu button.nav-item svg {
   margin: 0;
   width: 24px;
   height: 24px;
 }
 
-.level {
+.meta {
   display: flex;
   justify-content: space-between;
 }
 
-.level .left {
+.meta .left {
   align-self: flex-start;
 }
 
-.level .right {
+.meta .right {
   align-self: flex-end;
 }
