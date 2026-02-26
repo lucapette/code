@@ -24,7 +24,7 @@ description: Luca Pette's website
       <li class="entry">
         <a href="{{ item.url }}">
           <span>{{ item.data.title }}</span>
-          <span class="date">{{ item.date | formatDateShort }}</span>
+          <span class="entry-details">{{ item.date | formatDateShort }}</span>
         </a>
       </li>
     {% endfor %}
@@ -50,7 +50,7 @@ description: Luca Pette's website
         <a href="{{ item.url }}">
           <span>{{ item.data.title }}</span>
           {% if item.data.tags %}
-            <span class="meta">
+            <span class="entry-details">
               {% for tag in item.data.tags limit: 2 %}
                 <span class="tag">#{{ tag }}</span>
               {% endfor %}

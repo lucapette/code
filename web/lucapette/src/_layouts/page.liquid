@@ -58,7 +58,7 @@ layout: base.liquid
         <li class="entry">
           <a href="{{ item.url }}">
             <span>{{ item.data.title }}</span>
-            <span class="date">{{ item.date | formatDate }}</span>
+            <span class="entry-details">{{ item.date | formatDate }}</span>
           </a>
         </li>
       {% endfor %}

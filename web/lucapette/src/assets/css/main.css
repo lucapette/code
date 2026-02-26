@@ -65,7 +65,8 @@ ul.feed li:last-child a {
   border-bottom: none;
 }
 
-ul.feed li a .date {
+ul.feed li a .date,
+ul.feed li a .entry-details {
   font-size: small;
 }
 
