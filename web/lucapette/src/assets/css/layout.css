@@ -120,15 +120,3 @@
 .level .right {
   align-self: flex-end;
 }
-
-.columns {
-  display: flex;
-}
-
-.columns .column {
-  display: block;
-  flex-grow: 1;
-  flex-basis: 0;
-  flex-shrink: 1;
-  padding: 0.75rem 0.75rem 0.75rem 0;
-}

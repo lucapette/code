@@ -48,7 +48,6 @@ ul.articles li a {
   display: flex;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  margin: 0 -0.75rem;
   align-items: center;
   justify-content: space-between;
   white-space: nowrap;

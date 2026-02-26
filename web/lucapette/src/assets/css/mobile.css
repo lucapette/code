@@ -110,15 +110,6 @@
     font-size: 0.9rem;
   }
 
-  .columns {
-    display: unset;
-  }
-
-  .columns .column.is-half,
-  .columns .column.is-three-quarters {
-    width: 100%;
-  }
-
   .footer {
     display: flex;
     flex-direction: column;

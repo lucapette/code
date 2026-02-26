@@ -55,13 +55,9 @@ export default {
 </section>
 
 <section class="section">
-  <div class="columns">
-    <div class="column">
-      <ul class="articles">
+  <ul class="articles">
 ${postsHtml}
-      </ul>
-    </div>
-  </div>
+  </ul>
 </section>`;
   },
 };

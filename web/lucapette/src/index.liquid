@@ -18,54 +18,46 @@ description: Luca Pette's website
   </div>
 </section>
 <section>
-  <div class="columns">
-    <div class="column">
-      <h2 class="feed-title writing-icon">{% lucide "pen-tool" %} Latest writing</h2>
-      <ul class="articles">
-        {% for item in collections.writings limit: 5 %}
-          <li class="article">
-            <a href="{{ item.url }}">
-              <span>{{ item.data.title }}</span>
-              <span class="date">{{ item.date | formatDateShort }}</span>
-            </a>
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-  </div>
-  <div class="columns">
-    <div class="column">
-      <h2 class="feed-title highlights-icon">{% lucide "star" %} Highlights</h2>
-      <ul class="articles highlights">
-        {% for item in collections.favouriteWritings %}
-          <li class="article">
-            <a href="{{ item.url }}">
-              <span>{{ item.data.title }}</span>
-            </a>
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-  </div>
-  <div class="columns">
-    <div class="column">
-      <h2 class="feed-title notes-icon">{% lucide "sticky-note" %} Latest notes</h2>
-      <ul class="articles">
-        {% for item in collections.notes limit: 5 %}
-          <li class="article">
-            <a href="{{ item.url }}">
-              <span>{{ item.data.title }}</span>
-              {% if item.data.tags %}
-                <span class="meta">
-                  {% for tag in item.data.tags limit: 2 %}
-                    <span class="tag">#{{ tag }}</span>
-                  {% endfor %}
-                </span>
-              {% endif %}
-            </a>
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-  </div>
+  <h2 class="feed-title writing-icon">{% lucide "pen-tool" %} Latest writing</h2>
+  <ul class="articles">
+    {% for item in collections.writings limit: 5 %}
+      <li class="article">
+        <a href="{{ item.url }}">
+          <span>{{ item.data.title }}</span>
+          <span class="date">{{ item.date | formatDateShort }}</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+<section>
+  <h2 class="feed-title highlights-icon">{% lucide "star" %} Highlights</h2>
+  <ul class="articles highlights">
+    {% for item in collections.favouriteWritings %}
+      <li class="article">
+        <a href="{{ item.url }}">
+          <span>{{ item.data.title }}</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+<section>
+  <h2 class="feed-title notes-icon">{% lucide "sticky-note" %} Latest notes</h2>
+  <ul class="articles">
+    {% for item in collections.notes limit: 5 %}
+      <li class="article">
+        <a href="{{ item.url }}">
+          <span>{{ item.data.title }}</span>
+          {% if item.data.tags %}
+            <span class="meta">
+              {% for tag in item.data.tags limit: 2 %}
+                <span class="tag">#{{ tag }}</span>
+              {% endfor %}
+            </span>
+          {% endif %}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
 </section>
