@@ -52,7 +52,7 @@ document.querySelectorAll("pre[class*='language-']").forEach((pre) => {
         selection.removeAllRanges();
         selection.addRange(range);
         try {
-            //TODO remove deprecated execCommand
+          //TODO remove deprecated execCommand
           document.execCommand("copy");
           copyingDone();
         } catch (e) {
@@ -73,7 +73,7 @@ const navMenu = document.getElementById("nav-menu");
 if (mobileMenuToggle && navMenu) {
   mobileMenuToggle.addEventListener("click", function () {
     const isOpen = navMenu.classList.contains("is-open");
-      navMenu.classList.toggle("is-open");
+    navMenu.classList.toggle("is-open");
     mobileMenuToggle.setAttribute("aria-expanded", String(!isOpen));
   });
 }
