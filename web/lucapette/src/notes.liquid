@@ -12,9 +12,9 @@ permalink: /notes/
   <h2 class="year">
     <a href="/notes/{{ group.category }}/">{{ group.category | capitalize }}</a>
   </h2>
-  <ul class="articles">
+  <ul class="feed">
     {% for item in group.notes %}
-      <li class="article">
+      <li class="entry">
         <a href="{{ item.postUrl }}">
           <span class="title">{{ item.title }}</span>
           <span class="meta">

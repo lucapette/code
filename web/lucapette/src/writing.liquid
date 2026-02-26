@@ -5,9 +5,9 @@ permalink: /writing/
 ---
 {% for yearGroup in collections.writingsByYear %}
   <h2 class="year">{{ yearGroup.year }}</h2>
-  <ul class="articles">
+  <ul class="feed">
     {% for item in yearGroup.articles %}
-      <li class="article">
+      <li class="entry">
         <a href="{{ item.postUrl }}">
           <span>{{ item.title }}</span>
           <span class="date">{{ item.formattedDate }}</span>

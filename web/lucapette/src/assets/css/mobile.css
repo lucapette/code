@@ -145,7 +145,7 @@
     order: 1;
   }
 
-  ul.articles li a .date {
+  ul.feed li a .date {
     display: none;
   }
 

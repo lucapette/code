@@ -39,7 +39,7 @@ export default {
                       .join(" ")
                   : "";
 
-              return `          <li class="article">
+              return `          <li class="entry">
             <a href="${post.url}">
               <span class="title">${contentType} ${post.data.title}</span>
               <span class="meta">${tagsHtml}</span>
@@ -55,7 +55,7 @@ export default {
 </section>
 
 <section class="section">
-  <ul class="articles">
+  <ul class="feed">
 ${postsHtml}
   </ul>
 </section>`;

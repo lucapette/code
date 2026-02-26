@@ -38,13 +38,13 @@ html {
   color: var(--yellow);
 }
 
-ul.articles {
+ul.feed {
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
-ul.articles li a {
+ul.feed li a {
   display: flex;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
@@ -57,15 +57,15 @@ ul.articles li a {
   transition: background-color 0.15s ease;
 }
 
-ul.articles li a:hover {
+ul.feed li a:hover {
   background-color: var(--hover-bg);
 }
 
-ul.articles li:last-child a {
+ul.feed li:last-child a {
   border-bottom: none;
 }
 
-ul.articles li a .date {
+ul.feed li a .date {
   font-size: small;
 }
 

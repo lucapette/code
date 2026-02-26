@@ -19,9 +19,9 @@ description: Luca Pette's website
 </section>
 <section>
   <h2 class="feed-title writing-icon">{% lucide "pen-tool" %} Latest writing</h2>
-  <ul class="articles">
+  <ul class="feed">
     {% for item in collections.writings limit: 5 %}
-      <li class="article">
+      <li class="entry">
         <a href="{{ item.url }}">
           <span>{{ item.data.title }}</span>
           <span class="date">{{ item.date | formatDateShort }}</span>
@@ -32,9 +32,9 @@ description: Luca Pette's website
 </section>
 <section>
   <h2 class="feed-title highlights-icon">{% lucide "star" %} Highlights</h2>
-  <ul class="articles highlights">
+  <ul class="feed highlights">
     {% for item in collections.favouriteWritings %}
-      <li class="article">
+      <li class="entry">
         <a href="{{ item.url }}">
           <span>{{ item.data.title }}</span>
         </a>
@@ -44,9 +44,9 @@ description: Luca Pette's website
 </section>
 <section>
   <h2 class="feed-title notes-icon">{% lucide "sticky-note" %} Latest notes</h2>
-  <ul class="articles">
+  <ul class="feed">
     {% for item in collections.notes limit: 5 %}
-      <li class="article">
+      <li class="entry">
         <a href="{{ item.url }}">
           <span>{{ item.data.title }}</span>
           {% if item.data.tags %}

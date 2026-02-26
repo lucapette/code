@@ -35,9 +35,9 @@ layout: base.liquid
 {% if related %}
   <section>
     <h3 class="year">See also</h3>
-    <ul class="articles">
+    <ul class="feed">
       {% for item in related %}
-        <li class="article">
+        <li class="entry">
           <a href="{{ item.url }}">
             <span>{{ item.data.title }}</span>
             <span class="date">{{ item.date | formatDate }}</span>

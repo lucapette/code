@@ -7,9 +7,9 @@ permalink: /notes/recipes/
 
 {% for group in collections.notesByCategory %}
   {% if group.category == 'recipes' %}
-    <ul class="articles">
+    <ul class="feed">
       {% for item in group.notes %}
-        <li class="article">
+        <li class="entry">
           <a href="{{ item.postUrl }}">
             <span class="title">{{ item.title }}</span>
             <span class="meta">
