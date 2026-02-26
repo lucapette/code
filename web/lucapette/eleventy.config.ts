@@ -1,10 +1,6 @@
 import syntaxHighlight from "@11ty/eleventy-plugin-syntaxhighlight";
 import { IdAttributePlugin } from "@11ty/eleventy";
-import {
-  formatDate,
-  formatDateShort,
-  dateToRfc3339,
-} from "./src/_filters/date.js";
+import { formatDateShort, dateToRfc3339 } from "./src/_filters/date.js";
 import { asset } from "./src/_filters/asset.js";
 import {
   coverImageFilter,
@@ -60,7 +56,6 @@ export default function (eleventyConfig: EleventyConfig) {
     () => process.env.NODE_ENV || "development",
   );
 
-  eleventyConfig.addFilter("formatDate", formatDate);
   eleventyConfig.addFilter("formatDateShort", formatDateShort);
   eleventyConfig.addFilter("dateToRfc3339", dateToRfc3339);
   eleventyConfig.addFilter("asset", asset);
