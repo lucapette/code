@@ -7,7 +7,7 @@ function parseDate(dateObj: unknown): { month: string; year: number } | null {
   };
 }
 
-export function formatDateShort(dateObj: unknown): string {
+export function formatDate(dateObj: unknown): string {
   const parsed = parseDate(dateObj);
   if (!parsed) return "";
   const { month, year } = parsed;

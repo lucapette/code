@@ -6,7 +6,7 @@ layout: base.liquid
 {% assign isNoteStyle = page.url contains '/notes/' and  date %}
 
 <section>
-  <h1 {% if showMeta %}class="title"{% endif %}>{{ title }}</h1>
+  <h1 class="title">{{ title }}</h1>
 
   {% if showMeta %}
     <nav class="meta">
@@ -27,7 +27,7 @@ layout: base.liquid
           {% endif %}
 
           {% if date %}
-            on {{ date | formatDateShort }}
+            in {{ date | formatDate }}
           {% endif %}
 
           {% if isNoteStyle %}
@@ -54,7 +54,7 @@ layout: base.liquid
         <li class="entry">
           <a href="{{ item.url }}">
             <span>{{ item.data.title }}</span>
-            <span class="entry-details">{{ item.date | formatDateShort }}</span>
+            <span class="entry-details">{{ item.date | formatDate }}</span>
           </a>
         </li>
       {% endfor %}

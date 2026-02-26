@@ -38,10 +38,6 @@ section {
   padding: 2rem 1rem;
 }
 
-section:last-child {
-  padding-top: 0;
-}
-
 table {
   border-collapse: collapse;
   width: 100%;

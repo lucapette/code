@@ -1,5 +1,5 @@
 import { CollectionItem } from "./index";
-import { formatDateShort } from "../_filters/date";
+import { formatDate } from "../_filters/date";
 
 export function writings(collectionApi: {
   getFilteredByGlob: (path: string) => CollectionItem[];
@@ -35,7 +35,7 @@ export function writingsByYear(collectionApi: {
     grouped[year].push({
       postUrl: article.url,
       title: article.data.title as string,
-      formattedDate: formatDateShort(article.date),
+      formattedDate: formatDate(article.date),
       tags: tags as string[],
     });
   });
