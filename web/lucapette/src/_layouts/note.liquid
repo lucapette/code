@@ -25,40 +25,4 @@ layout: base.liquid
   </div>
 </section>
 
-<script>
-  document.querySelectorAll('pre > code').forEach((codeBlock) => {
-    const copyButton = document.createElement('button');
-    copyButton.classList.add('copy-code');
-    copyButton.innerHTML = 'copy';
-
-    function copyingDone() {
-      copyButton.innerHTML = 'copied!';
-      setTimeout(() => {
-        copyButton.innerHTML = 'copy';
-      }, 2000);
-    }
-
-    copyButton.addEventListener('click', (cb) => {
-      if ('clipboard' in navigator) {
-        navigator.clipboard.writeText(codeBlock.textContent);
-        copyingDone();
-        return;
-      }
-
-      const range = document.createRange();
-      range.selectNodeContents(codeBlock);
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-      try {
-        document.execCommand('copy');
-        copyingDone();
-      } catch (e) {}
-      selection.removeRange(range);
-    });
-
-    const container = codeBlock.parentNode.parentNode;
-
-    container.appendChild(copyButton);
-  });
-</script>
+{% include 'copy-code.liquid' %}
