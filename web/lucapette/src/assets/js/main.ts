@@ -40,26 +40,12 @@ document.querySelectorAll("pre[class*='language-']").forEach((pre) => {
     }, 2000);
   }
 
-  copyButton.addEventListener("click", () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(code.textContent || "");
+  copyButton.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(code.textContent || "");
       copyingDone();
-    } else {
-      const range = document.createRange();
-      range.selectNodeContents(code);
-      const selection = window.getSelection();
-      if (selection) {
-        selection.removeAllRanges();
-        selection.addRange(range);
-        try {
-          //TODO remove deprecated execCommand
-          document.execCommand("copy");
-          copyingDone();
-        } catch (e) {
-          // Ignore errors
-        }
-        selection.removeAllRanges();
-      }
+    } catch (err) {
+      console.error("Failed to copy:", err);
     }
   });
 
