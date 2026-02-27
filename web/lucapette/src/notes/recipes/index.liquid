@@ -5,8 +5,5 @@ permalink: /notes/recipes/
 ---
 <p>I love cooking so here I'm noting down recipes I perfected over time.</p>
 
-{% for group in collections.notesByCategory %}
-  {% if group.category == 'recipes' %}
-    {% include 'feed.liquid', items: group.notes, showTags: true %}
-  {% endif %}
-{% endfor %}
+{% assign category = collections.notesByCategory["recipes"] %}
+{% include 'feed.liquid', items: category.notes, showTags: true %}

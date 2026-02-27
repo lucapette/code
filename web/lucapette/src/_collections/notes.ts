@@ -8,7 +8,7 @@ export function notes(collectionApi: {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
-export function notesByCategory(collectionApi: {
+function buildNotesByCategory(collectionApi: {
   getFilteredByGlob: (path: string) => CollectionItem[];
 }) {
   const items = notes(collectionApi);
@@ -46,4 +46,27 @@ export function notesByCategory(collectionApi: {
       category: category,
       notes: grouped[category],
     }));
+}
+
+type CollectionApi = {
+  getFilteredByGlob: (path: string) => CollectionItem[];
+};
+
+type CategoryNotes = {
+  category: string;
+  notes: { postUrl: string; title: string; tags: string[]; author: string }[];
+};
+
+class NotesByCategory extends Array<CategoryNotes> {
+  constructor(items: CategoryNotes[]) {
+    super(...items);
+    items.forEach((item) => {
+      (this as any)[item.category] = item;
+    });
+  }
+}
+
+export function notesByCategory(collectionApi: CollectionApi): NotesByCategory {
+  const all = buildNotesByCategory(collectionApi);
+  return new NotesByCategory(all);
 }
