@@ -3,10 +3,6 @@
     {% for item in items limit: limit %}
       {% assign url = item.url | default: item.postUrl %}
       {% assign title = item.title | default: item.data.title %}
-      {% assign hasDate = item.formattedDate != null or item.date != null %}
-      {% assign hasTags = item.tags != null or item.data.tags != null %}
-      {% assign showDate = showDate and hasDate and showTags != true %}
-      {% assign showTags = showTags and hasTags %}
       <li class="entry">
         <a href="{{ url }}">
           <span class="title">{{ title }}</span>
