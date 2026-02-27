@@ -78,25 +78,19 @@
   color: var(--button-hover-color);
 }
 
-.nav .nav-menu button.nav-item svg {
-  margin: 0;
-  width: 24px;
-  height: 24px;
-}
-
 .meta {
-  display: flex;
-  justify-content: space-between;
+    display: flex;
+    justify-content: space-between;
 }
 
 .meta .left {
-  align-self: flex-start;
+    align-self: flex-start;
 }
 
 .meta .left p {
-  font-size: 1rem;
+    font-size: 1rem;
 }
 
 .meta .right {
-  align-self: flex-end;
+    align-self: flex-end;
 }
