@@ -17,16 +17,7 @@ description: Luca Pette's website
 </section>
 <section aria-labelledby="latest-writing">
   <h2 id="latest-writing" class="feed-title writing-icon">{% lucide "pen-tool" %} Latest writing</h2>
-  <ul class="feed">
-    {% for item in collections.writings limit: 5 %}
-      <li class="entry">
-        <a href="{{ item.url }}">
-          <span>{{ item.data.title }}</span>
-          <span class="entry-details">{{ item.date | formatDate }}</span>
-        </a>
-      </li>
-    {% endfor %}
-  </ul>
+  {% include 'feed.liquid', items: collections.writings, limit: 5, showDate: true %}
 </section>
 <section aria-labelledby="highlights">
   <h2 id="highlights" class="feed-title highlights-icon">{% lucide "star" %} Highlights</h2>
@@ -42,20 +33,5 @@ description: Luca Pette's website
 </section>
 <section aria-labelledby="latest-notes">
   <h2 id="latest-notes" class="feed-title notes-icon">{% lucide "sticky-note" %} Latest notes</h2>
-  <ul class="feed">
-    {% for item in collections.notes limit: 5 %}
-      <li class="entry">
-        <a href="{{ item.url }}">
-          <span>{{ item.data.title }}</span>
-          {% if item.data.tags %}
-            <span class="entry-details">
-              {% for tag in item.data.tags limit: 2 %}
-                <span class="tag">#{{ tag }}</span>
-              {% endfor %}
-            </span>
-          {% endif %}
-        </a>
-      </li>
-    {% endfor %}
-  </ul>
+  {% include 'feed.liquid', items: collections.notes, limit: 5, showTags: true %}
 </section>

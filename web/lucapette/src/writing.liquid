@@ -9,14 +9,5 @@ permalink: /writing/
 
 {% for yearGroup in collections.writingsByYear %}
   <h2 class="year">{{ yearGroup.year }}</h2>
-  <ul class="feed">
-    {% for item in yearGroup.articles %}
-      <li class="entry">
-        <a href="{{ item.postUrl }}">
-          <span>{{ item.title }}</span>
-          <span class="entry-details">{{ item.formattedDate }}</span>
-        </a>
-      </li>
-    {% endfor %}
-  </ul>
+  {% include 'feed.liquid', items: yearGroup.articles, showDate: true %}
 {% endfor %}

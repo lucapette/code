@@ -14,20 +14,5 @@ permalink: /notes/
   <h2 class="year">
     <a href="/notes/{{ group.category }}/">{{ group.category | capitalize }}</a>
   </h2>
-  <ul class="feed">
-    {% for item in group.notes %}
-      <li class="entry">
-        <a href="{{ item.postUrl }}">
-          <span class="title">{{ item.title }}</span>
-          <span class="entry-details">
-            {% if item.tags %}
-              {% for tag in item.tags %}
-                <span class="tag">#{{ tag }}</span>
-              {% endfor %}
-            {% endif %}
-          </span>
-        </a>
-      </li>
-    {% endfor %}
-  </ul>
+  {% include 'feed.liquid', items: group.notes, showTags: true %}
 {% endfor %}

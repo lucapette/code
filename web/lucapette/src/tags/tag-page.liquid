@@ -1,0 +1,20 @@
+---
+pagination:
+  data: collections.tagList
+  size: 1
+  alias: tag
+permalink: /tags/{{ tag }}/
+layout: base.liquid
+eleventyComputed:
+  title: "{{ tag | capitalize }}"
+  posts: "{{ collections.tagPosts[tag] }}"
+---
+<section>
+  <h1>{{ title }}</h1>
+</section>
+
+<section class="section">
+  {% if collections.tagPosts[tag] %}
+    {% include 'feed.liquid', items: collections.tagPosts[tag], showTags: true %}
+  {% endif %}
+</section>

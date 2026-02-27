@@ -1,0 +1,34 @@
+{% if items and items.size > 0 %}
+  <ul class="feed">
+    {% for item in items limit: limit %}
+      {% assign url = item.url | default: item.postUrl %}
+      {% assign title = item.title | default: item.data.title %}
+      {% assign hasDate = item.formattedDate != null or item.date != null %}
+      {% assign hasTags = item.tags != null or item.data.tags != null %}
+      {% assign showDate = showDate and hasDate and showTags != true %}
+      {% assign showTags = showTags and hasTags %}
+      <li class="entry">
+        <a href="{{ url }}">
+          <span class="title">{{ title }}</span>
+          {% if showDate or showTags %}
+            <span class="entry-details">
+              {% if showDate %}
+                {% if item.formattedDate %}
+                  <span class="date">{{ item.formattedDate }}</span>
+                {% elsif item.date %}
+                  <span class="date">{{ item.date | formatDate }}</span>
+                {% endif %}
+              {% endif %}
+              {% if showTags %}
+                {% assign tags = item.tags | default: item.data.tags %}
+                {% for tag in tags limit: 2 %}
+                  <span class="tag">#{{ tag }}</span>
+                {% endfor %}
+              {% endif %}
+            </span>
+          {% endif %}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}

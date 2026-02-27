@@ -79,18 +79,18 @@
 }
 
 .meta {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 
 .meta .left {
-    align-self: flex-start;
+  align-self: flex-start;
 }
 
 .meta .left p {
-    font-size: 1rem;
+  font-size: 1rem;
 }
 
 .meta .right {
-    align-self: flex-end;
+  align-self: flex-end;
 }
