@@ -22,6 +22,17 @@
     --font-size-primary: 1rem;
   }
 
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  body {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+      env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
   h1 {
     font-size: 1.75rem;
   }
@@ -119,12 +130,26 @@
     flex-direction: row;
   }
 
+  .footer a,
+  .footer button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .hero {
-    grid-template-columns: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
     gap: 1rem;
   }
 
   .hero .description {
+    width: 100%;
     order: 2;
   }
 
@@ -133,8 +158,19 @@
   }
 
   .hero .decoration {
-    justify-self: left;
+    width: 100%;
     order: 1;
+  }
+
+  .hero .me {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto;
+  }
+
+  .hero .me img {
+    width: 96px;
+    height: 96px;
   }
 
   ul.feed li a .date {

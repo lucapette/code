@@ -3,6 +3,11 @@ body {
   height: 100%;
 }
 
+html {
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
 body {
   display: flex;
   flex-direction: column;
@@ -190,4 +195,20 @@ body > header > nav button {
 body > header > nav button:hover {
   background-color: var(--button-hover-bg);
   color: var(--button-hover-color);
+}
+
+.sr-only:not(:focus):not(:active) {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+img {
+  filter: var(--image-filter);
+  max-width: 100%;
+  height: auto;
 }
