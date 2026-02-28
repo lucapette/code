@@ -5,5 +5,5 @@ permalink: /notes/programming/
 ---
 <p>Notes on programming topics I work with or find interesting. These are living documents I update as I learn more.</p>
 
-{% assign category = collections.notesByCategory["programming"] %}
+{% assign category = collections.notesByCategory.programming %}
 {% include 'feed.liquid', items: category.notes, showTags: true %}

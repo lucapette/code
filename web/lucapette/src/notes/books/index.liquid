@@ -10,7 +10,7 @@ description: Notes on books I've read
 </p>
 
 <div class="books-grid">
-  {% assign category = collections.notesByCategory["books"] %}
+  {% assign category = collections.notesByCategory.books %}
   {% for item in category.notes %}
     <a href="{{ item.postUrl }}">
       <article class="book-card">

@@ -9,5 +9,5 @@ permalink: /notes/lists/
 </p>
 <p>These notes will probably be even more random than the rest.</p>
 
-{% assign category = collections.notesByCategory["lists"] %}
+{% assign category = collections.notesByCategory.lists %}
 {% include 'feed.liquid', items: category.notes, showTags: true %}

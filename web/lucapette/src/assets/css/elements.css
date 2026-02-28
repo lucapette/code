@@ -130,3 +130,64 @@ article header {
 section {
   margin-bottom: 1rem;
 }
+
+body > header > nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+body > header > nav ul {
+  display: flex;
+  flex-grow: 1;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+body > header > nav ul > li {
+  display: flex;
+  align-items: center;
+}
+
+body > header > nav ul + button {
+  margin-left: 0.5rem;
+}
+
+body > header > nav a,
+body > header > nav button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+body > header > nav a {
+  padding: 0.5rem 0.75rem;
+  color: var(--link-color);
+}
+
+body > header > nav a:hover,
+body > header > nav a[aria-current="page"] {
+  background-color: var(--navbar-item-bg);
+  color: var(--text-color);
+  text-decoration: underline;
+}
+
+body > header > nav button {
+  padding: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--button-bg);
+  color: var(--button-color);
+  cursor: pointer;
+}
+
+body > header > nav button:hover {
+  background-color: var(--button-hover-bg);
+  color: var(--button-hover-color);
+}
