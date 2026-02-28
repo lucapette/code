@@ -84,7 +84,7 @@
     min-height: 44px;
     display: flex;
     align-items: center;
-      width: 100%;
+    width: 100%;
   }
 
   body > header > nav > ul + button {

@@ -1,30 +1,28 @@
-{% if items and items.size > 0 %}
-    <ul class="feed">
-        {% for item in items limit: limit %}
-            {% assign url = item.url | default: item.postUrl %}
-            {% assign title = item.title | default: item.data.title %}
-            <li class="entry">
-                <a href="{{ url }}">
-                    <span class="title">{{ title }}</span>
-                    {% if showDate or showTags %}
-                        <span class="entry-details">
-              {% if showDate %}
-                  {% if item.formattedDate %}
-                      <span class="date">{{ item.formattedDate }}</span>
-                  {% elsif item.date %}
-                      <span class="date">{{ item.date | formatDate }}</span>
-                  {% endif %}
+<ul class="feed">
+  {% for item in items limit: limit %}
+    {% assign url = item.url | default: item.postUrl %}
+    {% assign title = item.title | default: item.data.title %}
+    <li class="entry">
+      <a href="{{ url }}">
+        <span class="title">{{ title }}</span>
+        {% if showDate or showTags %}
+          <span class="entry-details">
+            {% if showDate %}
+              {% if item.formattedDate %}
+                <span class="date">{{ item.formattedDate }}</span>
+              {% elsif item.date %}
+                <span class="date">{{ item.date | formatDate }}</span>
               {% endif %}
-                            {% if showTags %}
-                                {% assign tags = item.tags | default: item.data.tags %}
-                                {% for tag in tags limit: 2 %}
-                                    <span class="tag">#{{ tag }}</span>
-                                {% endfor %}
-                            {% endif %}
-            </span>
-                    {% endif %}
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
-{% endif %}
+            {% endif %}
+            {% if showTags %}
+              {% assign tags = item.tags | default: item.data.tags %}
+              {% for tag in tags limit: 2 %}
+                <span class="tag">#{{ tag }}</span>
+              {% endfor %}
+            {% endif %}
+          </span>
+        {% endif %}
+      </a>
+    </li>
+  {% endfor %}
+</ul>
