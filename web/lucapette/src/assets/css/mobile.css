@@ -134,28 +134,11 @@
     font-size: 0.9rem;
   }
 
-  .footer {
+  footer {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-  }
-
-  .footer .left {
-    text-align: center;
-    margin-bottom: 0.5rem;
-  }
-
-  .footer .left,
-  .footer .right {
-    display: flex;
-  }
-
-  .footer .right {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
   }
 
   .footer a,
@@ -163,9 +146,6 @@
     min-height: 44px;
     min-width: 44px;
     padding: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .hero {
@@ -229,7 +209,6 @@
     display: inline;
   }
 
-  /* reading.css */
   .book {
     flex-direction: column;
   }
@@ -238,9 +217,6 @@
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 
-  /* Phase 3: Interactive & Dark Mode */
-
-  /* Mobile dark mode optimizations */
   :root[data-theme="dark"] {
     --background-color: var(--background-color-oled);
     --footer-bg: var(--footer-bg-oled);
@@ -248,7 +224,6 @@
     --link-color: var(--link-color-mobile);
   }
 
-  /* Mobile-optimized interactive states */
   @media (hover: none) and (max-width: 767px) {
     a:active,
     button:active {
@@ -263,7 +238,6 @@
     }
   }
 
-  /* Reduced motion for accessibility */
   @media (prefers-reduced-motion: no-preference) {
     a,
     button {
@@ -273,14 +247,12 @@
     }
   }
 
-  /* Enhanced mobile menu animation */
   body > header > nav > ul {
     transition:
       opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
       transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Content layout refinements */
   .content {
     margin: 0 auto;
     max-width: 95%;
