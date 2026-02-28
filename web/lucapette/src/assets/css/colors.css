@@ -54,4 +54,10 @@
   --info-bg: light-dark(var(--ice), var(--sky-blue));
   --warning-bg: light-dark(var(--cream), var(--amber));
   --hover-bg: light-dark(var(--white-ter), var(--black-quad));
+
+  /* Mobile dark mode optimizations */
+  --background-color-oled: #000000;
+  --footer-bg-oled: #0a0a0a;
+  --text-color-mobile: var(--white-bis);
+  --link-color-mobile: var(--turquoise);
 }

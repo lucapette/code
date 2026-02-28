@@ -229,4 +229,56 @@
   .books-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
+
+  /* Phase 3: Interactive & Dark Mode */
+
+  /* Mobile dark mode optimizations */
+  :root[data-theme="dark"] {
+    --background-color: var(--background-color-oled);
+    --footer-bg: var(--footer-bg-oled);
+    --text-color: var(--text-color-mobile);
+    --link-color: var(--link-color-mobile);
+  }
+
+  /* Mobile-optimized interactive states */
+  @media (hover: none) and (max-width: 767px) {
+    a:active,
+    button:active {
+      opacity: 0.8;
+      transform: scale(0.98);
+    }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+  }
+
+  /* Reduced motion for accessibility */
+  @media (prefers-reduced-motion: no-preference) {
+    a,
+    button {
+      transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+    }
+  }
+
+  /* Enhanced mobile menu animation */
+  body > header > nav > ul {
+    transition:
+      opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Content layout refinements */
+  .content {
+    margin: 0 auto;
+    max-width: 95%;
+  }
+
+  .content > *:first-child {
+    margin-top: 0;
+  }
 }
