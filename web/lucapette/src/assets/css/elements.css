@@ -168,33 +168,53 @@ body > header > nav button {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
 }
 
 body > header > nav a {
   padding: 0.5rem 0.75rem;
   color: var(--link-color);
+  position: relative;
+  text-decoration: none;
+}
+
+body > header > nav a::after {
+  content: "";
+  position: absolute;
+  bottom: 0.25rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  height: 2px;
+  background-image: linear-gradient(-90deg, var(--purple), var(--turquoise));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s ease;
+}
+
+body > header > nav a:hover::after,
+body > header > nav a[aria-current="page"]::after {
+  transform: scaleX(1);
 }
 
 body > header > nav a:hover,
 body > header > nav a[aria-current="page"] {
-  background-color: var(--navbar-item-bg);
+  background-color: transparent;
   color: var(--text-color);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 body > header > nav button {
   padding: 0.5rem;
-  border-radius: 50%;
-  background-color: var(--button-bg);
-  color: var(--button-color);
+  border: none;
+  background: transparent;
+  color: var(--link-color);
   cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.2s ease;
 }
 
 body > header > nav button:hover {
-  background-color: var(--button-hover-bg);
-  color: var(--button-hover-color);
+  background: transparent;
+  color: var(--text-color);
 }
 
 .sr-only:not(:focus):not(:active) {

@@ -116,12 +116,14 @@
     display: flex;
     align-items: center;
     width: 100%;
+    border: none;
+    border-radius: 0;
   }
 
   body > header > nav > ul + button {
-    border-top: 1px solid var(--border-color);
-    padding-top: 0.5rem;
-    margin-top: 0.5rem;
+    border: none;
+    padding: 0.5rem;
+    margin-top: 0;
     min-height: 44px;
     min-width: 44px;
     display: flex;
