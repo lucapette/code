@@ -7,6 +7,7 @@ import {
   createTag,
   deleteTag,
   getStats,
+  resetDb,
 } from './db';
 
 const api = new Hono();
@@ -52,6 +53,11 @@ api.delete('/tags/:id', (c) => {
 api.get('/stats', (c) => {
   const stats = getStats();
   return c.json(stats);
+});
+
+api.post('/test/reset', () => {
+  resetDb();
+  return new Response(null, { status: 204 });
 });
 
 export default api;

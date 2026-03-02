@@ -62,6 +62,11 @@ export const deleteTag = (id: string) => {
   return stmt.run(id);
 };
 
+export const resetDb = () => {
+  db.exec('DELETE FROM pomodoros');
+  db.exec('DELETE FROM tags');
+};
+
 export const getStats = () => {
   const pomodoros = getPomodoros();
 

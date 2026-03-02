@@ -43,18 +43,7 @@ window['pomodoroApp'] = function () {
       this.isDone = false;
       this.elapsed = 0;
       this.startTimer();
-
-      await fetch(`${API_BASE}/api/pomodoros`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tag: this.task || null,
-          duration: this.duration,
-        }),
-      });
-
       this.task = '';
-      await this.loadPomodoros();
     },
 
     startTimer() {
@@ -79,6 +68,17 @@ window['pomodoroApp'] = function () {
       this.interval = null;
       this.isRunning = false;
       this.isDone = true;
+
+      await fetch(`${API_BASE}/api/pomodoros`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tag: this.task || null,
+          duration: this.duration,
+        }),
+      });
+
+      await this.loadPomodoros();
 
       if (this.phase === 'work') {
         this.completedPomodoros++;
