@@ -1,0 +1,53 @@
+{% layout "layout.liquid" %}
+{% block content %}
+<div x-data="pomodoroApp()" x-init="init()">
+  <section class="section">
+    <form @submit.prevent="startPomodoro" class="form">
+      <input 
+        type="text" 
+        class="input" 
+        placeholder="What are you working on today?"
+        x-model="task"
+        @keydown.enter="startPomodoro"
+      >
+    </form>
+  </section>
+
+  <section class="section">
+    <div class="pomodoro-list">
+      <template x-for="pomodoro in pomodoros" :key="pomodoro.id">
+        <div class="card">
+          <div class="card-content">
+            <span x-text="pomodoro.duration / 60"></span> minutes spent on 
+            <span class="tag" x-text="pomodoro.tag || 'untitled'"></span>
+            <span class="timestamp" x-text="formatTime(pomodoro.completed_at)"></span>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <div class="modal" :class="{ 'is-active': isRunning || isDone }">
+    <div class="modal-background" @click="stopPomodoro"></div>
+    <div class="modal-card">
+      <div class="modal-card-header">
+        <div class="modal-card-title" x-text="task || 'Pomodoro'"></div>
+      </div>
+      <div class="modal-card-body">
+        <p class="timer-display" x-text="displayTime"></p>
+        <progress class="progress" :class="progress === 100 ? 'is-success' : 'is-primary'" 
+          max="100" :value="progress"></progress>
+        
+        <div class="timer-actions">
+          <button x-show="isRunning" class="btn btn-secondary" @click="stopPomodoro">
+            ⏹ Stop
+          </button>
+          <button x-show="isDone && phase === 'work'" class="btn btn-primary" @click="startBreak">
+            ▶ Start Break
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

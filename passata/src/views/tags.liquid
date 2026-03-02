@@ -1,0 +1,30 @@
+{% layout "layout.liquid" %}
+{% block content %}
+<div x-data="tagsApp()" x-init="init()">
+  <section class="section">
+    <div class="tag-list">
+      <template x-for="tag in tags" :key="tag.id">
+        <div class="card">
+          <div class="card-content tag-item">
+            <span x-text="tag.value"></span>
+            <button class="btn btn-small btn-danger" @click="deleteTag(tag.id)">✕</button>
+          </div>
+        </div>
+      </template>
+    </div>
+  </section>
+
+  <section class="section">
+    <form @submit.prevent="addTag" class="form">
+      <div class="field has-addons">
+        <div class="control is-expanded">
+          <input type="text" class="input" placeholder="Add a tag..." x-model="value" @keydown.enter="addTag">
+        </div>
+        <div class="control">
+          <button type="submit" class="btn btn-primary" :disabled="value.length === 0">+</button>
+        </div>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}
