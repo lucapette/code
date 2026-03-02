@@ -185,14 +185,12 @@ body > header > nav a::after {
   right: 0.75rem;
   height: 2px;
   background-image: linear-gradient(-90deg, var(--purple), var(--turquoise));
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.2s ease;
+  opacity: 0;
 }
 
 body > header > nav a:hover::after,
 body > header > nav a[aria-current="page"]::after {
-  transform: scaleX(1);
+  opacity: 1;
 }
 
 body > header > nav a:hover,
