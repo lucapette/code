@@ -197,6 +197,31 @@ h4.subtitle {
   margin-top: 0;
 }
 
+.content.list-note ul {
+  list-style: none;
+  margin-left: 0;
+  padding: 0;
+}
+
+.content.list-note ul > li {
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.content.list-note ul > li:last-child {
+  border-bottom: none;
+}
+
+.content.list-note ul > li > p {
+  margin: 0.5rem 0 0 0;
+  font-size: 1.2rem;
+}
+
+.content.list-note ul > li ul {
+  margin-top: 0.5rem;
+}
+
 pre {
   overflow-x: auto;
   padding: 1.25em 1.5em;

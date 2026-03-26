@@ -1,0 +1,61 @@
+---
+layout: base.liquid
+---
+{% assign showMeta = author or tags or date or page.url contains '/notes/' %}
+{% assign isArticleStyle = date %}
+{% assign isNoteStyle = page.url contains '/notes/' and date %}
+
+<article>
+  <header>
+    <h1 class="title">{{ title }}</h1>
+
+    {% if showMeta %}
+      <nav class="meta">
+        <div class="left">
+          <p>
+            {% if author %}
+              By {{ author -}}
+              <br>
+            {% endif %}
+
+            {% if tags %}
+              Published in
+            {% endif %}
+
+            {% if tags %}
+              {% for tag in tags %}
+                <a href="/tags/{{ tag }}">#{{ tag }}</a>
+                {%- unless forloop.last %}, {% endunless %}
+              {% endfor %}
+            {% endif %}
+
+            {% if date %}
+              in {{ date | formatDate }}
+            {% endif %}
+
+            {% if isNoteStyle %}
+              {% assign parts = page.url | split: '/' %}
+              in <a href="/notes/{{ parts[2] }}/">{{ parts[2] | capitalize }}</a>
+            {% endif %}
+          </p>
+        </div>
+      </nav>
+      <hr>
+    {% endif %}
+  </header>
+
+  <section class="content list-note">
+    {{ content }}
+  </section>
+</article>
+
+{% assign related = collections.relatedWritings[page.url] %}
+{% if related %}
+  <aside>
+    <hr>
+    <h3 class="year">See also</h3>
+    {% include 'feed.liquid', items: related, showDate: true %}
+  </aside>
+{% endif %}
+
+{% include 'copy-code.liquid' %}
