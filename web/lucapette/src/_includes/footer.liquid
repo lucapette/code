@@ -1,9 +1,7 @@
 <footer>
-  {% comment %}TODO we can and should use small for this. Also add copyright{% endcomment %}
-  <div class="left">Built with 🧡 and <a href="/credits">technology</a></div>
+  <div class="left"><small>Built with 🧡 and <a href="/credits">technology</a></small></div>
 
-  {% comment %}TODO let's do this with nav element{% endcomment %}
-  <div class="right">
+  <nav class="right" aria-label="Social links">
     <a href="mailto:ciao@lucapette.me">
       <span>
         <span aria-hidden="true">{% lucide "mail" %}</span>
@@ -32,5 +30,5 @@
         <span class="sr-only">Mastodon</span>
       </span>
     </a>
-  </div>
+  </nav>
 </footer>
