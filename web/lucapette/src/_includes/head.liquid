@@ -23,10 +23,9 @@
     content="{% if description %}{{ description | escape }}{% else %}{{ site.description }}{% endif %}"
   >
   <meta property="og:url" content="{{ site.url }}{{ page.url }}">
-  {% comment %} TODO this needs improvement (the section a better factor to determine type){% endcomment %}
-  {% assign has_cover = '' | hasCover %}
-  <meta property="og:type" content="{% if has_cover %}article{% else %}website{% endif %}">
+  <meta property="og:type" content="{% if page.url contains '/writing/' or page.url contains '/notes/' %}article{% else %}website{% endif %}">
   <meta property="og:site_name" content="Luca Pette">
+  {% assign has_cover = '' | hasCover %}
   {% if has_cover %}
     <meta name="twitter:card" content="summary_large_image">
   {% else %}
@@ -38,7 +37,6 @@
     name="twitter:description"
     content="{% if description %}{{ description | escape }}{% else %}{{ site.description }}{% endif %}"
   >
-  {% assign has_cover = '' | hasCover %}
   {% if has_cover %}
     {% assign webp_url = '' | coverImageWebp %}
     {% assign jpeg_url = '' | coverImageJpeg %}
