@@ -1,14 +1,13 @@
 import { CollectionItem } from "./index";
+import { writings } from "./writings";
+import { notes } from "./notes";
 
 export function tagList(collectionApi: {
   getFilteredByGlob: (path: string) => CollectionItem[];
 }) {
   const tags = new Set<string>();
 
-  //TODO use "official" way to get these collections
-  const writings = collectionApi.getFilteredByGlob("./src/writing/**/*.md");
-  const notes = collectionApi.getFilteredByGlob("./src/notes/**/*.md");
-  const allItems = [...writings, ...notes];
+  const allItems = [...writings(collectionApi), ...notes(collectionApi)];
 
   allItems.forEach((item) => {
     if ("tags" in item.data) {
@@ -28,10 +27,7 @@ export function tagPosts(collectionApi: {
 }) {
   const tagMap: Record<string, CollectionItem[]> = {};
 
-  // TODO Same here: use "official" way to get these collections
-  const writings = collectionApi.getFilteredByGlob("./src/writing/**/*.md");
-  const notes = collectionApi.getFilteredByGlob("./src/notes/**/*.md");
-  const allItems = [...writings, ...notes];
+  const allItems = [...writings(collectionApi), ...notes(collectionApi)];
 
   allItems.forEach((item) => {
     if (item.data.tags) {
