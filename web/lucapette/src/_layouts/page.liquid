@@ -8,6 +8,9 @@ layout: base.liquid
 <article>
   <header>
     <h1 class="title">{{ title }}</h1>
+    {% if description %}
+      <p class="subtitle">{{ description }}</p>
+    {% endif %}
 
     {% if showMeta %}
       <nav class="meta">

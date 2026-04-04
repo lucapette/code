@@ -23,6 +23,30 @@ h1 {
   font-size: 3rem;
 }
 
+.subtitle {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--accent-color);
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+article header .title {
+  margin-bottom: 0.25rem;
+}
+
+article header .subtitle {
+  margin-bottom: 0.75rem;
+}
+
+article header nav.meta {
+  margin-bottom: 0.5rem;
+}
+
+article header hr {
+  margin-top: 1rem;
+}
+
 h2 {
   font-size: 2rem;
 }
