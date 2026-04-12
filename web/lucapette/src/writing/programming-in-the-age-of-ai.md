@@ -283,8 +283,7 @@ became a detail.
 I could make more examples but it's pointless in a way because I know most would
 just want me to say something dumb like "I'm 2.7x faster" but I'm not gonna play
 that game. I can imagine some would say I executed this migration 5x faster than
-I
-would have without AI tooling. It's true but this isn't a valuable general
+I would have without AI tooling. It's true but this isn't a valuable general
 number is it? What I know for sure is that there's no going back to manually
 type out code like a caveman. It's a question of what should I do about it.
 Hence the next paragraph.
@@ -311,8 +310,8 @@ of early 2026 automatic programming.
 
 Let's proceed with the most obvious bit: the output produced by the agent may or
 may not be great. In my experience, there's considerable variance and probably
-too many reasons why the output quality varies so much. Even in the most
-mundane tasks, the agents are often messy:
+too many reasons why the output quality varies so much. Even in the most mundane
+tasks, the agents are often messy:
 
 - They leave dead code around all the time.
 - They don't do even the most obvious gardening.
@@ -322,9 +321,8 @@ mundane tasks, the agents are often messy:
 
 In short, they don't do any design and they don't care. They're pretty much the
 worst programmer you've worked with. But instead of showing up half naked and
-drunk
-at work (true story...), they just can't ever stop typing random code. It's easy
-to forget they're not smart at all because we, the humans, experience
+drunk at work (true story...), they just can't ever stop typing random code.
+It's easy to forget they're not smart at all because we, the humans, experience
 "intelligence" via language and these models are very good at mimicking
 language. But of course they've got no clue which part of your system needs to
 change soon because you have to accommodate for that upcoming feature. They're
@@ -357,11 +355,10 @@ right now:
 
 As for what happens after the agent produces any code, the key improvement is
 somewhat obvious: the automated feedback process you have in place to check your
-codebase after you make a change needs to be as good as possible.
-To me, this is the main argument in favour of "ai tooling amplifies your
-fundamentals". The more your codebase speaks you to, the fewer mistakes the
-agents make. And how talkative your codebase is entirely up on you. Here's some
-obvious things:
+codebase after you make a change needs to be as good as possible. To me, this is
+the main argument in favour of "ai tooling amplifies your fundamentals". The
+more your codebase speaks you to, the fewer mistakes the agents make. And how
+talkative your codebase is entirely up on you. Here's some obvious things:
 
 - Statically typed languages are better (if this annoys you, you should know
   it's the reason why I wrote it this way) because the compiler speaks a lot.
@@ -375,10 +372,10 @@ of your automated typing.
 
 This conversation makes me think we need to rethink the tooling from the ground
 up. Right now we're using agents to automatically type all of our code but
-there's no integration with the rest of the toolchain. For example, I've
-already found myself thinking I should automate the commit process completely so
-that I can have the agent automatically add context for itself as metadata in
-each commit. Not to mention a bit of a vertical integration with the rest of the
+there's no integration with the rest of the toolchain. For example, I've already
+found myself thinking I should automate the commit process completely so that I
+can have the agent automatically add context for itself as metadata in each
+commit. Not to mention a bit of a vertical integration with the rest of the
 product development value chain. I suppose that's what
 [entire.io](https://entire.io) wants to do. I have similar ideas but I don't
 have 60 millions 😉.
