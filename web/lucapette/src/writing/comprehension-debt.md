@@ -11,28 +11,30 @@ draft: true
 
 One of the most interesting things about programming in the age of AI is that
 everything keep getting better and worse at the same time. This is also
-representative of the post COVID world and perfectly aligned with the current
-geopolitical landscape. That's, of course, content for a different article.
-
-Here I'm following up on my own "programming in the age of AI" and maybe this
-wil turn out to be a series. Who knows. I'll try my best to make this article as
-independent as possible so I don't have to ask you to read a 5k words article
-just to read this one but, obviously, I'm asking anyway.
+representative of the post COVID pandemic world _and_ perfectly aligned with the
+current geopolitical landscape. That's, of course, content for a different
+article. In the context of this one, I want to talk about how I'm dealing with a
+specific challenge I'm facing with coding agents: comprehension debt. But let's
+me provide some context before I share my understanding and how I'm coping with
+it.
 
 First off, we're talking about "automatic programming" (coined by antirez and
-used here for lack of a better term). Meaning an LLMs via a "coding agent" makes
-pretty much all the typing based on your directions. My tooling, shared for
-the curious, right now is:
+used here for lack of a better term). Meaning a model, via a "coding agent",
+does pretty much all the typing based on prompts. Right now, for the curious,
+here's my tooling:
 
-- OpenCode. I think there are no major differences here between tools but I'm
+- OpenCode
+
+  I think there are no major differences here between tools but I'm
   also not really interested into a "comments section" war about them.
-- MiniMax 2.7 high speed plan. MiniMax is practical, dependable, and quite fast
-  on the high speed plan. The plan also comes with audio/image/speech generators
-  you can use through a friendly official cli and it has two MCPs remote servers
-  for image understand and web search (I Use the latter very much).
+- MiniMax 2.7 high speed plan
 
-To put some order to this before we dig into the main topic, there are two main
-ideas here we can pull from to get the main argument:
+  MiniMax is practical, dependable, and quite fast on the high speed plan. The
+  plan also comes with audio/image/speech generators you can use through a
+  friendly official cli and it has two MCPs remote servers for image understand
+  and web search (I Use the latter very much).
+
+To best explain comprehension debt, let me pull from two connected ideas:
 
 - Everything changed so nothing did.
 - Everything gets better, everything gets worse.
@@ -40,74 +42,83 @@ ideas here we can pull from to get the main argument:
 ## Everything changed so nothing did
 
 I use this catchy phrase to anchor the idea that now that typing is pretty much
-gone from the every day programming workflow, I constantly get the feeling I'm
-starting over with the craft. It's a whole new thing because, well, the main
-thing I did all the time, typing, is very sparse in my programming sessions and
-it's almost exclusively English.
+gone from the every day programming workflow (if you don't think that's the
+case, imo you have some tooling catch up to do), I constantly get the feeling
+I'm starting over with the craft. It's a whole new thing because, well, I did
+spend most of my programming time typing and now there's not much of that is
+going on. Also, I type almost exclusively English sentences.
 
-But then during these sessions, I end up running in the same exact problems I
-run before automatic programming was a thing. Too many changes in one commit,
-not enough test coverage, the design of a module is not flexible enough. And so
-on. The point I'm trying to make is that it feels like everything changed and
-maybe it did but the same principles and best practices we had before still
-apply. In fact, that's the only thing that really changed: everything we do is
-amplified by the ridiculous typing speed we have nowadays so our principles are
-even more relevant. Since the tooling now is much more powerful, we also have to
-be a lot more careful.
+Feels like a new job right? But then during these sessions, like clockwork, I
+end up running in the exact problems I was running all the time before automatic
+programming was a thing. Too many changes in one commit, not enough test
+coverage, the design of a module is not flexible enough. And so on.
 
-I like racing cars driving (I'm an avid sim-racer) so allow me to note here that
-this feels exactly like going around a track with a road car and then jump into
-the gt3 version (basically the same car, stripped down of all comfort features
-and powered up for speed). The gt3 is much much faster but one mistake and
-you're in the wall.
+Yes, it feels like everything changed and maybe it did _but_ the same principles
+and best practices we had before still apply. In fact, that's the only thing
+that really changed: everything we do is amplified by the ridiculous typing
+speed we have nowadays so our principles are even more relevant than before
+automatic programming was a thing.
+
+Since the tooling now is much more powerful, we also have to be a lot more
+careful. I like racing cars driving (I'm an avid sim-racer!) so allow me to note
+here that this feels exactly like going around a track with a road car and then
+jump into the gt3 version (basically the same car, stripped down of all comfort
+features and powered up for speed/cornering). The gt3 is much much faster but
+one mistake and you're in the wall.
 
 ## Everything gets better, everything gets worse
 
-I started doing automatic programming in January 2026. At the time
-of writing, that's around three short months. It feels like at least a year of
+I started doing automatic programming in January 2026. At the time of writing
+this article, that's around three short months. It feels like at least a year of
 progress with the tooling. OpenCode got better, more reliable, more polished.
-That didn't change the needle. Models got smarter and much much faster (at least
-the chinese ones, yes I should write about the Chinese AI landscape soon). That
-did change the needle quite a bit.
+That didn't change the needle but felt great. Models got smarter and much much
+faster (at least the Chinese ones, yes I should write about the Chinese AI
+landscape soon). That did change the needle quite a bit.
 
 To keep the metaphor alive, if your car gets faster from one day to the other
 you're not gonna be faster on track at first try. There's a bit of relearning.
-It's also more dangerous because, well, the car is faster.
+It's also more dangerous because the car _is_ faster.
 
 That's exactly what I experienced in the past month or so. I got faster but I
 also made more mistakes. The quality of the code started going down and I tried
 different ways of coping with it. The core problem was I was getting more and
-more detached from the codebase I was working on. Hence, the next paragraph.
+more detached from the codebase I was working on. Hence, the title of this
+article and the next paragraph.
 
 ## The comprehension debt challenge
 
 The simplest way I can describe the comprehension debt challenge is that it's
-very hard to know and conceptualise a codebase you didn't type almost any code
-like  a code base you did type it most of the code for.
+very hard to know and conceptualise a codebase you didn't type out as well as a
+code base you did type out yourself.
 
 The assumption here, a very strong one to be clear, is that we're talking about
 automatic programming and not vibe coding. In both approaches, you have a model
-produce code for for you. But in the former, you read the code before you ship
-it. Or, more accurately, you know what you're shipping and confident enough
-about it. In some cases like a database or the linux kernel, I'm sure you'd want
-to read every single line of code. In a product development workflow, I can
-imagine there's a decent compromise to make where you know most of the code but
-don't really read every single line.
+produce code for you. But in the former, you read the code before you ship it.
+Or, more accurately, you know what you're shipping and confident enough about
+it. In some cases like a database or the linux kernel, I'm sure you'd want to
+read every single line of code. In a product development workflow, I can imagine
+you can compromise a bit and don't really read every single line.
 
-Now the challenge here is that it's actually getting more challenging to deal with this as the months go by because typing code out is getting faster. So the challenge of understanding the codebase gets harder and harder because there's a lot more code to review.
+Now the challenge here is that it's actually getting harder and harder to deal
+with comprehension debt as the months go by because coding agents and models are
+improving a lot so the automatic typing is getting faster and faster which means
+the debt grows faster and faster. The situation is unsustainable without a
+structured approach.
 
-There are at least two separate challenges at play here:
+There are at least two separate problems to deal with here:
 
-- The average quality of the code isn't very high. The models have a bias for
+- The average quality of the code isn't very high. Models have a bias for
   shortcuts, duplication. They leave dead code around.
-- The LLMs can produce all the code for a feature spanning multiple modules in
-  minutes.Making it very hard for a human to understand what's going on.
+- The quantity of code a model can produce for a feature spanning multiple
+  modules is often very large. Making it very hard for a human to understand
+  what's going on at glance.
 
-Now the former problem is easier to mitigate and the current solution help quite
-a bit. A combinations of language rules, skills, and carefully selected mcp
-servers make the LLMs product higher quality code from the get-go. Once the code
-is there, a solid suite of CI tools with lots of tests and very aggressive
-linting cleans up the code quite nicely.
+Now the former problem is easier to mitigate and the current approach I use help
+quite a bit (more on this in my "programming in the age of ai"). A combinations
+of language rules, skills, and carefully selected mcp servers make the LLMs
+product higher quality code from the get-go. Once the code is there, a solid
+suite of CI tools with lots of tests and very aggressive linting cleans up the
+code quite nicely.
 
 These tools help a lot on the low level aspects of code quality but do pretty
 much nothing on what I like to call "architectural cohesion". In short, coding
@@ -115,7 +126,7 @@ agents are very reliable typists but they're terrible designers and organizers
 of code. They can write a single method flawlessly but mix up things together in
 a class/file/struct/whatever that clearly don't belong together. As soon as you
 look at the code, you notice things all kind of things that make no sense at
-all.
+all. There's no design in the typing.
 
 That's where the real challenge of the comprehension debt lies. Because, of
 course, in order for you, the human, to correctly assess the design of a new
@@ -174,9 +185,16 @@ I add lots of content first and then work very hard to reduce the word count.
 
 It's remarkably similar to what happens with automatic programming. I first have
 the agent type out all the code very fast and then I do slow moving sessions
-where I make incremental improvements.
+where I make incremental improvements. These changes are mostly reductions. Code
+that can be simplified, duplication that can be removed, "almost" dead code that
+can be removed with a bit of prep. Not that I strive for perfection but the
+process does remind me of the famous quote:
 
-This way I get myself to a place where I know a codebase I didn't type a single like of code for as well as one where I wrote all the code for.
+> In anything at all, perfection is finally attained not when there is no longer
+> anything to add, but when there is no longer anything to take away
+
+This way I get myself to a place where I know a codebase I didn't type a single
+like of code for as well as one where I wrote all the code for.
 
 I'm not saying "this is the way", I'm writing about it for the same reason I
 always write about things. I'm just trying to make sense of things.
