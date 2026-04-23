@@ -10,7 +10,7 @@ draft: true
 ---
 
 One of the most interesting things about programming in the age of AI is that
-everything keep getting better and worse at the same time. This is also
+everything keeps getting better and worse at the same time. This is also
 representative of the post COVID pandemic world _and_ perfectly aligned with the
 current geopolitical landscape. That, of course, is content for a different
 article.
@@ -91,8 +91,8 @@ The simplest way I can describe the comprehension debt challenge is that it's
 much harder to know and conceptualise a codebase you didn't type out than a code
 base you did type out yourself. It's obvious too but that doesn't help.
 
-The assumption here, a very strong one to be clear, is that I'ms talking about
-automatic programming and not vibe coding. In both approaches, yo have a model
+The assumption here, a very strong one to be clear, is that I'm talking about
+automatic programming and not vibe coding. In both approaches, you have a model
 produce code for you. But in the former, you read the code before you ship it.
 Or, more accurately, you're confident enough about your code to ship it to
 production. In some cases, say a database or the linux kernel, I'm sure you'd
@@ -135,45 +135,50 @@ have to know how the system is put together. More importantly you need to have a
 vision for how the different components should interact, which responsibility
 should be where. Nothing new right? Well yes and no.
 
-The point is that while the principles are the same now yo¨œ can have an LMM
+The point is that while the principles stayed the same, now you can have an LMM
 produce weeks of work in hours so the gap between how the code works and your
 understanding of it can widen quickly to a point it's probably easier not to
 look than try to understand it.
 
-Short detour, I do understand vibe coding. It gets things done and can work
-quite well in many contexts. But I can't really imagine being responsible for a
-production system with paying customers where I have to treat my code base as a
-black box. I suppose there's a future where this is just how it works but,
-frankly, given the average quality of the code the models produce I think it's
-quite far and definitely not something I can do right now. I don't trust the
-typists.
+Short but necessary detour: I do understand vibe coding. It gets things done and
+can work well in many contexts. I also like the political implications of it
+(assuming the trend of local models getting better and better doesn't change):
+it will make building products more accessible. But, personally, I can't imagine
+being responsible for a production system with paying customers where I have to
+treat my code base as a black box. I suppose there's a future where this is just
+how it works but, frankly, given how low is the quality of the code the models
+produce I think that future is far and surely not something I can do right now.
+I just don't trust the typists.
 
-My focus though is automatic programming and I an struggling with how fast the
-debt grows but I then landed on a workflow that I like very much and seems to
-work for now.
+My focus though is automatic programming and I am struggling with how fast the
+comprehension debt grows but I did land on a workflow that I like very much and
+seems to work well enough.
 
 This process feels very close to how my writing process (for the most curious
 see "on writing" where I wrote about writing LINK HERE) which makes sense.
-Automatic programming makes me work at higher level abstraction than typing code
-out.
+Automatic programming sessions feel a lot more like writing because I'm
+operating closer to my thoughts than the instructions the computer needs.
 
 In short, here is how it works:
 
 - I design a big feature with the agent.
-- I have the agent write all of it.
-- I check the tests the agent wrote are testing at the right level of
-  abstraction (so I can freely change internals that is).
+- I then have the agent write all of it.
+- I check that the tests the agent wrote are testing at the right level of
+  abstraction. Put it differently: I verify I can freely change internals
+  without having to change the tests (one more example of the principles stayed
+  the same)
 - I make a local commit.
 
-I can do this many times in a row also because, most of the time, I'm actually
+I do this many times in a row also because, most of the time, I'm actually
 dealing with at least two projects very different in nature and have two running
 sessions with my agent.
 
-At some point though (say after three or four commit), I start to feel my
+At some point though (say after three or four commits), I start to feel my
 understanding of the codebase is drifting. I notice a method that looks good but
 I don't understand why the agent put it a specific place. Small things. I admit
 this part of the process is unstructured at the moment. I'm sure I'll come back
-for another article (and then actually make a series out of this) to discuss it.
+for another article (and then actually make a series out of this?) to discuss
+it.
 
 Once I feel uneasy, I stop going for more features/commits and start a reading
 session. All I do is to leave TODO comments around. Sometimes there's straight
@@ -184,30 +189,28 @@ Finally, I commit all the TODOs and start a new session with the agent with the
 goal of solving as many todos I just added as possible. Often in these "todo
 tackling" sessions, I read some more code and end up producing more TODOs.
 
+I iterate on these sessions until I'm happy again with my understanding of the
+codebase which, almost always, means I have no TODOs again.
 
-As mentioned, this feels a lot like my writing process where I type out a whole
-draft without much thinking. I just want to get all my content out first. And
-then do a series of refining passes. Fix the grammar, the typos. Remove the
-sentences.
+As I was mentioning, this feels a lot like my writing process where I type out a
+whole draft without much thinking. I just want to get all my content out first.
+And then do a series of refining passes. Fix the grammar, the typos. Remove
+entire sentences or paragraphs.
 
-I add lots of content first and then work very hard to reduce the word count.
-
-It's remarkably similar to what happens with automatic programming. I first have
-the agent type out all the code very fast and then I do slow moving sessions
-where I make incremental improvements. These changes are mostly reductions. Code
-that can be simplified, duplication that can be removed, "almost" dead code that
-can be removed with a bit of prep. Not that I strive for perfection but the
-process does remind me of the famous quote:
+It's indeed remarkably similar to what happens with automatic programming: I
+first have the agent type out all the code very fast, get a first draft out, and
+then I do slow moving sessions where I make incremental improvements. These
+changes are mostly reductions. Code that can be simplified, duplication that can
+be removed, "almost" dead code that can be removed with a bit of prep. Not that
+I strive for perfection but the process does remind me of the famous quote:
 
 > In anything at all, perfection is finally attained not when there is no longer
 > anything to add, but when there is no longer anything to take away
 
 This way I get myself to a place where I know a codebase I didn't type a single
-like of code for as well as one where I wrote all the code for.
+line of code for as well as one where I wrote all the code for.
 
 I'm not saying "this is the way", I'm writing about it for the same reason I
-always write about things. I'm just trying to make sense of things.
+always write: I'm just trying to make sense of things.
 
-There's no doubt that this workflow feels like working with a junior developer.
-As much as I prefer comparing it to writing, it needs to be said the metaphor of
-having junior developers with lighting typing speed hold its water as well.
+Happy automatic programming everyone! Let me know if this resonates with you.
