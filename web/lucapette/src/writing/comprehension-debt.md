@@ -2,6 +2,7 @@
 title: Comprehension Debt
 description: or, as I like to call it, the better-worse trade-off
 date: "2026-04-22"
+cover: /assets/covers/comprehension-debt.jpg
 tags:
   - ai
   - programming
@@ -16,11 +17,10 @@ current geopolitical landscape. That, of course, is content for a different
 article.
 
 Here I want to talk about how I'm dealing with a specific challenge I'm facing
-with coding agents: comprehension debt. Let me provide some context before I
+with coding agents: [comprehension debt](https://x.com/jeremytwei/status/2015886793955229705). Let me provide some context before I
 share my understanding of this challenge and how I'm coping with it.
 
-First off, we're talking about "automatic programming" (coined by antirez and
-used here for lack of a better term). Meaning a model, via a coding agent, does
+First off, we're talking about "[automatic programming](https://antirez.com/news/159)". A model, via a coding agent, does
 pretty much all the typing based on prompts I write. For the curious, here's my
 tooling at the time of writing:
 
@@ -34,7 +34,7 @@ tooling at the time of writing:
   MiniMax is practical, dependable, and quite fast on the high-speed plans. The
   subscription also comes with audio/image/speech generators you can use through a
   friendly official cli and it has two MCPs remote servers for image understanding
-  and web search (I use the latter very much). All in all, big fan of minimax.io work.
+  and web search (I use the latter very much). All in all, big fan of [MiniMax](https://minimax.io)'s work.
 
 To best explain comprehension debt, let me pull from two connected ideas:
 
@@ -102,8 +102,8 @@ you do need a clear picture. And that's the point.
 
 The challenge is that it's getting harder and harder to deal with comprehension
 debt as the months go by because coding agents and models are improving at a
-higher rate than our ability to cope with it. Automatic typing is getting faster
-and faster means the debt grows faster and faster. The situation is
+higher rate than our ability to cope with it. As automatic typing gets faster
+and faster, the debt grows faster and faster. The situation is
 unsustainable without a structured approach.
 
 There are at least two separate problems to deal with here:
@@ -114,8 +114,8 @@ There are at least two separate problems to deal with here:
   modules is often very large. Making it very hard for a human to understand
   what's going on at glance.
 
-Now the former problem is easier to mitigate and the current approach I use help
-quite a bit (more on this in my "programming in the age of ai" LINK HERE). A
+Now the former problem is easier to mitigate and the current approach I use helps
+quite a bit (more on this in my [Programming in the Age of AI](/writing/programming-in-the-age-of-ai/)). A
 combinations of language rules, skills, and carefully selected mcp servers make
 the LLMs product higher quality code from the get-go. Once the code is there, a
 solid suite of CI tools with lots of tests and very aggressive linting cleans up
@@ -135,7 +135,7 @@ have to know how the system is put together. More importantly you need to have a
 vision for how the different components should interact, which responsibility
 should be where. Nothing new right? Well yes and no.
 
-The point is that while the principles stayed the same, now you can have an LMM
+The point is that while the principles stayed the same, now you can have an LLM
 produce weeks of work in hours so the gap between how the code works and your
 understanding of it can widen quickly to a point it's probably easier not to
 look than try to understand it.
@@ -146,8 +146,8 @@ can work well in many contexts. I also like the political implications of it
 it will make building products more accessible. But, personally, I can't imagine
 being responsible for a production system with paying customers where I have to
 treat my code base as a black box. I suppose there's a future where this is just
-how it works but, frankly, given how low is the quality of the code the models
-produce I think that future is far and surely not something I can do right now.
+how it works but, frankly, given how low-quality the code the models
+produce, I think that future is far and surely not something I can do right now.
 I just don't trust the typists.
 
 My focus though is automatic programming and I am struggling with how fast the
@@ -155,7 +155,7 @@ comprehension debt grows but I did land on a workflow that I like very much and
 seems to work well enough.
 
 This process feels very close to how my writing process (for the most curious
-see "on writing" where I wrote about writing LINK HERE) which makes sense.
+see [on writing](/writing/on-writing/) where I wrote about writing) which makes sense.
 Automatic programming sessions feel a lot more like writing because I'm
 operating closer to my thoughts than the instructions the computer needs.
 
@@ -186,7 +186,7 @@ up questions for the agent, sometimes it's clear instructions because I know
 what I want.
 
 Finally, I commit all the TODOs and start a new session with the agent with the
-goal of solving as many todos I just added as possible. Often in these "todo
+goal of solving as many todos as I just added as possible. Often in these "todo
 tackling" sessions, I read some more code and end up producing more TODOs.
 
 I iterate on these sessions until I'm happy again with my understanding of the
