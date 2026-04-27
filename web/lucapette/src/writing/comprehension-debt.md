@@ -6,23 +6,24 @@ cover: /assets/covers/comprehension-debt.jpg
 tags:
   - ai
   - programming
-keywords: ai,programming
-draft: true
+keywords: ai, programming
 ---
 
 One of the most interesting things about programming in the age of AI is that
-everything keeps getting better and worse at the same time. This is also
-representative of the post COVID pandemic world _and_ perfectly aligned with the
-current geopolitical landscape. That, of course, is content for a different
-article.
+everything keeps getting better and worse at the same time. Today I want to talk
+about how I'm dealing with [comprehension debt](https://x.com/jeremytwei/status/2015886793955229705):
 
-Here I want to talk about how I'm dealing with a specific challenge I'm facing
-with coding agents: [comprehension debt](https://x.com/jeremytwei/status/2015886793955229705). Let me provide some context before I
-share my understanding of this challenge and how I'm coping with it.
+> @karpathy do you find yourself accumulating “comprehension debt” where it’s
+> often quite tedious to review all the code and AI has written so over time you
+> understand less and less of the code in your codebase?
 
-First off, we're talking about "[automatic programming](https://antirez.com/news/159)". A model, via a coding agent, does
-pretty much all the typing based on prompts I write. For the curious, here's my
-tooling at the time of writing:
+Before I share my understanding of of the problem and  how I'm coping with it,
+let me provide some general context.
+
+First off, we're talking about "[automatic
+programming](https://antirez.com/news/159)". A model, via a coding agent, does
+pretty much all the typing based on prompts I write. My tooling at the time of
+writing looks like this:
 
 - OpenCode
 
@@ -32,9 +33,10 @@ tooling at the time of writing:
 - MiniMax 2.7 high-speed plan
 
   MiniMax is practical, dependable, and quite fast on the high-speed plans. The
-  subscription also comes with audio/image/speech generators you can use through a
-  friendly official cli and it has two MCPs remote servers for image understanding
-  and web search (I use the latter very much). All in all, big fan of [MiniMax](https://minimax.io)'s work.
+  subscription also comes with audio/image/speech generators you can use through
+  a friendly official cli and it has two remote MCPs servers for image
+  understanding and web search (I use the latter very much). All in all, big fan
+  of [MiniMax](https://minimax.io)'s work.
 
 To best explain comprehension debt, let me pull from two connected ideas:
 
@@ -43,12 +45,12 @@ To best explain comprehension debt, let me pull from two connected ideas:
 
 ## Everything changed so nothing did
 
-I use this catchy phrase to anchor the idea that now that typing is gone from
-the every day programming workflow (if you don't think that's the case, you have
-some tooling catch up to do), I constantly get the feeling I'm starting over
-with the craft. It's a whole new thing because, well, I was spending most of my
-programming time typing and now there's very little typing going on. Also, I
-type almost exclusively English sentences.
+I use this catchy phrase to reinforce the idea that, with typing now absent from
+the day-to-day programming workflow (and if you don't believe that's true, you
+have some tooling to catch up on), I constantly feel like I'm starting over with
+the craft. It's a whole new thing! I was spending most of my programming time
+typing and now there's very little typing going on. Also, I type almost
+exclusively English sentences.
 
 Feels like a new job right? But then during these sessions, like clockwork, I
 run in the exact problems I was running before automatic programming was a
