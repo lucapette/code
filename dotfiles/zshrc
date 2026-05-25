@@ -36,7 +36,6 @@ export EDITOR=vim
 
 export PATH=.:$HOME/bin:$HOME/bin/ai:$HOME/.opencode/bin:/usr/local/bin:/usr/local/sbin:$PATH
 export PATH=/opt/homebrew/opt/coreutils/libexec/gnubin::$PATH
-export PATH=$HOME/.cargo/bin:$PATH
 export PATH=$HOME/.lmstudio/bin:$PATH
 
 export GOPATH=$HOME/go
@@ -64,3 +63,4 @@ eval "$(mcfly init zsh)"
 eval "$(kubectl completion zsh)"
 
 source "${HOME}/.sdkman/bin/sdkman-init.sh"
+eval "$(direnv hook zsh)"
