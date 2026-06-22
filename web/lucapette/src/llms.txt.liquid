@@ -1,0 +1,27 @@
+---
+permalink: /llms.txt
+layout: false
+eleventyExcludeFromCollections: true
+---
+# lucapette.me
+
+> Personal website of Luca Pette, an independent software developer. The site features blog posts about software engineering, engineering management, programming languages (Go, Ruby, Rust, Kotlin), streaming data systems (Kafka Streams), developer tools (Vim, tmux), book reviews, and personal notes on various topics.
+
+Built with Eleventy (11ty). Content includes blog posts, programming notes, book notes, recipes, and lists.
+
+## Writing
+
+{% for item in collections.writings -%}
+- [{{ item.data.title }}]({{ site.url }}{{ item.url }}): {{ item.data.description | default: item.data.title }}
+{% endfor %}
+## Notes
+
+{% for item in collections.notes -%}
+- [{{ item.data.title }}]({{ site.url }}{{ item.url }}): {{ item.data.description | default: item.data.title }}
+{% endfor %}
+## Optional
+
+- [About]({{ site.url }}/about/): About Luca Pette
+- [Credits]({{ site.url }}/credits/): Tools and libraries used on this site
+- [Hire me]({{ site.url }}/hire/): Consulting and availability
+- [All tags]({{ site.url }}/tags/): All tags used on the site
