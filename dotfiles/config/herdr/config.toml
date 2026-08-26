@@ -9,6 +9,8 @@ goto = "prefix+shift+k"
 new_tab = "prefix+t"
 new_workspace = "prefix+w"
 workspace_picker = "prefix+ctrl+w"
+next_workspace = "prefix+n"
+previous_workspace = "prefix+p"
 navigate_workspace_down = "j"
 navigate_pane_down = "ctrl+j"
 
