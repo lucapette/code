@@ -1,15 +1,9 @@
 # Agents.md
 
-This is a monorepo containing apps in many languages.
+This is a monorepo containing projects in many languages.
 
 You MUST follow the specific rules for each language. **ALWAYS** start from
-checking out README.md.
-
-## Build Systems
-
-- **Kotlin/Java**: Gradle (Kotlin DSL). Use `./gradlew` commands.
-- **Go**: Go modules. Use `go` commands.
-- **TypeScript**: Use `npm`.
+checking out the closest README.md.
 
 ## How to Find the Right Rules
 
@@ -20,11 +14,11 @@ checking out README.md.
    - Kotlin → `kotlin.md`
    - etc.
 
-CRITICAL: When you encounter a file reference (e.g., `@.ai/rules/go.md`), use the Read tool to load it on a need-to-know basis.
+CRITICAL: When you encounter a file reference (e.g., `@.agents/rules/go.md`), use the Read tool to load it on a need-to-know basis.
 
 ## Additional Guidelines
 
 - [Plan Mode](.agents/rules/plan-mode.md)
 - [When You're Unsure](.agents/rules/unsure.md)
 
-_This file was last updated: 2026-04-04. Always check the `.ai/rules/` directory for the most current language-specific guidelines._
+_This file was last updated: 2026-08-28. Always check the `.agents/rules/` directory for the most current language-specific guidelines._
