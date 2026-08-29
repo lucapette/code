@@ -21,6 +21,7 @@ document.addEventListener('alpine:init', () => {
     intervalIndex: 0,         // current interval in the tiled pattern
     intervalTotal: 60,        // duration of the current interval
     intervalRemaining: 60,    // time left in the current interval
+    announcedIntervalIndex: null, // last interval index whose start was announced
 
     /* --- Timer state --- */
     status: 'IDLE',           // IDLE | RUNNING | PAUSED
@@ -32,10 +33,7 @@ document.addEventListener('alpine:init', () => {
     theme: 'dark',
 
     /* --- Presets & configuration --- */
-    builtInPresets: [
-      { id: 'p7', name: '7 min', totalSeconds: 420, intervals: Array.from({ length: 7 }, () => ({ seconds: 60, label: '' })) },
-    ],
-    savedPresets: [],         // custom presets from localStorage
+    savedPresets: [],         // all presets (seeded with 7 min on first run)
     configOpen: false,        // settings modal visibility
     draftPresetId: 'new',     // 'new' or an existing savedPresets id
     draftName: '',            // preset name being configured
@@ -57,19 +55,36 @@ document.addEventListener('alpine:init', () => {
       }
       this.applyTheme();
 
-      /* Load saved custom presets, migrating the old {id,name,minutes}
-         schema to the new {id,name,totalSeconds,intervals[]} schema. */
+      /* Load presets. On the very first run there is no stored data, so seed
+         the default 7 min preset. After that presets are fully user-managed:
+         editable and deletable like any other. Also migrates the old
+         {id,name,minutes} schema to {id,name,totalSeconds,intervals[]}. */
       try {
-        const raw = JSON.parse(localStorage.getItem('timer-presets') || '[]');
-        this.savedPresets = Array.isArray(raw)
-          ? raw.map((p) => {
-              if (p.totalSeconds && p.intervals) return p;
-              const seconds = (p.minutes || 7) * 60;
-              return { id: p.id, name: p.name, totalSeconds: seconds, intervals: [{ seconds, label: 'until break' }] };
-            })
-          : [];
+        const raw = localStorage.getItem('timer-presets');
+        if (raw === null) {
+          this.savedPresets = [
+            { id: 'p7', name: '7 min', totalSeconds: 420, intervals: Array.from({ length: 7 }, () => ({ seconds: 60, label: '' })) },
+          ];
+          localStorage.setItem('timer-presets', JSON.stringify(this.savedPresets));
+        } else {
+          const parsed = JSON.parse(raw);
+          this.savedPresets = Array.isArray(parsed)
+            ? parsed.map((p) => {
+                if (p.totalSeconds && p.intervals) return p;
+                const seconds = (p.minutes || 7) * 60;
+                return { id: p.id, name: p.name, totalSeconds: seconds, intervals: [{ seconds, label: '' }] };
+              })
+            : [];
+        }
       } catch (err) {
         this.savedPresets = [];
+      }
+
+      /* Boot into a real preset: if the stored session id no longer exists
+         (e.g. first run, or its preset was deleted), load the first one so the
+         ring shows the first interval's label right away. */
+      if (!this.savedPresets.find((p) => p.id === this.session.id) && this.savedPresets.length) {
+        this.applyPreset(this.savedPresets[0].id);
       }
 
       /* iOS loads voices asynchronously — listen for them. */
@@ -167,13 +182,16 @@ document.addEventListener('alpine:init', () => {
 
     get intervalCaption() {
       if (this.status === 'PAUSED') return 'paused';
-      if (this.status === 'IDLE') return 'ready to start';
+      if (this.status === 'IDLE') {
+        const first = (this.session.intervals[0]?.label || '').trim();
+        return first || 'ready to start';
+      }
       const label = (this.session.intervals[this.intervalIndex]?.label || '').trim();
       return label ? label : 'interval';
     },
 
     get presets() {
-      return [...this.builtInPresets, ...this.savedPresets];
+      return this.savedPresets;
     },
 
     get activePresetId() {
@@ -197,8 +215,14 @@ document.addEventListener('alpine:init', () => {
         this.sessionRemaining = this.session.totalSeconds;
       }
 
-      this.startTimestamp = Date.now() - this.baseElapsed * 1000;
+      /* Baseline at the moment we (re)start: tick() computes elapsed as
+         baseElapsed + time-since-this-timestamp, so pausing freezes progress
+         and resuming must not double-count the paused time. */
+      this.startTimestamp = Date.now();
       this.updateIntervalFromElapsed(this.baseElapsed);
+      /* A fresh start (elapsed 0) must announce the first interval; on resume
+         the current interval was already announced, so skip it. */
+      this.announcedIntervalIndex = this.baseElapsed > 0 ? this.intervalIndex : null;
       this.lastSpokenMinute = Math.ceil(this.intervalRemaining / 60);
       this.status = 'RUNNING';
       this.requestWakeLock();
@@ -227,6 +251,7 @@ document.addEventListener('alpine:init', () => {
       this.intervalTotal = first ? first.seconds : this.session.totalSeconds;
       this.intervalRemaining = this.intervalTotal;
       this.lastSpokenMinute = null;
+      this.announcedIntervalIndex = null;
       this.stopWakeLock();
     },
 
@@ -262,6 +287,7 @@ document.addEventListener('alpine:init', () => {
       this.intervalTotal = first ? first.seconds : this.session.totalSeconds;
       this.intervalRemaining = this.intervalTotal;
       this.lastSpokenMinute = null;
+      this.announcedIntervalIndex = null;
     },
 
     /* --- Engine -------------------------------------------------------- */
@@ -279,7 +305,7 @@ document.addEventListener('alpine:init', () => {
       }
 
       const idx = this.indexOfInterval(elapsed);
-      if (idx !== this.intervalIndex) this.onIntervalChange(idx);
+      if (idx !== this.announcedIntervalIndex) this.onIntervalChange(idx);
 
       this.updateIntervalFromElapsed(elapsed);
       if (this.intervalTotal >= 60) this.checkMinuteMark(this.intervalRemaining);
@@ -289,6 +315,7 @@ document.addEventListener('alpine:init', () => {
 
     /* Announce each interval as it starts (Work / Rest / …). */
     onIntervalChange(idx) {
+      this.announcedIntervalIndex = idx;
       this.intervalIndex = idx;
       const label = (this.session.intervals[idx].label || '').trim();
       if (label) this.speak(label);
@@ -334,6 +361,21 @@ document.addEventListener('alpine:init', () => {
       this.configOpen = true;
     },
 
+    /* Open the config editor pre-loaded with an existing preset. Editing
+       always happens in place — there are no locked built-ins. */
+    openConfigFor(id) {
+      const preset = this.savedPresets.find((p) => p.id === id);
+      if (!preset) {
+        this.openConfig();
+        return;
+      }
+      this.draftPresetId = id;
+      this.draftName = preset.name;
+      this.draftTotalMinutes = Math.round((preset.totalSeconds / 60) * 2) / 2;
+      this.draftIntervals = preset.intervals.map((iv) => ({ seconds: iv.seconds, label: iv.label }));
+      this.configOpen = true;
+    },
+
     loadDraftPreset(id) {
       if (id === 'new') {
         this.draftName = '';
@@ -344,7 +386,7 @@ document.addEventListener('alpine:init', () => {
       const preset = this.savedPresets.find((p) => p.id === id);
       if (!preset) return;
       this.draftName = preset.name;
-      this.draftTotalMinutes = Math.round(preset.totalSeconds / 60);
+      this.draftTotalMinutes = Math.round((preset.totalSeconds / 60) * 2) / 2;
       this.draftIntervals = preset.intervals.map((iv) => ({ seconds: iv.seconds, label: iv.label }));
     },
 
@@ -413,8 +455,19 @@ document.addEventListener('alpine:init', () => {
     },
 
     deletePreset(id) {
+      const preset = this.savedPresets.find((p) => p.id === id);
+      const name = preset ? `"${preset.name}"` : 'this preset';
+      if (!window.confirm(`Delete ${name}?`)) return;
+
+      const wasActive = this.session.id === id;
       this.savedPresets = this.savedPresets.filter((p) => p.id !== id);
       this.persistPresets();
+
+      if (wasActive && this.savedPresets.length) {
+        this.applyPreset(this.savedPresets[0].id);
+      } else if (wasActive) {
+        this.reset();
+      }
     },
 
     persistPresets() {
@@ -460,7 +513,6 @@ document.addEventListener('alpine:init', () => {
       try {
         if (!('speechSynthesis' in window)) return;
         const synth = window.speechSynthesis;
-        synth.cancel(); // prevent overlapping announcements
 
         const utter = new SpeechSynthesisUtterance(text);
         utter.rate = 0.95;
@@ -473,7 +525,14 @@ document.addEventListener('alpine:init', () => {
           voices.find((v) => /^en/i.test(v.lang));
         if (preferred) utter.voice = preferred;
 
-        synth.speak(utter);
+        if (synth.speaking || synth.pending) {
+          /* Chrome plays a new utterance at a distorted, high-pitched speed
+             if it starts before cancel() has settled — cancel and defer. */
+          synth.cancel();
+          setTimeout(() => synth.speak(utter), 80);
+        } else {
+          synth.speak(utter);
+        }
       } catch (err) {
         console.warn('Speech failed:', err);
       }

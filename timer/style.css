@@ -269,6 +269,9 @@ main {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 2px;
+  line-height: 1.4;
+  max-width: 88%;
+  overflow-wrap: break-word;
 }
 
 /* --- Controls -------------------------------------------------------------- */
@@ -421,6 +424,68 @@ main {
 .chip-add .ico-sm {
   width: 16px;
   height: 16px;
+}
+
+.chip-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chip-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.chip-edit .ico-sm {
+  width: 13px;
+  height: 13px;
+}
+
+.chip-edit:not(:disabled):hover {
+  color: var(--accent);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.chip-edit:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.chip-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.chip-del .ico-sm {
+  width: 13px;
+  height: 13px;
+}
+
+.chip-del:not(:disabled):hover {
+  color: var(--danger);
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.chip-del:disabled {
+  opacity: 0.25;
+  cursor: default;
 }
 
 /* --- Settings modal ---------------------------------------------------------- */
@@ -628,6 +693,10 @@ main {
 
 .icon-btn-sm:hover {
   color: var(--danger);
+}
+
+.saved-edit:hover {
+  color: var(--accent);
 }
 
 .ico-sm {
