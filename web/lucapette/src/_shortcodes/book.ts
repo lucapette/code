@@ -16,6 +16,7 @@ export async function bookShortcode(
   title: string,
   name: string,
   width = 200,
+  url = `https://www.goodreads.com/book/show/${id}`,
 ): Promise<string> {
   const page = this.page;
 
@@ -39,7 +40,7 @@ export async function bookShortcode(
           const medium = metadata.webp[1] || metadata.webp[0];
 
           imageHtml = `
-    <a class="book-cover" href="https://www.goodreads.com/book/show/${id}">
+    <a class="book-cover" href="${url}">
       <img src="${small.url}" srcset="${small.url} 200w, ${medium.url} 400w" sizes="(max-width: 600px) 128px, 800px" alt="${title}" width="${width}" />
     </a>`;
         }
