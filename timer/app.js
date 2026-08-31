@@ -87,11 +87,6 @@ document.addEventListener('alpine:init', () => {
         this.applyPreset(this.savedPresets[0].id);
       }
 
-      /* iOS loads voices asynchronously — listen for them. */
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = () => {};
-      }
-
       /* Page visibility: keep timestamp-corrected timing; re-acquire the
          wake lock when the tab becomes visible again (mobile drops it). */
       document.addEventListener('visibilitychange', () => {
@@ -318,9 +313,12 @@ document.addEventListener('alpine:init', () => {
       this.announcedIntervalIndex = idx;
       this.intervalIndex = idx;
       const label = (this.session.intervals[idx].label || '').trim();
-      if (label) this.speak(label);
-      this.playBeep(700, 130, 'sine', 0.45);
-      if (navigator.vibrate) navigator.vibrate(40);
+      if (label) {
+        this.speak(label);
+      } else {
+        this.playBeep(700, 130, 'sine', 0.45);
+        if (navigator.vibrate) navigator.vibrate(40);
+      }
       this.lastSpokenMinute = Math.ceil(this.intervalTotal / 60);
     },
 
@@ -348,7 +346,6 @@ document.addEventListener('alpine:init', () => {
       this.stopWakeLock();
 
       this.speak('Time is up!');
-      this.playFinalBeeps();
       if (navigator.vibrate) navigator.vibrate([120, 80, 120, 80, 240]);
     },
 
@@ -502,37 +499,15 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    playFinalBeeps() {
-      this.playBeep(1000, 300, 'square', 0.5);
-      setTimeout(() => this.playBeep(1000, 300, 'square', 0.5), 400);
-      setTimeout(() => this.playBeep(1000, 300, 'square', 0.5), 800);
-    },
-
     /* --- Voice --------------------------------------------------------- */
     speak(text) {
       try {
         if (!('speechSynthesis' in window)) return;
         const synth = window.speechSynthesis;
-
         const utter = new SpeechSynthesisUtterance(text);
         utter.rate = 0.95;
         utter.pitch = 1;
-
-        const voices = synth.getVoices();
-        const preferred =
-          voices.find((v) => /en[-_]US/i.test(v.lang) && /female/i.test(v.name)) ||
-          voices.find((v) => /en[-_]US/i.test(v.lang)) ||
-          voices.find((v) => /^en/i.test(v.lang));
-        if (preferred) utter.voice = preferred;
-
-        if (synth.speaking || synth.pending) {
-          /* Chrome plays a new utterance at a distorted, high-pitched speed
-             if it starts before cancel() has settled — cancel and defer. */
-          synth.cancel();
-          setTimeout(() => synth.speak(utter), 80);
-        } else {
-          synth.speak(utter);
-        }
+        synth.speak(utter);
       } catch (err) {
         console.warn('Speech failed:', err);
       }
