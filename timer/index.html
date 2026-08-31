@@ -70,6 +70,11 @@
                 x-text="displayTime"
               >1:00</div>
               <div class="time-label" x-text="intervalCaption">READY TO START</div>
+              <div
+                class="time-next"
+                x-show="nextLabel"
+                x-text="nextLabel ? 'next: ' + nextLabel : ''"
+              >next: REST</div>
             </div>
           </div>
 
@@ -95,6 +100,7 @@
                 x-text="sessionDisplay"
               >7:00</div>
               <div class="time-label">TOTAL</div>
+              <div class="time-sub" x-show="intervalProgress" x-text="intervalProgress">1 / 7</div>
             </div>
           </div>
         </div>

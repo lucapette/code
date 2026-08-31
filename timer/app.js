@@ -185,6 +185,50 @@ document.addEventListener('alpine:init', () => {
       return label ? label : 'interval';
     },
 
+    /* Label of the upcoming interval, shown as a teaser in the final
+       seconds of the current one (same window as the danger color change).
+       Hidden when the session ends with this interval or the next one has
+       no label. */
+    get nextLabel() {
+      if (this.intervalRemaining > 10) return '';
+      if (this.sessionRemaining <= this.intervalRemaining) return '';
+      const intervals = this.session.intervals;
+      const next = intervals[(this.intervalIndex + 1) % intervals.length];
+      return (next?.label || '').trim();
+    },
+
+    /* Interval count inside the tiled session, e.g. "3 / 14". The pattern
+       repeats until the session total is consumed, so the count covers full
+       tiles plus the partial one at the end. Empty for a single-interval
+       session — a plain countdown has nothing to count. */
+    get intervalProgress() {
+      const intervals = this.session.intervals;
+      const len = intervals.length;
+      const p = this.patternLength;
+      if (!len || !p) return '';
+
+      let total = Math.floor(this.session.totalSeconds / p) * len;
+      const rem = this.session.totalSeconds % p;
+      if (rem > 0) {
+        let acc = 0;
+        for (let i = 0; i < len; i++) {
+          acc += intervals[i].seconds;
+          if (rem <= acc) { total += i + 1; break; }
+        }
+      }
+      if (total <= 1) return '';
+
+      const elapsed = Math.min(
+        this.session.totalSeconds,
+        Math.max(0, this.session.totalSeconds - this.sessionRemaining)
+      );
+      const current = Math.min(
+        total,
+        Math.floor(elapsed / p) * len + this.indexOfInterval(elapsed) + 1
+      );
+      return `${current} / ${total}`;
+    },
+
     get presets() {
       return this.savedPresets;
     },
