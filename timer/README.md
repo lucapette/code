@@ -32,6 +32,17 @@ npm run preview    # serve the build
 The build bundles everything (Alpine.js included), so `dist/` works offline
 and from any static file host.
 
+## Test it
+
+```sh
+npm test            # run once (Vitest)
+npm run test:watch  # watch mode
+```
+
+The timer math — pattern tiling, interval countdowns, minute marks,
+ring/format helpers — lives in `src/engine.js` as pure functions and is
+covered by `tests/engine.test.js`.
+
 ## How it works
 
 All timing is derived from wall-clock elapsed time
@@ -57,8 +68,10 @@ used when available and silently skipped otherwise.
 | File                  | Purpose                                    |
 |-----------------------|--------------------------------------------|
 | `index.html`          | Markup + Alpine bindings                    |
-| `src/main.js`         | Timer engine wiring, presets, audio/voice, theme |
+| `src/main.js`         | Alpine component: state, presets, audio/voice, theme |
+| `src/engine.js`       | Pure timer math (tiling, countdowns, cues)  |
 | `src/style.css`       | Theming and layout                          |
+| `tests/engine.test.js`| Vitest coverage for the engine              |
 | `package.json`        | Vite/Vitest tooling, Alpine.js dependency   |
 
 See [docs/roadmap.md](docs/roadmap.md) for known issues and planned work.

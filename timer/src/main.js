@@ -1,6 +1,7 @@
 /* ==========================================================================
    Timer — Interval Timer
-   Alpine.js state management + timer engine.
+   Alpine.js state management, wiring the pure timer engine (engine.js)
+   to the DOM.
 
    A "session" is a sequence of intervals (a pattern). The pattern tiles
    until the session's total duration is consumed:
@@ -8,6 +9,14 @@
    ========================================================================== */
 
 import Alpine from 'alpinejs';
+
+import * as TimerEngine from './engine.js';
+
+const URGENCY_COLOR = {
+  normal: 'var(--accent)',
+  warning: 'var(--warning)',
+  danger: 'var(--danger)',
+};
 
 document.addEventListener('alpine:init', () => {
   Alpine.data('timerApp', () => ({
@@ -101,78 +110,39 @@ document.addEventListener('alpine:init', () => {
     },
 
     /* --- Pattern helpers ---------------------------------------------- */
-    get patternLength() {
-      return this.session.intervals.reduce((acc, iv) => acc + iv.seconds, 0);
-    },
-
-    indexOfInterval(elapsed) {
-      const intervals = this.session.intervals;
-      const p = this.patternLength;
-      const pos = p ? elapsed % p : 0;
-      let acc = 0;
-      for (let i = 0; i < intervals.length; i++) {
-        if (pos < acc + intervals[i].seconds) return i;
-        acc += intervals[i].seconds;
-      }
-      return intervals.length - 1;
-    },
-
     updateIntervalFromElapsed(elapsed) {
-      const intervals = this.session.intervals;
-      if (!intervals.length) return;
-      const p = this.patternLength;
-      const idx = this.indexOfInterval(elapsed);
-      const pos = p ? elapsed % p : 0;
-      let acc = 0;
-      for (let i = 0; i < idx; i++) acc += intervals[i].seconds;
-      const intervalStartElapsed = (p ? elapsed - pos : 0) + acc;
-      this.intervalIndex = idx;
-      this.intervalTotal = intervals[idx].seconds;
-      this.intervalRemaining = Math.max(0, this.intervalTotal - (elapsed - intervalStartElapsed));
+      const st = TimerEngine.intervalState(this.session.intervals, elapsed);
+      if (!st) return;
+      this.intervalIndex = st.index;
+      this.intervalTotal = st.total;
+      this.intervalRemaining = st.remaining;
     },
 
     /* --- Getters (reactively bound to the DOM) ------------------------ */
     get displayTime() {
-      return this.formatSeconds(Math.ceil(Math.max(0, this.intervalRemaining)));
+      return TimerEngine.formatClock(Math.ceil(Math.max(0, this.intervalRemaining)));
     },
 
     get sessionDisplay() {
-      return this.formatSeconds(Math.ceil(Math.max(0, this.sessionRemaining)));
-    },
-
-    formatSeconds(s) {
-      const h = Math.floor(s / 3600);
-      const m = Math.floor((s % 3600) / 60);
-      const sec = s % 60;
-      return h > 0
-        ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
-        : `${m}:${String(sec).padStart(2, '0')}`;
+      return TimerEngine.formatClock(Math.ceil(Math.max(0, this.sessionRemaining)));
     },
 
     get ringOffset() {
-      const progress = this.intervalTotal
-        ? Math.min(1, Math.max(0, this.intervalRemaining / this.intervalTotal))
-        : 1;
-      return this.ringCircumference * (1 - progress);
+      return this.ringCircumference
+        * (1 - TimerEngine.ringProgress(this.intervalRemaining, this.intervalTotal));
     },
 
     get ringColor() {
-      if (this.intervalRemaining <= 10) return 'var(--danger)';
-      if (this.intervalRemaining <= 60) return 'var(--warning)';
-      return 'var(--accent)';
+      return URGENCY_COLOR[TimerEngine.urgency(this.intervalRemaining)];
     },
 
     get sessionRingOffset() {
-      const progress = this.session.totalSeconds
-        ? Math.min(1, Math.max(0, this.sessionRemaining / this.session.totalSeconds))
-        : 1;
-      return this.ringCircumference * (1 - progress);
+      return this.ringCircumference
+        * (1 - TimerEngine.ringProgress(this.sessionRemaining, this.session.totalSeconds));
     },
 
     get totalRingColor() {
-      if (this.sessionRemaining <= 10) return 'var(--danger)';
-      if (this.sessionRemaining <= 60) return 'var(--warning)';
-      return 'var(--accent)';
+      return URGENCY_COLOR[TimerEngine.urgency(this.sessionRemaining)];
     },
 
     get totalMinutes() {
@@ -190,47 +160,26 @@ document.addEventListener('alpine:init', () => {
     },
 
     /* Label of the upcoming interval, shown as a teaser in the final
-       seconds of the current one (same window as the danger color change).
-       Hidden when the session ends with this interval or the next one has
-       no label. */
+       seconds of the current one. Decision lives in the engine. */
     get nextLabel() {
-      if (this.intervalRemaining > 10) return '';
-      if (this.sessionRemaining <= this.intervalRemaining) return '';
-      const intervals = this.session.intervals;
-      const next = intervals[(this.intervalIndex + 1) % intervals.length];
-      return (next?.label || '').trim();
+      return TimerEngine.nextLabel(
+        this.session.intervals,
+        this.intervalIndex,
+        this.intervalRemaining,
+        this.sessionRemaining
+      );
     },
 
-    /* Interval count inside the tiled session, e.g. "3 / 14". The pattern
-       repeats until the session total is consumed, so the count covers full
-       tiles plus the partial one at the end. Empty for a single-interval
-       session — a plain countdown has nothing to count. */
+    /* Interval count inside the tiled session, e.g. "3 / 14", delegated
+       to the engine. Empty for a single-interval session — a plain
+       countdown has nothing to count. */
     get intervalProgress() {
-      const intervals = this.session.intervals;
-      const len = intervals.length;
-      const p = this.patternLength;
-      if (!len || !p) return '';
-
-      let total = Math.floor(this.session.totalSeconds / p) * len;
-      const rem = this.session.totalSeconds % p;
-      if (rem > 0) {
-        let acc = 0;
-        for (let i = 0; i < len; i++) {
-          acc += intervals[i].seconds;
-          if (rem <= acc) { total += i + 1; break; }
-        }
-      }
-      if (total <= 1) return '';
-
-      const elapsed = Math.min(
+      const count = TimerEngine.progressCount(
+        this.session.intervals,
         this.session.totalSeconds,
-        Math.max(0, this.session.totalSeconds - this.sessionRemaining)
+        this.sessionRemaining
       );
-      const current = Math.min(
-        total,
-        Math.floor(elapsed / p) * len + this.indexOfInterval(elapsed) + 1
-      );
-      return `${current} / ${total}`;
+      return count ? `${count.current} / ${count.total}` : '';
     },
 
     get presets() {
@@ -347,7 +296,7 @@ document.addEventListener('alpine:init', () => {
         return;
       }
 
-      const idx = this.indexOfInterval(elapsed);
+      const idx = TimerEngine.indexOfInterval(this.session.intervals, elapsed);
       if (idx !== this.announcedIntervalIndex) this.onIntervalChange(idx);
 
       this.updateIntervalFromElapsed(elapsed);
@@ -372,8 +321,12 @@ document.addEventListener('alpine:init', () => {
 
     /* Announce minute marks only inside intervals >= 60s. */
     checkMinuteMark(intervalRemaining) {
-      const minutes = Math.ceil(intervalRemaining / 60);
-      if (minutes === this.lastSpokenMinute) return;
+      const minutes = TimerEngine.minuteMark(
+        this.intervalTotal,
+        intervalRemaining,
+        this.lastSpokenMinute
+      );
+      if (minutes === null) return;
 
       this.lastSpokenMinute = minutes;
       const label = minutes === 1

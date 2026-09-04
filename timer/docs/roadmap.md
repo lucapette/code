@@ -16,14 +16,6 @@ up!" only fires as a catch-up when the app becomes visible again — not on
 time. Fix direction: a `setTimeout`/Web Worker heartbeat fallback, still
 timestamp-corrected by the existing elapsed math.
 
-### P2 — Timer engine is not unit-testable
-
-Pattern tiling (`indexOfInterval`), partial-final-interval counting
-(`intervalProgress`), and minute-mark logic are exactly the code that
-regresses silently, and all of it is embedded in the Alpine component
-object. Extract the engine into a pure module (elapsed in → state out) and
-add tests.
-
 ### P2 — Screen-reader noise from per-second `aria-live`
 
 Both countdown elements use `role="timer" aria-live="polite"` and re-render
@@ -78,25 +70,31 @@ the rest of the UI.
 1. **PWA** — manifest, service worker, and a completion notification.
    Makes the app installable, fully offline, and lets "Time is up!" land on
    time even when the tab is hidden (pairs with the heartbeat fallback).
-2. **Extract + test the engine** — pure module with the tiling/minute-mark
-   logic, covered by unit tests (same work as the P2 issue above).
-3. **Announcement preferences** — toggles for voice / beeps / vibration,
+2. **Announcement preferences** — toggles for voice / beeps / vibration,
    and distinct tones per interval so Work vs Rest is audible without
    looking.
-4. **Preset import/export** — copy/paste a preset as JSON to share HIIT
+3. **Preset import/export** — copy/paste a preset as JSON to share HIIT
    routines between devices.
+4. **TypeScript** — the Vite + ES-module structure is in place; rename
+   `src/*.js` → `.ts` and tighten types.
 5. **Explicitly out of scope** — accounts, server sync, session history.
    The app stays a single static page.
 
 ## Suggested order
 
-1. Extract engine + tests (unblocks confident refactoring)
-2. Background heartbeat fallback (core use case)
-3. PWA (notification completes the background story)
-4. A11y + polish batch (remaining P2/P3 items)
+1. Background heartbeat fallback (core use case)
+2. PWA (notification completes the background story)
+3. A11y + polish batch (remaining P2/P3 items)
 
 ## Done
 
+- **2026-09-04** — Extracted the timer math into `src/engine.js`, a pure
+  ES module (tiling, interval state, progress counting, minute marks,
+  ring/format helpers), with 33 Vitest cases in `tests/engine.test.js`.
+  Introduced Vite along the way: `npm run dev|build|test`, Alpine.js from
+  npm (vendored copy deleted), sources under `src/` — the codebase is now
+  one rename away from TypeScript. `file://` double-click is replaced by
+  `npm run dev` or the self-contained `dist/` build.
 - **2026-09-04** — Removed all duration caps: sessions and intervals are
   unlimited (the old save path silently capped the total at 60 minutes
   while the UI allowed 120). Kept the sanity floors — 1 min session,
