@@ -67,6 +67,7 @@
                 role="timer"
                 aria-live="polite"
                 :style="{ color: ringColor }"
+                :class="{ 'time-long': intervalRemaining >= 3600 }"
                 x-text="displayTime"
               >1:00</div>
               <div class="time-label" x-text="intervalCaption">READY TO START</div>
@@ -97,6 +98,7 @@
                 role="timer"
                 aria-live="polite"
                 :style="{ color: totalRingColor }"
+                :class="{ 'time-long': sessionRemaining >= 3600 }"
                 x-text="sessionDisplay"
               >7:00</div>
               <div class="time-label">TOTAL</div>
@@ -143,7 +145,7 @@
             class="btn btn-adjust glass"
             type="button"
             @click="adjust(60)"
-            :disabled="status === 'RUNNING' || session.totalSeconds >= 3600"
+            :disabled="status === 'RUNNING'"
             aria-label="Add one minute"
           >
             <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -299,7 +301,6 @@
                     class="big-input"
                     type="number"
                     min="5"
-                    max="3600"
                     step="1"
                     x-model.number="iv.seconds"
                     :aria-label="'Interval ' + (i + 1) + ' seconds'"
@@ -331,7 +332,6 @@
               class="big-input"
               type="number"
               min="1"
-              max="120"
               step="0.5"
               x-model.number="draftTotalMinutes"
               aria-label="Total minutes"

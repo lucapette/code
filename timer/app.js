@@ -132,17 +132,20 @@ document.addEventListener('alpine:init', () => {
 
     /* --- Getters (reactively bound to the DOM) ------------------------ */
     get displayTime() {
-      const s = Math.ceil(Math.max(0, this.intervalRemaining));
-      const m = Math.floor(s / 60);
-      const sec = s % 60;
-      return `${m}:${String(sec).padStart(2, '0')}`;
+      return this.formatSeconds(Math.ceil(Math.max(0, this.intervalRemaining)));
     },
 
     get sessionDisplay() {
-      const s = Math.ceil(Math.max(0, this.sessionRemaining));
-      const m = Math.floor(s / 60);
+      return this.formatSeconds(Math.ceil(Math.max(0, this.sessionRemaining)));
+    },
+
+    formatSeconds(s) {
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
       const sec = s % 60;
-      return `${m}:${String(sec).padStart(2, '0')}`;
+      return h > 0
+        ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+        : `${m}:${String(sec).padStart(2, '0')}`;
     },
 
     get ringOffset() {
@@ -296,7 +299,7 @@ document.addEventListener('alpine:init', () => {
 
     adjust(delta) {
       if (this.status === 'RUNNING') return;
-      const next = Math.min(3600, Math.max(60, this.session.totalSeconds + delta));
+      const next = Math.max(60, this.session.totalSeconds + delta);
       this.session.totalSeconds = next;
       if (this.session.intervals.length === 1) {
         this.session.intervals[0].seconds = next;
@@ -435,7 +438,7 @@ document.addEventListener('alpine:init', () => {
       const iv = this.draftIntervals[index];
       if (!iv) return;
       const cur = Number.isFinite(iv.seconds) ? iv.seconds : 60;
-      iv.seconds = Math.min(3600, Math.max(5, cur + delta));
+      iv.seconds = Math.max(5, cur + delta);
     },
 
     addDraftInterval() {
@@ -451,7 +454,7 @@ document.addEventListener('alpine:init', () => {
 
     draftTotalAdjust(delta) {
       const cur = Number.isFinite(this.draftTotalMinutes) ? this.draftTotalMinutes : 7;
-      this.draftTotalMinutes = Math.min(120, Math.max(1, cur + delta));
+      this.draftTotalMinutes = Math.max(1, cur + delta);
     },
 
     get draftSum() {
@@ -461,7 +464,7 @@ document.addEventListener('alpine:init', () => {
     savePreset() {
       const intervals = this.draftIntervals.map((iv) => ({
         seconds: Number.isFinite(+iv.seconds)
-          ? Math.min(3600, Math.max(5, Math.round(iv.seconds)))
+          ? Math.max(5, Math.round(iv.seconds))
           : 60,
         label: (iv.label || '').trim(),
       }));
@@ -470,9 +473,7 @@ document.addEventListener('alpine:init', () => {
       const rawTotal = Math.round(this.draftTotalMinutes * 60);
       const totalSeconds = Math.max(
         sum,
-        Number.isFinite(rawTotal)
-          ? Math.min(3600, Math.max(60, rawTotal))
-          : 60
+        Number.isFinite(rawTotal) ? Math.max(60, rawTotal) : 60
       );
       const name = (this.draftName || '').trim() || `${Math.round(totalSeconds / 60)} min`;
 

@@ -6,16 +6,6 @@ Priorities: **P1** = bug or core-use-case gap, **P2** = structure/a11y,
 
 ## Known issues
 
-### P1 — Silent 60-minute cap on the session total
-
-The settings UI allows up to 120 total minutes (input `max="120"`,
-`draftTotalAdjust()` clamps to 120), but `savePreset()` clamps the entered
-total to 3600s — a 90-minute preset silently saves as 60 minutes with no
-feedback. Inconsistent counterpart: the *interval sum* path in the same
-expression (`Math.max(sum, …)`) is unclamped, so sessions longer than 60
-minutes are reachable via intervals but not via the total field. Pick one
-limit and surface it in the UI.
-
 ### P1 — No alerts while the tab is hidden or the screen is off
 
 The engine only runs inside `requestAnimationFrame` (`tick()`), which
@@ -100,8 +90,14 @@ the rest of the UI.
 
 ## Suggested order
 
-1. 60-minute clamp bug (small, real bug)
-2. Extract engine + tests (unblocks confident refactoring)
-3. Background heartbeat fallback (core use case)
-4. PWA (notification completes the background story)
-5. A11y + polish batch (remaining P2/P3 items)
+1. Extract engine + tests (unblocks confident refactoring)
+2. Background heartbeat fallback (core use case)
+3. PWA (notification completes the background story)
+4. A11y + polish batch (remaining P2/P3 items)
+
+## Done
+
+- **2026-09-04** — Removed all duration caps: sessions and intervals are
+  unlimited (the old save path silently capped the total at 60 minutes
+  while the UI allowed 120). Kept the sanity floors — 1 min session,
+  5 s per interval — and added H:MM:SS formatting past one hour.
