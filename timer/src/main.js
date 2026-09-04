@@ -11,6 +11,7 @@
 import Alpine from 'alpinejs';
 
 import * as TimerEngine from './engine.js';
+import { createHeartbeat } from './heartbeat.js';
 
 const URGENCY_COLOR = {
   normal: 'var(--accent)',
@@ -36,6 +37,7 @@ document.addEventListener('alpine:init', () => {
     /* --- Timer state --- */
     status: 'IDLE',           // IDLE | RUNNING | PAUSED
     rafId: null,              // requestAnimationFrame id
+    heartbeat: null,          // worker-driven fallback beats while hidden
     startTimestamp: null,     // Date.now() baseline for elapsed math
     baseElapsed: 0,           // seconds elapsed, frozen at pause
     lastSpokenMinute: null,   // last minute boundary already announced
@@ -97,13 +99,15 @@ document.addEventListener('alpine:init', () => {
         this.applyPreset(this.savedPresets[0].id);
       }
 
-      /* Page visibility: keep timestamp-corrected timing; re-acquire the
-         wake lock when the tab becomes visible again (mobile drops it). */
+      /* Page visibility: recompute from the wall clock and re-acquire the
+         wake lock when the tab becomes visible again (mobile drops it).
+         While hidden, the heartbeat keeps advancing instead of rAF. */
+      this.heartbeat = createHeartbeat(() => this.advance());
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
           if (this.status === 'RUNNING') {
             this.requestWakeLock();
-            this.tick();
+            this.advance();
           }
         }
       });
@@ -218,6 +222,7 @@ document.addEventListener('alpine:init', () => {
       this.lastSpokenMinute = Math.ceil(this.intervalRemaining / 60);
       this.status = 'RUNNING';
       this.requestWakeLock();
+      this.heartbeat.start();
       this.tick();
     },
 
@@ -229,6 +234,7 @@ document.addEventListener('alpine:init', () => {
       this.baseElapsed = (Date.now() - this.startTimestamp) / 1000;
       this.updateIntervalFromElapsed(this.baseElapsed);
       this.sessionRemaining = Math.max(0, this.session.totalSeconds - this.baseElapsed);
+      this.heartbeat.stop();
       this.stopWakeLock();
     },
 
@@ -244,6 +250,7 @@ document.addEventListener('alpine:init', () => {
       this.intervalRemaining = this.intervalTotal;
       this.lastSpokenMinute = null;
       this.announcedIntervalIndex = null;
+      this.heartbeat.stop();
       this.stopWakeLock();
     },
 
@@ -283,11 +290,10 @@ document.addEventListener('alpine:init', () => {
     },
 
     /* --- Engine -------------------------------------------------------- */
-    tick() {
-      if (this.status !== 'RUNNING') return;
-
-      /* Timestamp compensation: elapsed is computed from wall-clock time, so
-         background throttling of the animation frame cannot cause drift. */
+    /* Recompute all state from the wall clock. Idempotent: announcement
+       guards (announcedIntervalIndex, lastSpokenMinute) make repeated
+       calls safe, whether driven by rAF or by the heartbeat. */
+    advance() {
       const elapsed = this.baseElapsed + (Date.now() - this.startTimestamp) / 1000;
       this.sessionRemaining = Math.max(0, this.session.totalSeconds - elapsed);
 
@@ -301,7 +307,12 @@ document.addEventListener('alpine:init', () => {
 
       this.updateIntervalFromElapsed(elapsed);
       if (this.intervalTotal >= 60) this.checkMinuteMark(this.intervalRemaining);
+    },
 
+    tick() {
+      if (this.status !== 'RUNNING') return;
+      this.advance();
+      if (this.status !== 'RUNNING') return;
       this.rafId = requestAnimationFrame(() => this.tick());
     },
 
@@ -344,6 +355,7 @@ document.addEventListener('alpine:init', () => {
       this.status = 'IDLE';
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
+      this.heartbeat.stop();
       this.stopWakeLock();
 
       this.speak('Time is up!');

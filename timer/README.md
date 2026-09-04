@@ -51,6 +51,14 @@ interval is *computed* from elapsed time rather than mutated per tick. This
 keeps pause/resume and background-tab throttling drift-free: a single frame
 after returning to the tab restores the correct state.
 
+While the tab is hidden, `requestAnimationFrame` is suspended — a dedicated
+Web Worker heartbeat (`src/heartbeat.js`) keeps the state advancing on time
+(Worker timers are not tab-throttled), falling back to `setInterval` where
+Workers are unavailable. Beats only signal "time has passed"; all state is
+recomputed from the wall clock. A locked screen suspends the page entirely
+on some platforms — the wake lock covers that case where granted, and a
+notification (see `docs/roadmap.md`) is the eventual fix.
+
 State is held in a single Alpine.js component (`src/main.js`) bound to the
 DOM in `index.html`; `src/style.css` implements the dark-first
 glassmorphism theme with CSS custom properties.

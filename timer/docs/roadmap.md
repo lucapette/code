@@ -6,16 +6,6 @@ Priorities: **P1** = bug or core-use-case gap, **P2** = structure/a11y,
 
 ## Known issues
 
-### P1 — No alerts while the tab is hidden or the screen is off
-
-The engine only runs inside `requestAnimationFrame` (`tick()`), which
-browsers suspend in hidden tabs and when the screen locks. The wake lock
-mitigates this while granted, but it is not universal (Firefox, older iOS
-Safari, denied permission). If the screen goes dark mid-workout, "Time is
-up!" only fires as a catch-up when the app becomes visible again — not on
-time. Fix direction: a `setTimeout`/Web Worker heartbeat fallback, still
-timestamp-corrected by the existing elapsed math.
-
 ### P2 — Screen-reader noise from per-second `aria-live`
 
 Both countdown elements use `role="timer" aria-live="polite"` and re-render
@@ -82,12 +72,19 @@ the rest of the UI.
 
 ## Suggested order
 
-1. Background heartbeat fallback (core use case)
-2. PWA (notification completes the background story)
-3. A11y + polish batch (remaining P2/P3 items)
+1. PWA (installable, offline; a notification also hardens the
+   locked-screen case the heartbeat can't reach)
+2. A11y + polish batch (remaining P2/P3 items)
 
 ## Done
 
+- **2026-09-04** — Hidden-tab reliability: a dedicated Web Worker
+  heartbeat (worker timers escape tab throttling) now drives state
+  re-syncs while `requestAnimationFrame` is suspended, with a
+  `setInterval` fallback where Workers are unavailable. Beats only say
+  "time has passed" — all state stays derived from the wall clock. The
+  tick loop split into `advance()` (recompute) and `tick()` (advance +
+  schedule rAF). Verified by completing a session with rAF disabled.
 - **2026-09-04** — Extracted the timer math into `src/engine.js`, a pure
   ES module (tiling, interval state, progress counting, minute marks,
   ring/format helpers), with 33 Vitest cases in `tests/engine.test.js`.
