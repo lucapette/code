@@ -5,8 +5,9 @@
    A "session" is a sequence of intervals (a pattern). The pattern tiles
    until the session's total duration is consumed:
      - 7 min preset  -> seven 1-minute intervals
-   No external libraries beyond Alpine (vendored locally for offline use).
    ========================================================================== */
+
+import Alpine from 'alpinejs';
 
 document.addEventListener('alpine:init', () => {
   Alpine.data('timerApp', () => ({
@@ -599,3 +600,5 @@ document.addEventListener('alpine:init', () => {
     },
   }));
 });
+
+Alpine.start();

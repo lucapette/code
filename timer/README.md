@@ -1,6 +1,7 @@
 # Interval Timer
 
-A zero-build interval timer for workouts and focus sessions. A session is a
+A zero-framework interval timer for workouts and focus sessions, built with
+Vite and Alpine.js. A session is a
 chain of named intervals (Work, Rest, …) that repeats until the session's
 total duration is consumed — e.g. 40s + 20s tiled for 25 minutes is HIIT.
 
@@ -21,13 +22,15 @@ vanilla JavaScript.
 
 ## Run it
 
-No build step and no dependencies beyond the vendored Alpine.js. Either open
-`index.html` directly in a browser, or serve the folder statically:
-
 ```sh
-python3 -m http.server 8000
-# → http://localhost:8000
+npm install
+npm run dev        # dev server
+npm run build      # production build → dist/ (self-contained, offline)
+npm run preview    # serve the build
 ```
+
+The build bundles everything (Alpine.js included), so `dist/` works offline
+and from any static file host.
 
 ## How it works
 
@@ -37,9 +40,9 @@ interval is *computed* from elapsed time rather than mutated per tick. This
 keeps pause/resume and background-tab throttling drift-free: a single frame
 after returning to the tab restores the correct state.
 
-State is held in a single Alpine.js component (`app.js`) bound to the DOM in
-`index.html`; `style.css` implements the dark-first glassmorphism theme with
-CSS custom properties.
+State is held in a single Alpine.js component (`src/main.js`) bound to the
+DOM in `index.html`; `src/style.css` implements the dark-first
+glassmorphism theme with CSS custom properties.
 
 Persisted keys:
 
@@ -51,11 +54,11 @@ used when available and silently skipped otherwise.
 
 ## Project layout
 
-| File                  | Purpose                                   |
-|-----------------------|-------------------------------------------|
-| `index.html`          | Markup + Alpine bindings                   |
-| `app.js`              | Timer engine, presets, audio/voice, theme  |
-| `style.css`           | Theming and layout                         |
-| `vendor/alpine.min.js`| Vendored Alpine.js (offline-friendly)      |
+| File                  | Purpose                                    |
+|-----------------------|--------------------------------------------|
+| `index.html`          | Markup + Alpine bindings                    |
+| `src/main.js`         | Timer engine wiring, presets, audio/voice, theme |
+| `src/style.css`       | Theming and layout                          |
+| `package.json`        | Vite/Vitest tooling, Alpine.js dependency   |
 
 See [docs/roadmap.md](docs/roadmap.md) for known issues and planned work.
