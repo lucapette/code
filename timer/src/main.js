@@ -46,7 +46,7 @@ document.addEventListener('alpine:init', () => {
 
     /* --- Presets & configuration --- */
     savedPresets: [],         // all presets (seeded with 7 min on first run)
-    configOpen: false,        // settings modal visibility
+    view: 'timer',            // 'timer' | 'settings'
     draftPresetId: 'new',     // 'new' or an existing savedPresets id
     draftName: '',            // preset name being configured
     draftTotalMinutes: 7,     // session total being configured (minutes)
@@ -54,7 +54,10 @@ document.addEventListener('alpine:init', () => {
 
     /* --- Ring geometry --- */
     ringRadius: 138,
-    ringCircumference: 2 * Math.PI * 138,
+
+    get ringCircumference() {
+      return 2 * Math.PI * this.ringRadius;
+    },
 
     /* ------------------------------------------------------------------ */
     init() {
@@ -137,6 +140,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     get ringColor() {
+      if (this.status === 'IDLE') return URGENCY_COLOR.normal;
       return URGENCY_COLOR[TimerEngine.urgency(this.intervalRemaining)];
     },
 
@@ -146,11 +150,8 @@ document.addEventListener('alpine:init', () => {
     },
 
     get totalRingColor() {
+      if (this.status === 'IDLE') return URGENCY_COLOR.normal;
       return URGENCY_COLOR[TimerEngine.urgency(this.sessionRemaining)];
-    },
-
-    get totalMinutes() {
-      return Math.round(this.session.totalSeconds / 60);
     },
 
     get intervalCaption() {
@@ -368,7 +369,7 @@ document.addEventListener('alpine:init', () => {
       this.draftName = '';
       this.draftTotalMinutes = 7;
       this.draftIntervals = [{ seconds: 60, label: '' }];
-      this.configOpen = true;
+      this.view = 'settings';
     },
 
     /* Open the config editor pre-loaded with an existing preset. Editing
@@ -383,7 +384,7 @@ document.addEventListener('alpine:init', () => {
       this.draftName = preset.name;
       this.draftTotalMinutes = Math.round((preset.totalSeconds / 60) * 2) / 2;
       this.draftIntervals = preset.intervals.map((iv) => ({ seconds: iv.seconds, label: iv.label }));
-      this.configOpen = true;
+      this.view = 'settings';
     },
 
     loadDraftPreset(id) {
@@ -459,7 +460,7 @@ document.addEventListener('alpine:init', () => {
         this.applyPreset(id);
       }
       this.persistPresets();
-      this.configOpen = false;
+      this.view = 'timer';
     },
 
     deletePreset(id) {

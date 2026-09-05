@@ -13,11 +13,13 @@ vanilla JavaScript.
 
 - Two progress rings: current interval and total session, with countdowns
 - Interval chains that tile until the session total is used up
-- Editable, deletable presets persisted to `localStorage`
+- Timer and settings as two in-app views; presets are applied from the
+  timer and managed (create, edit, delete) in settings
 - Voice announcements (Web Speech API) with beep/vibration fallbacks
 - Minute marks announced inside intervals of 60s or longer
 - "Next interval" teaser in the final seconds of the current one
-- Screen wake lock while running (re-acquired when the tab becomes visible)
+- Screen wake lock while running, plus a Web Worker heartbeat that keeps
+  timing on time while the tab is hidden
 - Dark and light themes (follows `prefers-color-scheme` on first run)
 
 ## Run it

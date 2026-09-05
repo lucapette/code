@@ -12,22 +12,11 @@ Both countdown elements use `role="timer" aria-live="polite"` and re-render
 every second. The speech announcements already cover non-visual users; the
 visual ticking should stay silent (drop `aria-live`, keep `role="timer"`).
 
-### P3 — Touch targets below 44px
-
-The per-chip edit/delete buttons are 26×26px (`chip-edit`, `chip-del`) —
-hard to hit on a phone for a phone-first app.
-
 ### P3 — `adjust()` while paused leaves the total display stale
 
 Adjusting ±1m while PAUSED updates `session.totalSeconds` but not
 `sessionRemaining`, so the total ring and countdown only correct themselves
 on resume.
-
-### P3 — Idle state paints a fresh 60s interval in warning amber
-
-`ringColor` maps `≤ 60s` to `--warning`, so an untouched 60s interval shows
-the "almost up" color before anything has started. Skip warning/danger
-coloring while `IDLE`.
 
 ### P3 — Corrupt localStorage silently drops all presets
 
@@ -42,17 +31,11 @@ and focus. Use a stable per-row id.
 
 ### P3 — Modal focus management
 
-The settings dialog handles Escape and click-outside but never moves focus
-into the dialog on open, traps focus, or restores it on close. Also the
-delete confirmation uses the native `window.confirm`, which clashes with
-the rest of the UI.
+The delete confirmation uses the native `window.confirm`, which clashes
+with the rest of the UI.
 
 ### P3 — Housekeeping
 
-- `ringCircumference` duplicates the `138` radius literal instead of
-  deriving from `ringRadius`
-- `x-init="init()"` is redundant (Alpine auto-invokes `init()`)
-- Dead style: `.ring-content { transform: rotate(0deg) }`
 - Root README does not list the project yet
 
 ## Ideas
@@ -78,6 +61,19 @@ the rest of the UI.
 
 ## Done
 
+- **2026-09-05** — Look rework, same palette: one shape grammar (circles
+  for icon-only controls, rounded rects from a two-step radius scale for
+  anything with text — `--radius-sm` 12px / `--radius-lg` 20px). The play
+  button is a true circle echoing the rings; ±1m and reset are icon
+  circles in the controls row (reset disabled while IDLE); preset chips
+  are rounded rects that only apply — managing happens in settings. The
+  settings modal became a dedicated view (topbar swaps between timer and
+  settings, with a live remaining-time indicator while a session is
+  active); overlay, focus-trap and Escape handling deleted along with it.
+  Also fixed: idle rings no longer render in warning amber, footer
+  dropped as redundant, gear entry point disabled while running, spacing
+  normalized to a 4px rhythm, and the ringCircumference/x-init/dead-CSS
+  housekeeping items.
 - **2026-09-04** — Hidden-tab reliability: a dedicated Web Worker
   heartbeat (worker timers escape tab throttling) now drives state
   re-syncs while `requestAnimationFrame` is suspended, with a

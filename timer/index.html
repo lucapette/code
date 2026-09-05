@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/src/style.css" />
   <script type="module" src="/src/main.js"></script>
 </head>
-<body x-data="timerApp()" x-init="init()">
+<body x-data="timerApp()">
 
   <div class="glow glow-a" aria-hidden="true"></div>
   <div class="glow glow-b" aria-hidden="true"></div>
@@ -18,33 +18,68 @@
   <div class="app">
 
     <header class="topbar glass">
-      <h1 class="brand">
-        <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/>
-          <path d="M12 9v4l2.5 2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <path d="M12 5V3M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        Interval Timer
-      </h1>
-      <button
-        class="icon-btn glass"
-        type="button"
-        @click="toggleTheme()"
-        :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
-        :title="theme === 'dark' ? 'Light mode' : 'Dark mode'"
-      >
-        <svg x-show="theme === 'dark'" class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        <svg x-show="theme === 'light'" x-cloak class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
+      <div class="topbar-left">
+        <button
+          class="icon-btn glass"
+          type="button"
+          x-show="view === 'settings'"
+          x-cloak
+          @click="view = 'timer'"
+          aria-label="Back to timer"
+        >
+          <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <h1 class="brand" x-show="view === 'timer'">
+          <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 9v4l2.5 2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 5V3M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Interval Timer
+        </h1>
+        <h2 class="topbar-title" x-show="view === 'settings'" x-cloak>Settings</h2>
+      </div>
+      <div class="topbar-right">
+        <span class="run-ind" x-show="view === 'settings' && status !== 'IDLE'" x-cloak>
+          <span class="run-dot" :class="{ paused: status === 'PAUSED' }" aria-hidden="true"></span>
+          <span x-text="sessionDisplay"></span>
+        </span>
+        <button
+          class="icon-btn glass"
+          type="button"
+          x-show="view === 'timer'"
+          @click="openConfig()"
+          :disabled="status === 'RUNNING'"
+          aria-label="Open settings"
+          title="Settings"
+        >
+          <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button
+          class="icon-btn glass"
+          type="button"
+          @click="toggleTheme()"
+          :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+          :title="theme === 'dark' ? 'Light mode' : 'Dark mode'"
+        >
+          <svg x-show="theme === 'dark'" class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg x-show="theme === 'light'" x-cloak class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
     </header>
 
     <main>
-      <section class="hero" aria-label="Countdown">
+      <section class="hero" aria-label="Countdown" x-show="view === 'timer'">
 
         <div class="rings">
           <div class="ring-wrap" :class="{ pulse: intervalRemaining <= 10 && status === 'RUNNING' }">
@@ -108,24 +143,22 @@
 
       </section>
 
-      <section class="controls" aria-label="Timer controls">
+      <section class="controls" aria-label="Timer controls" x-show="view === 'timer'">
         <div class="controls-row">
           <button
-            class="btn btn-adjust glass"
+            class="btn-round glass"
             type="button"
             @click="adjust(-60)"
             :disabled="status === 'RUNNING' || session.totalSeconds <= 60"
             aria-label="Subtract one minute"
           >
             <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
-              <path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            <span>1m</span>
           </button>
 
           <button
-            class="btn btn-play"
+            class="btn-play"
             type="button"
             @click="togglePlay()"
             :aria-label="status === 'RUNNING' ? 'Pause timer' : status === 'PAUSED' ? 'Resume timer' : 'Start timer'"
@@ -137,110 +170,50 @@
               <rect x="6" y="4" width="4" height="16" rx="1.5"/>
               <rect x="14" y="4" width="4" height="16" rx="1.5"/>
             </svg>
-            <span class="btn-play-label" x-text="status === 'RUNNING' ? 'Pause' : status === 'PAUSED' ? 'Resume' : 'Start'">Start</span>
           </button>
 
           <button
-            class="btn btn-adjust glass"
+            class="btn-round glass"
             type="button"
             @click="adjust(60)"
             :disabled="status === 'RUNNING'"
             aria-label="Add one minute"
           >
             <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            <span>1m</span>
+          </button>
+
+          <button
+            class="btn-round glass"
+            type="button"
+            @click="reset()"
+            :disabled="status === 'IDLE'"
+            aria-label="Reset timer"
+          >
+            <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M3 4v5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </button>
         </div>
 
         <div class="presets" role="group" aria-label="Duration presets">
           <template x-for="preset in presets" :key="preset.id">
-            <span class="chip-wrap">
-              <button
-                class="chip glass"
-                type="button"
-                @click="applyPreset(preset.id)"
-                :disabled="status === 'RUNNING'"
-                :class="{ active: activePresetId === preset.id }"
-                :aria-pressed="activePresetId === preset.id"
-                x-text="preset.name"
-              >7 min</button>
-              <button
-                class="chip-edit glass"
-                type="button"
-                @click="openConfigFor(preset.id)"
-                :disabled="status === 'RUNNING'"
-                :aria-label="'Edit preset ' + preset.name"
-                :title="'Edit ' + preset.name"
-              >
-                <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <button
-                class="chip-del glass"
-                type="button"
-                @click="deletePreset(preset.id)"
-                :disabled="status === 'RUNNING'"
-                :aria-label="'Delete preset ' + preset.name"
-                :title="'Delete ' + preset.name"
-              >
-                <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-            </span>
+            <button
+              class="chip glass"
+              type="button"
+              @click="applyPreset(preset.id)"
+              :disabled="status === 'RUNNING'"
+              :class="{ active: activePresetId === preset.id }"
+              :aria-pressed="activePresetId === preset.id"
+              x-text="preset.name"
+            >7 min</button>
           </template>
-          <button class="chip chip-add glass" type="button" @click="openConfig()" aria-label="Add preset">
-            <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <span>New</span>
-          </button>
         </div>
-
-        <button class="btn-reset" type="button" @click="reset()" aria-label="Reset timer">
-          <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M3 12a9 9 0 1 0 3-6.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <path d="M3 4v5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>Reset</span>
-        </button>
       </section>
 
-    </main>
-
-    <footer class="foot" aria-hidden="true">
-      <span x-text="totalMinutes">7</span> min session
-    </footer>
-
-    <!-- Settings modal -->
-    <div
-      class="overlay"
-      x-show="configOpen"
-      x-cloak
-      x-transition.opacity.duration.250ms
-      @click.self="configOpen = false"
-      @keydown.escape.window="configOpen = false"
-    >
-      <div
-        class="sheet glass"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="config-title"
-        x-transition.duration.250ms
-      >
-        <div class="sheet-head">
-          <h2 id="config-title">Interval settings</h2>
-          <button class="icon-btn" type="button" @click="configOpen = false" aria-label="Close settings">
-            <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
-
+      <section class="settings" aria-label="Settings" x-show="view === 'settings'" x-cloak>
         <div class="field">
           <label class="field-label" for="preset-picker">Preset</label>
           <select
@@ -265,7 +238,6 @@
             x-model="draftName"
             placeholder="e.g. HIIT 25"
             maxlength="32"
-            @keydown.enter.prevent="savePreset()"
           />
         </div>
 
@@ -356,7 +328,7 @@
           <h3>Your presets</h3>
           <template x-for="p in savedPresets" :key="p.id">
             <div class="saved-row">
-              <button class="saved-apply" type="button" @click="applyPreset(p.id); configOpen = false" x-text="p.name"></button>
+              <button class="saved-apply" type="button" @click="applyPreset(p.id); view = 'timer'" x-text="p.name"></button>
               <span class="saved-min" x-text="Math.round(p.totalSeconds / 60) + ' min · ' + p.intervals.length + ' intv'"></span>
               <button
                 class="icon-btn icon-btn-sm saved-edit"
@@ -382,8 +354,9 @@
             </div>
           </template>
         </div>
-      </div>
-    </div>
+      </section>
+
+    </main>
 
   </div>
 

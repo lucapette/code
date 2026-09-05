@@ -6,6 +6,8 @@
 
 :root {
   --time-font: clamp(2.4rem, 10vw, 3.6rem);
+  --radius-sm: 12px;  /* controls: buttons, inputs, chips, steppers */
+  --radius-lg: 20px;  /* containers: topbar, cards, editors */
 }
 
 /* --- Dark theme (default) ---------------------------------------------- */
@@ -132,7 +134,7 @@ button:focus-visible {
 .glass {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
@@ -142,7 +144,49 @@ button:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.topbar-left,
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.topbar-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.run-ind {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.run-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: ringPulse 1s ease-in-out infinite;
+}
+
+.run-dot.paused {
+  background: var(--warning);
+  animation: none;
 }
 
 .brand {
@@ -250,7 +294,6 @@ main {
   justify-content: center;
   gap: 8px;
   text-align: center;
-  transform: rotate(0deg);
 }
 
 .time {
@@ -323,57 +366,47 @@ main {
 .controls-row {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 16px;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  transition: transform 0.2s ease, box-shadow 0.3s ease, opacity 0.3s ease;
-}
-
-.btn-adjust {
-  width: 64px;
+/* Icon-only actions are circles; anything carrying text is a rounded rect. */
+.btn-round {
+  display: grid;
+  place-items: center;
+  width: 56px;
   height: 56px;
-  flex-direction: column;
-  gap: 1px;
-  font-size: 0.72rem;
-  font-weight: 600;
+  border-radius: 50%;
   color: var(--text-secondary);
+  transition: transform 0.2s ease, opacity 0.3s ease, color 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.btn-adjust .ico {
-  width: 20px;
-  height: 20px;
+.btn-round .ico {
+  width: 22px;
+  height: 22px;
 }
 
-.btn-adjust:not(:disabled):hover {
+.btn-round:not(:disabled):hover {
   transform: scale(1.08);
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
-.btn-adjust:disabled {
+.btn-round:disabled {
   opacity: 0.35;
 }
 
 .btn-play {
-  width: 116px;
-  height: 84px;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
   background: var(--play-bg);
   color: var(--play-text);
   box-shadow: var(--shadow);
-}
-
-.btn-play-label {
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
 }
 
 .btn-play .ico {
@@ -385,7 +418,7 @@ main {
   transform: translateX(2px);
 }
 
-.btn-play:not(:disabled):hover {
+.btn-play:hover {
   transform: scale(1.05);
 }
 
@@ -393,35 +426,13 @@ main {
   transform: scale(0.96);
 }
 
-.btn-reset {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  padding: 6px 12px;
-  border-radius: 999px;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.btn-reset .ico {
-  width: 16px;
-  height: 16px;
-}
-
-.btn-reset:hover {
-  color: var(--text-primary);
-  transform: scale(1.06);
-}
-
 /* --- Preset chips ----------------------------------------------------------- */
 .presets {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 10px;
-  padding: 4px 0 2px;
+  gap: 8px;
+  padding-top: 4px;
 }
 
 .chip {
@@ -429,8 +440,8 @@ main {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 16px;
-  border-radius: 999px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -453,118 +464,16 @@ main {
   opacity: 0.4;
 }
 
-.chip-add {
-  padding: 9px 14px;
-  border-style: dashed;
-}
-
-.chip-add .ico-sm {
-  width: 16px;
-  height: 16px;
-}
-
-.chip-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.chip-edit {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  color: var(--text-secondary);
-  opacity: 0.6;
-  transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
-}
-
-.chip-edit .ico-sm {
-  width: 13px;
-  height: 13px;
-}
-
-.chip-edit:not(:disabled):hover {
-  color: var(--accent);
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-.chip-edit:disabled {
-  opacity: 0.25;
-  cursor: default;
-}
-
-.chip-del {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  color: var(--text-secondary);
-  opacity: 0.6;
-  transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
-}
-
-.chip-del .ico-sm {
-  width: 13px;
-  height: 13px;
-}
-
-.chip-del:not(:disabled):hover {
-  color: var(--danger);
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-.chip-del:disabled {
-  opacity: 0.25;
-  cursor: default;
-}
-
-/* --- Settings modal ---------------------------------------------------------- */
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-
-.sheet {
+/* --- Settings view ----------------------------------------------------------- */
+.settings {
   width: 100%;
-  max-width: 400px;
-  max-height: calc(100dvh - 40px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  padding: 24px;
-  border-radius: 24px;
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
-  box-shadow: var(--shadow);
-}
-
-.sheet-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.sheet-head h2 {
-  font-size: 1.15rem;
-  font-weight: 700;
+  max-width: 560px;
+  margin: 0 auto;
+  padding-top: 8px;
 }
 
 .field {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .field-label {
@@ -582,13 +491,13 @@ main {
   align-items: center;
   gap: 4px;
   padding: 6px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
 }
 
 .stepper button {
   flex: 1;
   padding: 10px 0;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -605,9 +514,9 @@ main {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   padding: 8px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
 }
 
 .big-input {
@@ -623,7 +532,7 @@ main {
   font-size: 1.35rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  border-radius: 10px;
+  border-radius: 8px;
   transition: box-shadow 0.2s ease;
 }
 
@@ -647,7 +556,7 @@ main {
 .input {
   width: 100%;
   padding: 12px 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-primary);
@@ -668,7 +577,7 @@ main {
 .btn-save {
   width: 100%;
   padding: 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--play-text);
@@ -682,8 +591,8 @@ main {
 }
 
 .saved-list {
-  margin-top: 22px;
-  padding-top: 18px;
+  margin-top: 24px;
+  padding-top: 16px;
   border-top: 1px solid var(--border);
 }
 
@@ -723,9 +632,9 @@ main {
 }
 
 .icon-btn-sm {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
 }
 
 .icon-btn-sm:hover {
@@ -754,7 +663,7 @@ main {
   gap: 8px;
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 
@@ -779,7 +688,7 @@ main {
 .interval-stepper button {
   flex: 1;
   padding: 8px 2px;
-  border-radius: 9px;
+  border-radius: 8px;
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -813,7 +722,7 @@ main {
   gap: 6px;
   padding: 10px 14px;
   border: 1px dashed var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -853,16 +762,6 @@ select.input option {
   background: var(--bg);
 }
 
-/* --- Footer ---------------------------------------------------------------- */
-.foot {
-  text-align: center;
-  padding-top: 22px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  letter-spacing: 0.5px;
-}
-
 /* --- Responsive ------------------------------------------------------------ */
 @media (max-width: 480px) {
   :root {
@@ -877,14 +776,14 @@ select.input option {
     gap: 12px;
   }
 
-  .btn-adjust {
-    width: 60px;
-    height: 56px;
+  .btn-round {
+    width: 52px;
+    height: 52px;
   }
 
   .btn-play {
-    width: 108px;
-    height: 78px;
+    width: 84px;
+    height: 84px;
   }
 }
 
