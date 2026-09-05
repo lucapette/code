@@ -104,6 +104,18 @@ export function minuteMark(intervalTotal, intervalRemaining, lastSpokenMinute) {
   return minutes === lastSpokenMinute ? null : minutes;
 }
 
+/* Segment layout for a strip visualization: each interval mapped to the
+   fraction of the pattern it occupies. Used for the run screen's plan
+   strip and the mini pattern previews on preset picks. */
+export function stripLayout(intervals) {
+  const p = patternLength(intervals);
+  return intervals.map((iv) => ({
+    seconds: iv.seconds,
+    label: iv.label,
+    fraction: p ? iv.seconds / p : 0,
+  }));
+}
+
 /* Label of the upcoming interval, for the teaser in the final seconds of
    the current one (same window as the danger color). Empty when the window
    hasn't started, the session ends with this interval, or the next

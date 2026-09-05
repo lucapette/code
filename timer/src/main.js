@@ -19,6 +19,13 @@ const URGENCY_COLOR = {
   danger: 'var(--danger)',
 };
 
+/* Stable hue per pattern position (golden-angle spacing keeps adjacent
+   segments distinct). Same position across presets → same hue. */
+const GOLDEN = 137.508;
+function segmentHue(index) {
+  return Math.round((index * GOLDEN) % 360);
+}
+
 document.addEventListener('alpine:init', () => {
   Alpine.data('timerApp', () => ({
     /* --- Session definition (currently loaded) ----------------------- */
@@ -46,18 +53,11 @@ document.addEventListener('alpine:init', () => {
 
     /* --- Presets & configuration --- */
     savedPresets: [],         // all presets (seeded with 7 min on first run)
-    view: 'timer',            // 'timer' | 'settings'
+    view: 'timer',            // 'timer' | 'edit'
     draftPresetId: 'new',     // 'new' or an existing savedPresets id
     draftName: '',            // preset name being configured
     draftTotalMinutes: 7,     // session total being configured (minutes)
     draftIntervals: [{ seconds: 420, label: 'until break' }],
-
-    /* --- Ring geometry --- */
-    ringRadius: 138,
-
-    get ringCircumference() {
-      return 2 * Math.PI * this.ringRadius;
-    },
 
     /* ------------------------------------------------------------------ */
     init() {
@@ -97,7 +97,7 @@ document.addEventListener('alpine:init', () => {
 
       /* Boot into a real preset: if the stored session id no longer exists
          (e.g. first run, or its preset was deleted), load the first one so the
-         ring shows the first interval's label right away. */
+         strip shows the first interval's label right away. */
       if (!this.savedPresets.find((p) => p.id === this.session.id) && this.savedPresets.length) {
         this.applyPreset(this.savedPresets[0].id);
       }
@@ -134,26 +134,6 @@ document.addEventListener('alpine:init', () => {
       return TimerEngine.formatClock(Math.ceil(Math.max(0, this.sessionRemaining)));
     },
 
-    get ringOffset() {
-      return this.ringCircumference
-        * (1 - TimerEngine.ringProgress(this.intervalRemaining, this.intervalTotal));
-    },
-
-    get ringColor() {
-      if (this.status === 'IDLE') return URGENCY_COLOR.normal;
-      return URGENCY_COLOR[TimerEngine.urgency(this.intervalRemaining)];
-    },
-
-    get sessionRingOffset() {
-      return this.ringCircumference
-        * (1 - TimerEngine.ringProgress(this.sessionRemaining, this.session.totalSeconds));
-    },
-
-    get totalRingColor() {
-      if (this.status === 'IDLE') return URGENCY_COLOR.normal;
-      return URGENCY_COLOR[TimerEngine.urgency(this.sessionRemaining)];
-    },
-
     get intervalCaption() {
       if (this.status === 'PAUSED') return 'paused';
       if (this.status === 'IDLE') {
@@ -162,6 +142,95 @@ document.addEventListener('alpine:init', () => {
       }
       const label = (this.session.intervals[this.intervalIndex]?.label || '').trim();
       return label ? label : 'interval';
+    },
+
+    /* Color for the big countdown: urgency-driven, idle stays calm. */
+    get clockColor() {
+      return URGENCY_COLOR[TimerEngine.urgency(this.intervalRemaining)];
+    },
+
+    /* Position within one pattern tile — the strip repeats the tile, so the
+       current interval's index wraps modulo the chain length. */
+    get patternIndex() {
+      return this.intervalIndex % Math.max(1, this.session.intervals.length);
+    },
+
+    /* The plan strip: one segment per interval, labelled and hue-assigned by
+       pattern position so Work→Rest stays visually distinct. */
+    get patternStrip() {
+      return TimerEngine.stripLayout(this.session.intervals)
+        .map((seg, i) => ({ ...seg, hue: segmentHue(i) }));
+    },
+
+    /* Accessible description of the plan for the strip's aria-label. */
+    get patternStripCaption() {
+      return this.session.intervals
+        .map((iv) => `${(iv.label || 'interval').trim()} ${iv.seconds}s`)
+        .join(', ');
+    },
+
+    /* Percent of the whole session already elapsed, for the thin bar. */
+    get sessionPercent() {
+      const total = this.session.totalSeconds;
+      return total ? 100 * (1 - this.sessionRemaining / total) : 0;
+    },
+
+    get playLabel() {
+      if (this.status === 'RUNNING') return 'Pause';
+      return this.status === 'PAUSED' ? 'Resume' : 'Start';
+    },
+
+    /* True while a session is active on the timer view — the whole app
+       recedes and the running timer takes the stage. Not on the edit view,
+       which still needs its topbar. */
+    get sessionMode() {
+      return this.view === 'timer' && this.status !== 'IDLE';
+    },
+
+    /* --- Strip styling -------------------------------------------------- */
+    /* The strip segment for the current interval drains left-to-right as it
+       counts down (its bright fill is the portion remaining). Colors are
+       theme-explicit so a theme toggle re-resolves them deterministically. */
+    segColor(h) {
+      return {
+        base: this.theme === 'light' ? `hsl(${h} 55% 34% / 0.26)` : `hsl(${h} 40% 52% / 0.20)`,
+        fill: this.theme === 'light' ? `hsl(${h} 70% 42%)` : `hsl(${h} 75% 62%)`,
+        future: this.theme === 'light' ? `hsl(${h} 55% 34% / 0.10)` : `hsl(${h} 40% 52% / 0.09)`,
+      };
+    },
+
+    segStyle(seg, i) {
+      const c = this.segColor(seg.hue);
+      const running = this.status !== 'IDLE';
+      const current = i === this.patternIndex;
+      return {
+        width: `${(seg.fraction * 100).toFixed(3)}%`,
+        /* Idle segments show the full fill color, matching the mini strips
+           on the preset picks; while running the current segment drains
+           from its fill down to the dim base. */
+        '--seg-base': running ? c.base : c.fill,
+        '--seg-fill': c.fill,
+        '--seg-future': c.future,
+        '--fill': current && running
+          ? (this.intervalTotal ? this.intervalRemaining / this.intervalTotal : 0)
+          : 0,
+      };
+    },
+
+    /* Mini strip for preset picks and editor previews. */
+    miniStrip(preset) {
+      return TimerEngine.stripLayout(preset.intervals);
+    },
+
+    miniSegStyle(seg, i) {
+      return {
+        width: `${(seg.fraction * 100).toFixed(3)}%`,
+        backgroundColor: this.segColor(segmentHue(i)).fill,
+      };
+    },
+
+    get draftStrip() {
+      return this.miniStrip({ intervals: this.draftIntervals });
     },
 
     /* Label of the upcoming interval, shown as a teaser in the final
@@ -253,20 +322,6 @@ document.addEventListener('alpine:init', () => {
       this.announcedIntervalIndex = null;
       this.heartbeat.stop();
       this.stopWakeLock();
-    },
-
-    adjust(delta) {
-      if (this.status === 'RUNNING') return;
-      const next = Math.max(60, this.session.totalSeconds + delta);
-      this.session.totalSeconds = next;
-      if (this.session.intervals.length === 1) {
-        this.session.intervals[0].seconds = next;
-        if (this.status === 'IDLE') {
-          this.intervalTotal = next;
-          this.intervalRemaining = next;
-        }
-      }
-      if (this.status === 'IDLE') this.sessionRemaining = next;
     },
 
     applyPreset(id) {
@@ -364,12 +419,18 @@ document.addEventListener('alpine:init', () => {
     },
 
     /* --- Presets & configuration -------------------------------------- */
-    openConfig() {
+    /* Open the edit view with a fresh draft. */
+    openEdit() {
+      this.newDraft();
+      this.view = 'edit';
+    },
+
+    /* Reset the draft form to a blank preset. */
+    newDraft() {
       this.draftPresetId = 'new';
       this.draftName = '';
       this.draftTotalMinutes = 7;
       this.draftIntervals = [{ seconds: 60, label: '' }];
-      this.view = 'settings';
     },
 
     /* Open the config editor pre-loaded with an existing preset. Editing
@@ -377,28 +438,14 @@ document.addEventListener('alpine:init', () => {
     openConfigFor(id) {
       const preset = this.savedPresets.find((p) => p.id === id);
       if (!preset) {
-        this.openConfig();
+        this.newDraft();
         return;
       }
       this.draftPresetId = id;
       this.draftName = preset.name;
       this.draftTotalMinutes = Math.round((preset.totalSeconds / 60) * 2) / 2;
       this.draftIntervals = preset.intervals.map((iv) => ({ seconds: iv.seconds, label: iv.label }));
-      this.view = 'settings';
-    },
-
-    loadDraftPreset(id) {
-      if (id === 'new') {
-        this.draftName = '';
-        this.draftTotalMinutes = 7;
-        this.draftIntervals = [{ seconds: 60, label: '' }];
-        return;
-      }
-      const preset = this.savedPresets.find((p) => p.id === id);
-      if (!preset) return;
-      this.draftName = preset.name;
-      this.draftTotalMinutes = Math.round((preset.totalSeconds / 60) * 2) / 2;
-      this.draftIntervals = preset.intervals.map((iv) => ({ seconds: iv.seconds, label: iv.label }));
+      this.view = 'edit';
     },
 
     draftIntervalAdjust(index, delta) {

@@ -6,18 +6,6 @@ Priorities: **P1** = bug or core-use-case gap, **P2** = structure/a11y,
 
 ## Known issues
 
-### P2 — Screen-reader noise from per-second `aria-live`
-
-Both countdown elements use `role="timer" aria-live="polite"` and re-render
-every second. The speech announcements already cover non-visual users; the
-visual ticking should stay silent (drop `aria-live`, keep `role="timer"`).
-
-### P3 — `adjust()` while paused leaves the total display stale
-
-Adjusting ±1m while PAUSED updates `session.totalSeconds` but not
-`sessionRemaining`, so the total ring and countdown only correct themselves
-on resume.
-
 ### P3 — Corrupt localStorage silently drops all presets
 
 The `JSON.parse` failure path sets `savedPresets = []` and never reseeds,
@@ -61,6 +49,19 @@ with the rest of the UI.
 
 ## Done
 
+- **2026-09-05** — UI rethink. Dropped the two competing progress rings for
+  a single focused run screen: one big interval countdown, a plan strip
+  (the interval pattern rendered as colored segments — current one drains
+  as it counts down), and a thin session progress bar with time left.
+  Controls are now a rectangular text Start/Pause plus a Reset ghost button
+  (the ±1m steppers are gone — adjust duration in the editor). Preset
+  picking moved to the run screen as cards with a mini pattern preview;
+  the settings modal/split became a flat two-section editor (draft form +
+  pattern preview + saved preset list, each row showing its mini strip).
+  Removed glassmorphism, glow blobs, round control buttons and the ring
+  math; replaced with a flat minimal theme using `light-dark()`.
+  Fixed along the way: the P3 "adjust while paused" bug is moot (steppers
+  removed), and the dropdown preset picker was deleted.
 - **2026-09-05** — Look rework, same palette: one shape grammar (circles
   for icon-only controls, rounded rects from a two-step radius scale for
   anything with text — `--radius-sm` 12px / `--radius-lg` 20px). The play

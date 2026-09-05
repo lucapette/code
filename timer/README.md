@@ -11,10 +11,15 @@ vanilla JavaScript.
 
 ## Features
 
-- Two progress rings: current interval and total session, with countdowns
+- Plan strip: the session's intervals render as colored segments, current
+  one highlighted and draining as it counts down — you can see the whole
+  pattern at a glance
+- One big current-interval countdown, with a thin session progress bar and
+  left-remaining label underneath
 - Interval chains that tile until the session total is used up
-- Timer and settings as two in-app views; presets are applied from the
-  timer and managed (create, edit, delete) in settings
+- Timer and preset editor as two in-app views; presets are picked from the
+  run screen (each showing a mini preview of its plan) and managed
+  (create, edit, delete) in the editor
 - Voice announcements (Web Speech API) with beep/vibration fallbacks
 - Minute marks announced inside intervals of 60s or longer
 - "Next interval" teaser in the final seconds of the current one
@@ -62,8 +67,9 @@ on some platforms — the wake lock covers that case where granted, and a
 notification (see `docs/roadmap.md`) is the eventual fix.
 
 State is held in a single Alpine.js component (`src/main.js`) bound to the
-DOM in `index.html`; `src/style.css` implements the dark-first
-glassmorphism theme with CSS custom properties.
+DOM in `index.html`; `src/style.css` implements a flat, minimal theme
+(dark/light via CSS `light-dark()` on a dark-first base) with CSS custom
+properties.
 
 Persisted keys:
 

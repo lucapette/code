@@ -9,6 +9,7 @@ import {
   patternLength,
   progressCount,
   ringProgress,
+  stripLayout,
   urgency,
 } from '../src/engine.js';
 
@@ -127,6 +128,24 @@ describe('formatClock', () => {
     expect(formatClock(3661)).toBe('1:01:01');
     expect(formatClock(5400)).toBe('1:30:00');
     expect(formatClock(10800)).toBe('3:00:00');
+  });
+});
+
+describe('stripLayout', () => {
+  it('maps each interval to its share of the pattern', () => {
+    expect(stripLayout(hiit)).toEqual([
+      { seconds: 40, label: 'Work', fraction: 2 / 3 },
+      { seconds: 20, label: 'Rest', fraction: 1 / 3 },
+    ]);
+  });
+
+  it('returns equal fractions for identical intervals', () => {
+    const segs = stripLayout(Array.from({ length: 7 }, (_, i) => ({ seconds: 60, label: `i${i}` })));
+    segs.forEach((s) => expect(s.fraction).toBeCloseTo(1 / 7));
+  });
+
+  it('handles an empty chain with zero fractions', () => {
+    expect(stripLayout([])).toEqual([]);
   });
 });
 

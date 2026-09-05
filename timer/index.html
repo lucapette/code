@@ -4,25 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0B0C10" />
-  <meta name="description" content="Timer — a 7-minute interval timer with current-interval and total countdown, plus voice and audio alerts." />
+  <meta name="description" content="Timer — an interval timer with a clear session plan, current-interval countdown, and voice and audio alerts." />
   <title>Interval Timer</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%E2%8F%B1%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/src/style.css" />
   <script type="module" src="/src/main.js"></script>
 </head>
-<body x-data="timerApp()">
-
-  <div class="glow glow-a" aria-hidden="true"></div>
-  <div class="glow glow-b" aria-hidden="true"></div>
+<body x-data="timerApp()" :class="{ 'session-mode': sessionMode }">
 
   <div class="app">
 
-    <header class="topbar glass">
+    <header class="topbar">
       <div class="topbar-left">
         <button
-          class="icon-btn glass"
+          class="icon-btn"
           type="button"
-          x-show="view === 'settings'"
+          x-show="view === 'edit'"
           x-cloak
           @click="view = 'timer'"
           aria-label="Back to timer"
@@ -37,31 +34,30 @@
             <path d="M12 9v4l2.5 2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             <path d="M12 5V3M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          Interval Timer
+          <span x-text="session.name">7 min</span>
         </h1>
-        <h2 class="topbar-title" x-show="view === 'settings'" x-cloak>Settings</h2>
+        <h2 class="topbar-title" x-show="view === 'edit'" x-cloak>Presets</h2>
       </div>
       <div class="topbar-right">
-        <span class="run-ind" x-show="view === 'settings' && status !== 'IDLE'" x-cloak>
+        <span class="run-ind" x-show="view === 'edit' && status !== 'IDLE'" x-cloak>
           <span class="run-dot" :class="{ paused: status === 'PAUSED' }" aria-hidden="true"></span>
           <span x-text="sessionDisplay"></span>
         </span>
         <button
-          class="icon-btn glass"
+          class="icon-btn edit-btn"
           type="button"
           x-show="view === 'timer'"
-          @click="openConfig()"
+          @click="openEdit()"
           :disabled="status === 'RUNNING'"
-          aria-label="Open settings"
-          title="Settings"
+          aria-label="Open preset editor"
+          title="Presets"
         >
           <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
         <button
-          class="icon-btn glass"
+          class="icon-btn"
           type="button"
           @click="toggleTheme()"
           :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
@@ -79,259 +75,223 @@
     </header>
 
     <main>
+
       <section class="hero" aria-label="Countdown" x-show="view === 'timer'">
-
-        <div class="rings">
-          <div class="ring-wrap" :class="{ pulse: intervalRemaining <= 10 && status === 'RUNNING' }">
-            <svg class="ring" viewBox="0 0 300 300" role="img" aria-label="Current interval progress ring">
-              <circle class="ring-track" cx="150" cy="150" :r="ringRadius"/>
-              <circle
-                class="ring-progress"
-                cx="150" cy="150" :r="ringRadius"
-                :stroke="ringColor"
-                :stroke-dasharray="ringCircumference"
-                :stroke-dashoffset="ringOffset"
-                :style="{ color: ringColor, transition: 'stroke-dashoffset .3s linear, stroke .6s ease' }"
-              />
-            </svg>
-
-            <div class="ring-content">
-              <div
-                class="time"
-                role="timer"
-                aria-live="polite"
-                :style="{ color: ringColor }"
-                :class="{ 'time-long': intervalRemaining >= 3600 }"
-                x-text="displayTime"
-              >1:00</div>
-              <div class="time-label" x-text="intervalCaption">READY TO START</div>
-              <div
-                class="time-next"
-                x-show="nextLabel"
-                x-text="nextLabel ? 'next: ' + nextLabel : ''"
-              >next: REST</div>
-            </div>
+        <h2 class="session-name" x-show="sessionMode" x-cloak x-text="session.name">7 min</h2>
+        <div class="session">
+          <div class="stage">
+            <div
+              class="time"
+              role="timer"
+              :style="{ color: clockColor }"
+              :class="{ 'time-long': intervalRemaining >= 3600 }"
+              x-text="displayTime"
+            >1:00</div>
+            <div class="interval-label" x-text="intervalCaption">ready to start</div>
+            <div class="next" x-show="nextLabel" x-text="nextLabel ? 'next: ' + nextLabel : ''">next: REST</div>
           </div>
 
-          <div class="ring-wrap">
-            <svg class="ring" viewBox="0 0 300 300" role="img" aria-label="Total session progress ring">
-              <circle class="ring-track" cx="150" cy="150" :r="ringRadius"/>
-              <circle
-                class="ring-progress"
-                cx="150" cy="150" :r="ringRadius"
-                :stroke="totalRingColor"
-                :stroke-dasharray="ringCircumference"
-                :stroke-dashoffset="sessionRingOffset"
-                :style="{ color: totalRingColor, transition: 'stroke-dashoffset .3s linear, stroke .6s ease' }"
-              />
-            </svg>
-
-            <div class="ring-content">
+          <div
+            class="strip"
+            role="img"
+            :aria-label="'Plan: ' + patternStripCaption"
+          >
+            <template x-for="(seg, i) in patternStrip" :key="i">
               <div
-                class="time"
-                role="timer"
-                aria-live="polite"
-                :style="{ color: totalRingColor }"
-                :class="{ 'time-long': sessionRemaining >= 3600 }"
-                x-text="sessionDisplay"
-              >7:00</div>
-              <div class="time-label">TOTAL</div>
-              <div class="time-sub" x-show="intervalProgress" x-text="intervalProgress">1 / 7</div>
+                class="seg"
+                :class="{ current: i === patternIndex, done: status !== 'IDLE' && i < patternIndex, future: i > patternIndex }"
+                :style="segStyle(seg, i)"
+                :title="(seg.label ? seg.label + ' ' : 'interval ' + (i + 1) + ' ') + '· ' + seg.seconds + 's'"
+              ></div>
+            </template>
+          </div>
+
+          <div class="session-line">
+            <div class="session-meta">
+              <span class="session-label">Session</span>
+              <span class="session-right">
+                <span class="session-left" x-text="sessionDisplay">7:00</span>
+                <span class="session-unit">left</span>
+                <span x-show="intervalProgress" class="session-dot" aria-hidden="true">·</span>
+                <span class="session-count" x-show="intervalProgress" x-text="intervalProgress">1 / 7</span>
+              </span>
             </div>
+            <span class="session-track"><span class="session-fill" :style="{ width: sessionPercent + '%' }"></span></span>
           </div>
         </div>
-
       </section>
 
       <section class="controls" aria-label="Timer controls" x-show="view === 'timer'">
         <div class="controls-row">
           <button
-            class="btn-round glass"
-            type="button"
-            @click="adjust(-60)"
-            :disabled="status === 'RUNNING' || session.totalSeconds <= 60"
-            aria-label="Subtract one minute"
-          >
-            <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
-
-          <button
-            class="btn-play"
+            class="btn-primary"
             type="button"
             @click="togglePlay()"
             :aria-label="status === 'RUNNING' ? 'Pause timer' : status === 'PAUSED' ? 'Resume timer' : 'Start timer'"
           >
-            <svg x-show="status !== 'RUNNING'" class="ico ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86a1 1 0 0 0-1.5.86Z"/>
-            </svg>
-            <svg x-show="status === 'RUNNING'" x-cloak class="ico ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <svg x-show="status === 'RUNNING'" x-cloak class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <rect x="6" y="4" width="4" height="16" rx="1.5"/>
               <rect x="14" y="4" width="4" height="16" rx="1.5"/>
             </svg>
-          </button>
-
-          <button
-            class="btn-round glass"
-            type="button"
-            @click="adjust(60)"
-            :disabled="status === 'RUNNING'"
-            aria-label="Add one minute"
-          >
-            <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <svg x-show="status !== 'RUNNING'" class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86a1 1 0 0 0-1.5.86Z"/>
             </svg>
+            <span class="btn-label" x-text="playLabel">Start</span>
           </button>
-
           <button
-            class="btn-round glass"
+            class="btn-ghost"
             type="button"
             @click="reset()"
             :disabled="status === 'IDLE'"
-            aria-label="Reset timer"
-          >
-            <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M3 12a9 9 0 1 0 3-6.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M3 4v5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
+          >Reset</button>
         </div>
 
-        <div class="presets" role="group" aria-label="Duration presets">
+        <div class="picks" role="group" aria-label="Presets" x-show="view === 'timer'">
           <template x-for="preset in presets" :key="preset.id">
             <button
-              class="chip glass"
+              class="pick"
               type="button"
               @click="applyPreset(preset.id)"
               :disabled="status === 'RUNNING'"
               :class="{ active: activePresetId === preset.id }"
               :aria-pressed="activePresetId === preset.id"
-              x-text="preset.name"
-            >7 min</button>
+            >
+              <span class="pick-name" x-text="preset.name">7 min</span>
+              <span class="pick-strip" aria-hidden="true">
+                <template x-for="(seg, i) in miniStrip(preset)" :key="i">
+                  <span class="mini-seg" :style="miniSegStyle(seg, i)"></span>
+                </template>
+              </span>
+            </button>
           </template>
         </div>
       </section>
 
-      <section class="settings" aria-label="Settings" x-show="view === 'settings'" x-cloak>
-        <div class="field">
-          <label class="field-label" for="preset-picker">Preset</label>
-          <select
-            id="preset-picker"
-            class="input"
-            x-model="draftPresetId"
-            @change="loadDraftPreset(draftPresetId)"
-          >
-            <option value="new">New preset</option>
-            <template x-for="p in savedPresets" :key="p.id">
-              <option :value="p.id" x-text="p.name"></option>
-            </template>
-          </select>
-        </div>
+      <section class="editor" aria-label="Preset editor" x-show="view === 'edit'" x-cloak>
 
-        <div class="field">
-          <label class="field-label" for="preset-name">Name</label>
-          <input
-            id="preset-name"
-            class="input"
-            type="text"
-            x-model="draftName"
-            placeholder="e.g. HIIT 25"
-            maxlength="32"
-          />
-        </div>
-
-        <div class="field">
-          <span class="field-label">Intervals</span>
-          <p class="field-hint field-hint-top">Intervals play in order — a chain. Add a few to build a routine, or one long one for a plain countdown.</p>
-          <div class="interval-list">
-            <template x-for="(iv, i) in draftIntervals" :key="i">
-              <div class="interval-row">
-                <div class="interval-top">
-                  <input
-                    class="input interval-label"
-                    type="text"
-                    x-model="iv.label"
-                    placeholder="Work / Rest"
-                    maxlength="32"
-                    :aria-label="'Interval ' + (i + 1) + ' label'"
-                  />
-                  <button
-                    class="icon-btn icon-btn-sm"
-                    type="button"
-                    @click="removeDraftInterval(i)"
-                    :aria-label="'Remove interval ' + (i + 1)"
-                  >
-                    <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                </div>
-                <div class="interval-value-row glass">
-                  <input
-                    class="big-input"
-                    type="number"
-                    min="5"
-                    step="1"
-                    x-model.number="iv.seconds"
-                    :aria-label="'Interval ' + (i + 1) + ' seconds'"
-                  />
-                  <span class="unit">seconds</span>
-                </div>
-                <div class="interval-stepper glass">
-                  <button type="button" @click="draftIntervalAdjust(i, -60)" aria-label="Subtract one minute">−1m</button>
-                  <button type="button" @click="draftIntervalAdjust(i, -10)" aria-label="Subtract ten seconds">−10s</button>
-                  <button type="button" @click="draftIntervalAdjust(i, 10)" aria-label="Add ten seconds">+10s</button>
-                  <button type="button" @click="draftIntervalAdjust(i, 60)" aria-label="Add one minute">+1m</button>
-                </div>
-              </div>
-            </template>
-            <button class="btn-add-interval" type="button" @click="addDraftInterval()">
-              <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>Add interval</span>
-            </button>
+        <div class="editor-form">
+          <div class="draft-preview" x-show="draftIntervals.length">
+            <span class="field-label">Plan</span>
+            <span class="pick-strip strip-lg" aria-hidden="true">
+              <template x-for="(seg, i) in draftStrip" :key="i">
+                <span class="mini-seg" :style="miniSegStyle(seg, i)"></span>
+              </template>
+            </span>
           </div>
-          <p class="field-hint">If the total session is longer than the intervals, the chain repeats until the time is used up (e.g. 40s + 20s for 25 min = HIIT).</p>
-        </div>
 
-        <div class="field">
-          <span class="field-label">Total session</span>
-          <div class="value-row glass">
+          <div class="field">
+            <label class="field-label" for="preset-name">Name</label>
             <input
-              class="big-input"
-              type="number"
-              min="1"
-              step="0.5"
-              x-model.number="draftTotalMinutes"
-              aria-label="Total minutes"
+              id="preset-name"
+              class="input"
+              type="text"
+              x-model="draftName"
+              placeholder="e.g. HIIT 25"
+              maxlength="32"
             />
-            <span class="unit">minutes</span>
           </div>
-          <div class="stepper glass">
-            <button type="button" @click="draftTotalAdjust(-5)" aria-label="Subtract five minutes">−5</button>
-            <button type="button" @click="draftTotalAdjust(-1)" aria-label="Subtract one minute">−1</button>
-            <button type="button" @click="draftTotalAdjust(1)" aria-label="Add one minute">+1</button>
-            <button type="button" @click="draftTotalAdjust(5)" aria-label="Add five minutes">+5</button>
+
+          <div class="field">
+            <span class="field-label">Intervals</span>
+            <p class="field-hint">Intervals play in order as a chain. Add a few to build a routine, or one long one for a plain countdown.</p>
+            <div class="interval-list">
+              <template x-for="(iv, i) in draftIntervals" :key="i">
+                <div class="interval-row">
+                  <div class="interval-top">
+                    <input
+                      class="input interval-label"
+                      type="text"
+                      x-model="iv.label"
+                      placeholder="Work / Rest"
+                      maxlength="32"
+                      :aria-label="'Interval ' + (i + 1) + ' label'"
+                    />
+                  </div>
+                  <div class="interval-value-row">
+                    <input
+                      class="big-input"
+                      type="number"
+                      min="5"
+                      step="1"
+                      x-model.number="iv.seconds"
+                      :aria-label="'Interval ' + (i + 1) + ' seconds'"
+                    />
+                    <span class="unit">seconds</span>
+                    <div class="interval-stepper">
+                      <button type="button" @click="draftIntervalAdjust(i, -60)" aria-label="Subtract one minute">−1m</button>
+                      <button type="button" @click="draftIntervalAdjust(i, -10)" aria-label="Subtract ten seconds">−10s</button>
+                      <button type="button" @click="draftIntervalAdjust(i, 10)" aria-label="Add ten seconds">+10s</button>
+                      <button type="button" @click="draftIntervalAdjust(i, 60)" aria-label="Add one minute">+1m</button>
+                    </div>
+                    <button
+                      class="icon-btn icon-btn-sm"
+                      type="button"
+                      @click="removeDraftInterval(i)"
+                      :aria-label="'Remove interval ' + (i + 1)"
+                    >
+                      <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </template>
+              <button class="btn-add-interval" type="button" @click="addDraftInterval()">
+                <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Add interval</span>
+              </button>
+            </div>
           </div>
-          <p
-            class="field-hint"
-            x-show="draftSum > draftTotalMinutes * 60"
-            x-text="'Pattern is ' + draftSum + 's — session raised to ' + Math.ceil(draftSum / 60) + ' min.'"
-          ></p>
+
+          <div class="field">
+            <span class="field-label">Total session</span>
+            <div class="value-row">
+              <input
+                class="big-input"
+                type="number"
+                min="1"
+                step="0.5"
+                x-model.number="draftTotalMinutes"
+                aria-label="Total minutes"
+              />
+              <span class="unit">minutes</span>
+              <div class="stepper">
+                <button type="button" @click="draftTotalAdjust(-5)" aria-label="Subtract five minutes">−5</button>
+                <button type="button" @click="draftTotalAdjust(-1)" aria-label="Subtract one minute">−1</button>
+                <button type="button" @click="draftTotalAdjust(1)" aria-label="Add one minute">+1</button>
+                <button type="button" @click="draftTotalAdjust(5)" aria-label="Add five minutes">+5</button>
+              </div>
+            </div>
+            <p
+              class="field-hint"
+              x-show="draftSum > draftTotalMinutes * 60"
+              x-text="'Pattern is ' + draftSum + 's — session raised to ' + Math.ceil(draftSum / 60) + ' min.'"
+            ></p>
+          </div>
+
+          <button class="btn-save" type="button" @click="savePreset()" x-text="draftPresetId === 'new' ? 'Save preset' : 'Update preset'">Save preset</button>
         </div>
 
-        <button class="btn-save" type="button" @click="savePreset()" x-text="draftPresetId === 'new' ? 'Save preset' : 'Update preset'">Save preset</button>
-
-        <div class="saved-list" x-show="savedPresets.length">
-          <h3>Your presets</h3>
+        <div class="preset-list" x-show="savedPresets.length">
+          <div class="preset-list-head">
+            <h3>Your presets</h3>
+            <button class="btn-ghost btn-ghost-sm" type="button" @click="newDraft()">New</button>
+          </div>
           <template x-for="p in savedPresets" :key="p.id">
             <div class="saved-row">
-              <button class="saved-apply" type="button" @click="applyPreset(p.id); view = 'timer'" x-text="p.name"></button>
-              <span class="saved-min" x-text="Math.round(p.totalSeconds / 60) + ' min · ' + p.intervals.length + ' intv'"></span>
+              <button class="saved-apply" type="button" @click="applyPreset(p.id); view = 'timer'" :aria-label="'Run ' + p.name">
+                <span class="saved-name" x-text="p.name"></span>
+                <span class="saved-min" x-text="Math.round(p.totalSeconds / 60) + ' min · ' + p.intervals.length + ' intv'"></span>
+                <span class="saved-strip" aria-hidden="true">
+                  <template x-for="(seg, i) in miniStrip(p)" :key="i">
+                    <span class="mini-seg" :style="miniSegStyle(seg, i)"></span>
+                  </template>
+                </span>
+              </button>
               <button
-                class="icon-btn icon-btn-sm saved-edit"
+                class="icon-btn icon-btn-sm"
                 type="button"
                 @click="openConfigFor(p.id)"
                 :aria-label="'Edit preset ' + p.name"
@@ -354,6 +314,7 @@
             </div>
           </template>
         </div>
+
       </section>
 
     </main>
