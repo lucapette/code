@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createHeartbeat } from '../src/heartbeat.js';
+import { createHeartbeat } from '../src/heartbeat';
 
 /* Node has no Worker global, so these exercise the setInterval fallback;
    the Worker path differs only in transport. */

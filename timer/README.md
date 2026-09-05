@@ -44,11 +44,12 @@ and from any static file host.
 ```sh
 npm test            # run once (Vitest)
 npm run test:watch  # watch mode
+npm run type-check  # strict TypeScript check (tsc --noEmit)
 ```
 
 The timer math — pattern tiling, interval countdowns, minute marks,
-ring/format helpers — lives in `src/engine.js` as pure functions and is
-covered by `tests/engine.test.js`.
+ring/format helpers — lives in `src/engine.ts` as pure functions and is
+covered by `tests/engine.test.ts`.
 
 ## How it works
 
@@ -59,15 +60,16 @@ keeps pause/resume and background-tab throttling drift-free: a single frame
 after returning to the tab restores the correct state.
 
 While the tab is hidden, `requestAnimationFrame` is suspended — a dedicated
-Web Worker heartbeat (`src/heartbeat.js`) keeps the state advancing on time
+Web Worker heartbeat (`src/heartbeat.ts`) keeps the state advancing on time
 (Worker timers are not tab-throttled), falling back to `setInterval` where
 Workers are unavailable. Beats only signal "time has passed"; all state is
 recomputed from the wall clock. A locked screen suspends the page entirely
 on some platforms — the wake lock covers that case where granted, and a
 notification (see `docs/roadmap.md`) is the eventual fix.
 
-State is held in a single Alpine.js component (`src/main.js`) bound to the
-DOM in `index.html`; `src/style.css` implements a flat, minimal theme
+State is held in a single Alpine.js component (`src/main.ts`) bound to the
+DOM in `index.html`; shared types live in `src/types.ts`; `src/style.css`
+implements a flat, minimal theme
 (dark/light via CSS `light-dark()` on a dark-first base) with CSS custom
 properties.
 
@@ -84,10 +86,12 @@ used when available and silently skipped otherwise.
 | File                  | Purpose                                    |
 |-----------------------|--------------------------------------------|
 | `index.html`          | Markup + Alpine bindings                    |
-| `src/main.js`         | Alpine component: state, presets, audio/voice, theme |
-| `src/engine.js`       | Pure timer math (tiling, countdowns, cues)  |
+| `src/main.ts`         | Alpine component: state, presets, audio/voice, theme |
+| `src/engine.ts`       | Pure timer math (tiling, countdowns, cues)  |
+| `src/types.ts`        | Shared `Interval` / `Preset` / `Session` types |
+| `src/heartbeat.ts`    | Hidden-tab heartbeat (Worker + fallback)    |
 | `src/style.css`       | Theming and layout                          |
-| `tests/engine.test.js`| Vitest coverage for the engine              |
+| `tests/engine.test.ts`| Vitest coverage for the engine              |
 | `package.json`        | Vite/Vitest tooling, Alpine.js dependency   |
 
 See [docs/roadmap.md](docs/roadmap.md) for known issues and planned work.

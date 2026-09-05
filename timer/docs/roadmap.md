@@ -49,6 +49,23 @@ with the rest of the UI.
 
 ## Done
 
+- **2026-09-05** — TypeScript. Renamed `src/*.js` → `.ts`, strict
+  `tsconfig.json` (`noEmit` + `moduleResolution: bundler`), new
+  `src/types.ts` with the shared `Interval`/`Preset`/`Session` shapes, and a
+  `npm run type-check` script (runs `tsc --noEmit`). The Alpine component is
+  now `function timerApp(): TimerApp` (`AlpineComponent<T>`), engine and
+  heartbeat got real signatures, and the localStorage preset payload is
+  validated with type guards instead of `any`. Behavior-identical: 40 tests
+  pass, build emits the worker chunk, and the dev server smoke-tested
+  start/pause/accumulate/reset/editor end-to-end.
+- **2026-09-05** — Pause/resume fidelity. `advance()` now bails out unless
+  the status is `RUNNING`, so a worker beat posted just before
+  `heartbeat.stop()`'s terminate cannot land on a paused timer, compute a
+  huge elapsed from the stale `startTimestamp`, and fire a spurious
+  "Time is up!". Also fixed pause/resume accumulation: `pause()` was
+  overwriting `baseElapsed` with only the time since the last resume,
+  dropping all previously elapsed time on the second pause (sessions ran
+  long). It now adds to the running total. Both verified in-browser.
 - **2026-09-05** — UI rethink. Dropped the two competing progress rings for
   a single focused run screen: one big interval countdown, a plan strip
   (the interval pattern rendered as colored segments — current one drains

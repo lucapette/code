@@ -7,13 +7,21 @@
    so every answer is derived from elapsed time rather than accumulated.
    ========================================================================== */
 
+import type {
+  Interval,
+  IntervalState,
+  ProgressCount,
+  StripSegment,
+  Urgency,
+} from './types';
+
 /* Total length of one pattern tile, in seconds. */
-export function patternLength(intervals) {
+export function patternLength(intervals: Interval[]): number {
   return intervals.reduce((acc, iv) => acc + iv.seconds, 0);
 }
 
 /* Index of the interval `elapsed` falls in, across all tiles. */
-export function indexOfInterval(intervals, elapsed) {
+export function indexOfInterval(intervals: Interval[], elapsed: number): number {
   const p = patternLength(intervals);
   const pos = p ? elapsed % p : 0;
   let acc = 0;
@@ -26,7 +34,7 @@ export function indexOfInterval(intervals, elapsed) {
 
 /* `{index, total, remaining}` for the interval covering `elapsed`.
    `remaining` is clamped at 0. Returns null for an empty chain. */
-export function intervalState(intervals, elapsed) {
+export function intervalState(intervals: Interval[], elapsed: number): IntervalState | null {
   if (!intervals.length) return null;
   const p = patternLength(intervals);
   const index = indexOfInterval(intervals, elapsed);
@@ -44,7 +52,11 @@ export function intervalState(intervals, elapsed) {
 /* Interval count inside the tiled session, e.g. {current: 3, total: 14}.
    Full tiles plus the partial one at the end. Null for a single-interval
    session — a plain countdown has nothing to count. */
-export function progressCount(intervals, totalSeconds, sessionRemaining) {
+export function progressCount(
+  intervals: Interval[],
+  totalSeconds: number,
+  sessionRemaining: number
+): ProgressCount | null {
   const len = intervals.length;
   const p = patternLength(intervals);
   if (!len || !p) return null;
@@ -73,7 +85,7 @@ export function progressCount(intervals, totalSeconds, sessionRemaining) {
 
 /* M:SS, switching to H:MM:SS from one hour on. `s` is expected as an
    integer (callers ceil fractional remainders). */
-export function formatClock(s) {
+export function formatClock(s: number): string {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
@@ -84,12 +96,12 @@ export function formatClock(s) {
 
 /* Fraction of time remaining for a progress ring, clamped to 0..1.
    A zero total renders as a full ring. */
-export function ringProgress(remaining, total) {
+export function ringProgress(remaining: number, total: number): number {
   return total ? Math.min(1, Math.max(0, remaining / total)) : 1;
 }
 
 /* 'normal' | 'warning' | 'danger' — thresholds shared by both rings. */
-export function urgency(remaining) {
+export function urgency(remaining: number): Urgency {
   if (remaining <= 10) return 'danger';
   if (remaining <= 60) return 'warning';
   return 'normal';
@@ -98,7 +110,11 @@ export function urgency(remaining) {
 /* Minute-mark decision: how many minutes are left if that changed since
    the last announcement, else null. Intervals shorter than a minute never
    announce — the interval-change cue covers them. */
-export function minuteMark(intervalTotal, intervalRemaining, lastSpokenMinute) {
+export function minuteMark(
+  intervalTotal: number,
+  intervalRemaining: number,
+  lastSpokenMinute: number | null
+): number | null {
   if (intervalTotal < 60) return null;
   const minutes = Math.ceil(intervalRemaining / 60);
   return minutes === lastSpokenMinute ? null : minutes;
@@ -107,7 +123,7 @@ export function minuteMark(intervalTotal, intervalRemaining, lastSpokenMinute) {
 /* Segment layout for a strip visualization: each interval mapped to the
    fraction of the pattern it occupies. Used for the run screen's plan
    strip and the mini pattern previews on preset picks. */
-export function stripLayout(intervals) {
+export function stripLayout(intervals: Interval[]): StripSegment[] {
   const p = patternLength(intervals);
   return intervals.map((iv) => ({
     seconds: iv.seconds,
@@ -120,7 +136,12 @@ export function stripLayout(intervals) {
    the current one (same window as the danger color). Empty when the window
    hasn't started, the session ends with this interval, or the next
    interval has no label. */
-export function nextLabel(intervals, index, intervalRemaining, sessionRemaining) {
+export function nextLabel(
+  intervals: Interval[],
+  index: number,
+  intervalRemaining: number,
+  sessionRemaining: number
+): string {
   if (intervalRemaining > 10) return '';
   if (sessionRemaining <= intervalRemaining) return '';
   const next = intervals[(index + 1) % intervals.length];

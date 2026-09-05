@@ -1,6 +1,6 @@
 /* ==========================================================================
    Timer — Interval Timer
-   Alpine.js state management, wiring the pure timer engine (engine.js)
+   Alpine.js state management, wiring the pure timer engine (engine.ts)
    to the DOM.
 
    A "session" is a sequence of intervals (a pattern). The pattern tiles
@@ -8,12 +8,24 @@
      - 7 min preset  -> seven 1-minute intervals
    ========================================================================== */
 
-import Alpine from 'alpinejs';
+import Alpine, { AlpineComponent } from 'alpinejs';
 
-import * as TimerEngine from './engine.js';
-import { createHeartbeat } from './heartbeat.js';
+import * as TimerEngine from './engine';
+import { createHeartbeat } from './heartbeat';
+import type { HeartbeatController } from './heartbeat';
+import type {
+  Interval,
+  PatternSegment,
+  Preset,
+  Session,
+  StripSegment,
+  Theme,
+  TimerStatus,
+  Urgency,
+  View,
+} from './types';
 
-const URGENCY_COLOR = {
+const URGENCY_COLOR: Record<Urgency, string> = {
   normal: 'var(--accent)',
   warning: 'var(--warning)',
   danger: 'var(--danger)',
@@ -22,18 +34,64 @@ const URGENCY_COLOR = {
 /* Stable hue per pattern position (golden-angle spacing keeps adjacent
    segments distinct). Same position across presets → same hue. */
 const GOLDEN = 137.508;
-function segmentHue(index) {
+function segmentHue(index: number): number {
   return Math.round((index * GOLDEN) % 360);
 }
 
-document.addEventListener('alpine:init', () => {
-  Alpine.data('timerApp', () => ({
+/* Safari exposes the audio context under a vendor prefix. */
+interface WebkitWindow extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
+
+/* Type guards for the localStorage preset payload (user-writable data). */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isInterval(value: unknown): value is Interval {
+  return isRecord(value) && typeof value.seconds === 'number';
+}
+
+/** Migrates a stored preset payload (new or legacy {id,name,minutes}
+    schema) into a well-formed Preset. */
+function parsePreset(value: unknown): Preset {
+  if (isRecord(value)) {
+    if (typeof value.totalSeconds === 'number' && Array.isArray(value.intervals)) {
+      return {
+        id: typeof value.id === 'string' ? value.id : `c-${Date.now()}`,
+        name: typeof value.name === 'string' ? value.name : 'Preset',
+        totalSeconds: value.totalSeconds,
+        intervals: value.intervals.filter(isInterval),
+      };
+    }
+    /* Legacy {id, name, minutes} schema. */
+    const minutes = typeof value.minutes === 'number' ? value.minutes : 7;
+    const seconds = minutes * 60;
+    return {
+      id: typeof value.id === 'string' ? value.id : `c-${Date.now()}`,
+      name: typeof value.name === 'string' ? value.name : 'Preset',
+      totalSeconds: seconds,
+      intervals: [{ seconds, label: '' }],
+    };
+  }
+  return { id: `c-${Date.now()}`, name: 'Preset', totalSeconds: 420, intervals: [{ seconds: 420, label: '' }] };
+}
+
+const DEFAULT_7_MIN: Preset = {
+  id: 'p7',
+  name: '7 min',
+  totalSeconds: 420,
+  intervals: Array.from({ length: 7 }, () => ({ seconds: 60, label: '' })),
+};
+
+function timerApp(): TimerApp {
+  return {
     /* --- Session definition (currently loaded) ----------------------- */
     session: {
-      id: 'p7',
-      name: '7 min',
-      totalSeconds: 420,
-      intervals: Array.from({ length: 7 }, () => ({ seconds: 60, label: '' })),
+      id: DEFAULT_7_MIN.id,
+      name: DEFAULT_7_MIN.name,
+      totalSeconds: DEFAULT_7_MIN.totalSeconds,
+      intervals: DEFAULT_7_MIN.intervals.map((iv) => ({ ...iv })),
     },
     sessionRemaining: 420,    // whole-session time left
     intervalIndex: 0,         // current interval in the tiled pattern
@@ -44,7 +102,7 @@ document.addEventListener('alpine:init', () => {
     /* --- Timer state --- */
     status: 'IDLE',           // IDLE | RUNNING | PAUSED
     rafId: null,              // requestAnimationFrame id
-    heartbeat: null,          // worker-driven fallback beats while hidden
+    heartbeat: { start() {}, stop() {} }, // replaced by init()'s real heartbeat
     startTimestamp: null,     // Date.now() baseline for elapsed math
     baseElapsed: 0,           // seconds elapsed, frozen at pause
     lastSpokenMinute: null,   // last minute boundary already announced
@@ -58,6 +116,9 @@ document.addEventListener('alpine:init', () => {
     draftName: '',            // preset name being configured
     draftTotalMinutes: 7,     // session total being configured (minutes)
     draftIntervals: [{ seconds: 420, label: 'until break' }],
+
+    /* --- Audio (lazily created) -------------------------------------- */
+    audioCtx: null,
 
     /* ------------------------------------------------------------------ */
     init() {
@@ -77,18 +138,12 @@ document.addEventListener('alpine:init', () => {
       try {
         const raw = localStorage.getItem('timer-presets');
         if (raw === null) {
-          this.savedPresets = [
-            { id: 'p7', name: '7 min', totalSeconds: 420, intervals: Array.from({ length: 7 }, () => ({ seconds: 60, label: '' })) },
-          ];
+          this.savedPresets = [DEFAULT_7_MIN];
           localStorage.setItem('timer-presets', JSON.stringify(this.savedPresets));
         } else {
-          const parsed = JSON.parse(raw);
+          const parsed: unknown = JSON.parse(raw);
           this.savedPresets = Array.isArray(parsed)
-            ? parsed.map((p) => {
-                if (p.totalSeconds && p.intervals) return p;
-                const seconds = (p.minutes || 7) * 60;
-                return { id: p.id, name: p.name, totalSeconds: seconds, intervals: [{ seconds, label: '' }] };
-              })
+            ? parsed.map(parsePreset)
             : [];
         }
       } catch (err) {
@@ -117,7 +172,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     /* --- Pattern helpers ---------------------------------------------- */
-    updateIntervalFromElapsed(elapsed) {
+    updateIntervalFromElapsed(elapsed: number) {
       const st = TimerEngine.intervalState(this.session.intervals, elapsed);
       if (!st) return;
       this.intervalIndex = st.index;
@@ -191,15 +246,15 @@ document.addEventListener('alpine:init', () => {
     /* The strip segment for the current interval drains left-to-right as it
        counts down (its bright fill is the portion remaining). Colors are
        theme-explicit so a theme toggle re-resolves them deterministically. */
-    segColor(h) {
+    segColor(hue: number) {
       return {
-        base: this.theme === 'light' ? `hsl(${h} 55% 34% / 0.26)` : `hsl(${h} 40% 52% / 0.20)`,
-        fill: this.theme === 'light' ? `hsl(${h} 70% 42%)` : `hsl(${h} 75% 62%)`,
-        future: this.theme === 'light' ? `hsl(${h} 55% 34% / 0.10)` : `hsl(${h} 40% 52% / 0.09)`,
+        base: this.theme === 'light' ? `hsl(${hue} 55% 34% / 0.26)` : `hsl(${hue} 40% 52% / 0.20)`,
+        fill: this.theme === 'light' ? `hsl(${hue} 70% 42%)` : `hsl(${hue} 75% 62%)`,
+        future: this.theme === 'light' ? `hsl(${hue} 55% 34% / 0.10)` : `hsl(${hue} 40% 52% / 0.09)`,
       };
     },
 
-    segStyle(seg, i) {
+    segStyle(seg: PatternSegment, i: number) {
       const c = this.segColor(seg.hue);
       const running = this.status !== 'IDLE';
       const current = i === this.patternIndex;
@@ -218,11 +273,11 @@ document.addEventListener('alpine:init', () => {
     },
 
     /* Mini strip for preset picks and editor previews. */
-    miniStrip(preset) {
+    miniStrip(preset: { intervals: Interval[] }): StripSegment[] {
       return TimerEngine.stripLayout(preset.intervals);
     },
 
-    miniSegStyle(seg, i) {
+    miniSegStyle(seg: StripSegment, i: number) {
       return {
         width: `${(seg.fraction * 100).toFixed(3)}%`,
         backgroundColor: this.segColor(segmentHue(i)).fill,
@@ -299,9 +354,12 @@ document.addEventListener('alpine:init', () => {
     pause() {
       if (this.status !== 'RUNNING') return;
       this.status = 'PAUSED';
-      cancelAnimationFrame(this.rafId);
+      cancelAnimationFrame(this.rafId ?? 0);
       this.rafId = null;
-      this.baseElapsed = (Date.now() - this.startTimestamp) / 1000;
+      /* Accumulate, don't overwrite: baseElapsed already holds every run
+         before this one after a previous pause, so counting only since the
+         last resume would lose it and the session would run too long. */
+      this.baseElapsed += (Date.now() - (this.startTimestamp ?? Date.now())) / 1000;
       this.updateIntervalFromElapsed(this.baseElapsed);
       this.sessionRemaining = Math.max(0, this.session.totalSeconds - this.baseElapsed);
       this.heartbeat.stop();
@@ -310,7 +368,7 @@ document.addEventListener('alpine:init', () => {
 
     reset() {
       this.status = 'IDLE';
-      cancelAnimationFrame(this.rafId);
+      cancelAnimationFrame(this.rafId ?? 0);
       this.rafId = null;
       this.baseElapsed = 0;
       this.sessionRemaining = this.session.totalSeconds;
@@ -324,7 +382,7 @@ document.addEventListener('alpine:init', () => {
       this.stopWakeLock();
     },
 
-    applyPreset(id) {
+    applyPreset(id: string) {
       if (this.status === 'RUNNING') return;
       const preset = this.presets.find((p) => p.id === id);
       if (!preset) return;
@@ -348,9 +406,14 @@ document.addEventListener('alpine:init', () => {
     /* --- Engine -------------------------------------------------------- */
     /* Recompute all state from the wall clock. Idempotent: announcement
        guards (announcedIntervalIndex, lastSpokenMinute) make repeated
-       calls safe, whether driven by rAF or by the heartbeat. */
+       calls safe, whether driven by rAF or by the heartbeat. The RUNNING
+       guard makes stray beats harmless — a worker beat posted right before
+       termination can still arrive after pause(), and without the guard it
+       would compute a huge elapsed (startTimestamp is old) and complete() a
+       session that was only paused. */
     advance() {
-      const elapsed = this.baseElapsed + (Date.now() - this.startTimestamp) / 1000;
+      if (this.status !== 'RUNNING') return;
+      const elapsed = this.baseElapsed + (Date.now() - (this.startTimestamp ?? Date.now())) / 1000;
       this.sessionRemaining = Math.max(0, this.session.totalSeconds - elapsed);
 
       if (this.sessionRemaining <= 0) {
@@ -373,7 +436,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     /* Announce each interval as it starts (Work / Rest / …). */
-    onIntervalChange(idx) {
+    onIntervalChange(idx: number) {
       this.announcedIntervalIndex = idx;
       this.intervalIndex = idx;
       const label = (this.session.intervals[idx].label || '').trim();
@@ -387,7 +450,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     /* Announce minute marks only inside intervals >= 60s. */
-    checkMinuteMark(intervalRemaining) {
+    checkMinuteMark(intervalRemaining: number) {
       const minutes = TimerEngine.minuteMark(
         this.intervalTotal,
         intervalRemaining,
@@ -409,7 +472,7 @@ document.addEventListener('alpine:init', () => {
       this.intervalRemaining = 0;
       this.sessionRemaining = 0;
       this.status = 'IDLE';
-      cancelAnimationFrame(this.rafId);
+      cancelAnimationFrame(this.rafId ?? 0);
       this.rafId = null;
       this.heartbeat.stop();
       this.stopWakeLock();
@@ -435,7 +498,7 @@ document.addEventListener('alpine:init', () => {
 
     /* Open the config editor pre-loaded with an existing preset. Editing
        always happens in place — there are no locked built-ins. */
-    openConfigFor(id) {
+    openConfigFor(id: string) {
       const preset = this.savedPresets.find((p) => p.id === id);
       if (!preset) {
         this.newDraft();
@@ -448,7 +511,7 @@ document.addEventListener('alpine:init', () => {
       this.view = 'edit';
     },
 
-    draftIntervalAdjust(index, delta) {
+    draftIntervalAdjust(index: number, delta: number) {
       const iv = this.draftIntervals[index];
       if (!iv) return;
       const cur = Number.isFinite(iv.seconds) ? iv.seconds : 60;
@@ -459,14 +522,14 @@ document.addEventListener('alpine:init', () => {
       this.draftIntervals.push({ seconds: 60, label: '' });
     },
 
-    removeDraftInterval(index) {
+    removeDraftInterval(index: number) {
       this.draftIntervals.splice(index, 1);
       if (!this.draftIntervals.length) {
         this.draftIntervals.push({ seconds: 60, label: '' });
       }
     },
 
-    draftTotalAdjust(delta) {
+    draftTotalAdjust(delta: number) {
       const cur = Number.isFinite(this.draftTotalMinutes) ? this.draftTotalMinutes : 7;
       this.draftTotalMinutes = Math.max(1, cur + delta);
     },
@@ -510,7 +573,7 @@ document.addEventListener('alpine:init', () => {
       this.view = 'timer';
     },
 
-    deletePreset(id) {
+    deletePreset(id: string) {
       const preset = this.savedPresets.find((p) => p.id === id);
       const name = preset ? `"${preset.name}"` : 'this preset';
       if (!window.confirm(`Delete ${name}?`)) return;
@@ -531,14 +594,15 @@ document.addEventListener('alpine:init', () => {
     },
 
     /* --- Audio --------------------------------------------------------- */
-    playBeep(freq, duration, type = 'sine', volume = 0.5) {
+    playBeep(freq: number, duration: number, type: OscillatorType = 'sine', volume = 0.5) {
       try {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
+        const webkitWindow = window as WebkitWindow;
+        const Ctx = window.AudioContext || webkitWindow.webkitAudioContext;
         if (!Ctx) return;
         if (!this.audioCtx || this.audioCtx.state === 'closed') {
           this.audioCtx = new Ctx();
         }
-        if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+        if (this.audioCtx.state === 'suspended') void this.audioCtx.resume();
 
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
@@ -559,7 +623,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     /* --- Voice --------------------------------------------------------- */
-    speak(text) {
+    speak(text: string) {
       try {
         if (!('speechSynthesis' in window)) return;
         const synth = window.speechSynthesis;
@@ -611,7 +675,90 @@ document.addEventListener('alpine:init', () => {
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta) meta.setAttribute('content', this.theme === 'dark' ? '#0B0C10' : '#F9F9FB');
     },
-  }));
+  };
+}
+
+/** The Alpine component's full reactive surface: state, getters and methods. */
+export type TimerApp = AlpineComponent<TimerAppState>;
+
+type TimerAppState = {
+  session: Session;
+  sessionRemaining: number;
+  intervalIndex: number;
+  intervalTotal: number;
+  intervalRemaining: number;
+  announcedIntervalIndex: number | null;
+  status: TimerStatus;
+  rafId: number | null;
+  heartbeat: HeartbeatController;
+  startTimestamp: number | null;
+  baseElapsed: number;
+  lastSpokenMinute: number | null;
+  wakeLock: WakeLockSentinel | null;
+  theme: Theme;
+  savedPresets: Preset[];
+  view: View;
+  draftPresetId: string;
+  draftName: string;
+  draftTotalMinutes: number;
+  draftIntervals: Interval[];
+  audioCtx: AudioContext | null;
+
+  /* Getters (readonly, reactively bound). */
+  readonly displayTime: string;
+  readonly sessionDisplay: string;
+  readonly intervalCaption: string;
+  readonly clockColor: string;
+  readonly patternIndex: number;
+  readonly patternStrip: PatternSegment[];
+  readonly patternStripCaption: string;
+  readonly sessionPercent: number;
+  readonly playLabel: string;
+  readonly sessionMode: boolean;
+  readonly draftStrip: StripSegment[];
+  readonly nextLabel: string;
+  readonly intervalProgress: string;
+  readonly presets: Preset[];
+  readonly activePresetId: string | null;
+  readonly draftSum: number;
+
+  /* Methods. */
+  init(): void;
+  updateIntervalFromElapsed(elapsed: number): void;
+  segColor(hue: number): { base: string; fill: string; future: string };
+  segStyle(seg: PatternSegment, i: number): Record<string, string | number>;
+  miniStrip(preset: { intervals: Interval[] }): StripSegment[];
+  miniSegStyle(seg: StripSegment, i: number): Record<string, string>;
+  togglePlay(): void;
+  start(): void;
+  pause(): void;
+  reset(): void;
+  applyPreset(id: string): void;
+  advance(): void;
+  tick(): void;
+  onIntervalChange(idx: number): void;
+  checkMinuteMark(intervalRemaining: number): void;
+  complete(): void;
+  openEdit(): void;
+  newDraft(): void;
+  openConfigFor(id: string): void;
+  draftIntervalAdjust(index: number, delta: number): void;
+  addDraftInterval(): void;
+  removeDraftInterval(index: number): void;
+  draftTotalAdjust(delta: number): void;
+  savePreset(): void;
+  deletePreset(id: string): void;
+  persistPresets(): void;
+  playBeep(freq: number, duration: number, type?: OscillatorType, volume?: number): void;
+  speak(text: string): void;
+  requestWakeLock(): Promise<void>;
+  stopWakeLock(): Promise<void>;
+  toggleTheme(): void;
+  applyTheme(): void;
+};
+
+document.addEventListener('alpine:init', () => {
+  Alpine.data('timerApp', timerApp);
 });
 
 Alpine.start();

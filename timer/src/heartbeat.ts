@@ -11,16 +11,21 @@
 
 const BEAT_MS = 500;
 
-export function createHeartbeat(onBeat) {
-  let worker = null;
-  let fallbackTimer = null;
+export interface HeartbeatController {
+  start(): void;
+  stop(): void;
+}
+
+export function createHeartbeat(onBeat: () => void): HeartbeatController {
+  let worker: Worker | null = null;
+  let fallbackTimer: ReturnType<typeof setInterval> | null = null;
   let running = false;
 
-  function startFallback() {
+  function startFallback(): void {
     fallbackTimer = setInterval(onBeat, BEAT_MS);
   }
 
-  function stopWorker() {
+  function stopWorker(): void {
     if (!worker) return;
     worker.terminate();
     worker = null;
@@ -31,7 +36,7 @@ export function createHeartbeat(onBeat) {
       if (running) return;
       running = true;
       try {
-        worker = new Worker(new URL('./heartbeat.worker.js', import.meta.url));
+        worker = new Worker(new URL('./heartbeat.worker.ts', import.meta.url));
         worker.onmessage = () => onBeat();
         worker.onerror = () => {
           stopWorker();

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { Interval } from '../src/types';
 import {
   formatClock,
   indexOfInterval,
@@ -11,15 +12,15 @@ import {
   ringProgress,
   stripLayout,
   urgency,
-} from '../src/engine.js';
+} from '../src/engine';
 
 /* Work 40s + Rest 20s — the canonical HIIT tile used across the suite. */
-const hiit = [
+const hiit: Interval[] = [
   { seconds: 40, label: 'Work' },
   { seconds: 20, label: 'Rest' },
 ];
 
-const seven = Array.from({ length: 7 }, (_, i) => ({ seconds: 60, label: `i${i}` }));
+const seven: Interval[] = Array.from({ length: 7 }, (_, i) => ({ seconds: 60, label: `i${i}` }));
 
 describe('patternLength', () => {
   it('sums interval seconds', () => {
@@ -75,7 +76,7 @@ describe('intervalState', () => {
   });
 
   it('handles a single long interval', () => {
-    const single = [{ seconds: 5400, label: 'deep work' }];
+    const single: Interval[] = [{ seconds: 5400, label: 'deep work' }];
     expect(intervalState(single, 0)).toEqual({ index: 0, total: 5400, remaining: 5400 });
     expect(intervalState(single, 2700)).toEqual({ index: 0, total: 5400, remaining: 2700 });
   });
@@ -140,7 +141,7 @@ describe('stripLayout', () => {
   });
 
   it('returns equal fractions for identical intervals', () => {
-    const segs = stripLayout(Array.from({ length: 7 }, (_, i) => ({ seconds: 60, label: `i${i}` })));
+    const segs = stripLayout(seven);
     segs.forEach((s) => expect(s.fraction).toBeCloseTo(1 / 7));
   });
 
@@ -209,7 +210,7 @@ describe('minuteMark', () => {
 });
 
 describe('nextLabel', () => {
-  const labeled = [
+  const labeled: Interval[] = [
     { seconds: 40, label: 'Work' },
     { seconds: 20, label: 'Rest' },
   ];
@@ -233,7 +234,7 @@ describe('nextLabel', () => {
   });
 
   it('is hidden when the next interval has no label', () => {
-    const unlabeled = [{ seconds: 40, label: 'Work' }, { seconds: 20, label: '' }];
+    const unlabeled: Interval[] = [{ seconds: 40, label: 'Work' }, { seconds: 20, label: '' }];
     expect(nextLabel(unlabeled, 0, 5, 100)).toBe('');
   });
 
