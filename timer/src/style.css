@@ -286,7 +286,6 @@ main {
   height: 100%;
   border-radius: 6px;
   background: var(--seg-base);
-  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
 .seg.future {
@@ -304,7 +303,6 @@ main {
   width: calc(var(--fill, 0) * 100%);
   border-radius: 6px;
   background: var(--seg-fill);
-  transition: width 0.3s linear;
 }
 
 /* --- Session progress line ------------------------------------------------ */
