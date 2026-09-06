@@ -4,22 +4,75 @@ Known issues and candidate work items, to be tackled one at a time.
 Priorities: **P1** = bug or core-use-case gap, **P2** = structure/a11y,
 **P3** = polish.
 
-## Known issues
+Direction (decided 2026-09-06): stay a single static page — zero backend.
+Ship a curated library of read-only built-ins), let intervals mean
+work/rest/rounds instead of opaque tiles, and make the app shareable by
+link. Exercise figures are deferred (roadmap below) until the core model is
+settled.
 
-(none)
+## Active
 
-## Ideas
+### P1 — Preset library with categories
 
-1. **PWA** — manifest, service worker, and a completion notification.
-   Makes the app installable, fully offline, and lets "Time is up!" land on
-   time even when the tab is hidden (pairs with the heartbeat fallback).
-2. **Explicitly out of scope** — accounts, server sync, session history.
-   The app stays a single static page.
+- Add a `category` field to `Preset`; presets group under it on the run
+  screen (headers + filter), and the editor can set it or type a new one.
+- Categories are **high-level and user-extensible** — not a fixed workout
+  taxonomy. Defaults make room for anything: "Workouts", "Productivity"
+  (a Pomodoro preset), "Cooking" (a 4-timer roast), etc. A preset belongs
+  to exactly one category.
+- Ship a small bundled library of **read-only built-ins**, one per
+  category to start. Editing a built-in **forks** into an editable user
+  copy instead of mutating it; built-ins survive deletes and re-seed if
+  the store is wiped. Contents (decided 2026-09-06):
+  - **Workouts** — Mobility routine (the existing 45s-exercise chain);
+    Jump rope (30s jump / 30s rest, 10 rounds, 10 min).
+  - **Productivity** — Pomodoro classic (4 × 25 work / 5 break + 15 min
+    long break); Focus (25 work / 5 break, repeated).
+  - **Cooking** — White rice (10 min cook / 10 min rest).
+- `savedPresets` splits conceptually into `builtinPresets` + `userPresets`
+  (persisted); backs the migration in `loadPresets()`.
+- *Why:* "a library of presets" needs grouping before it can grow, but the
+  grouping is the user's world (they add a Cooking section), not ours.
+
+### P1 — Intervals express intent: work / rest / rounds
+
+- Add `kind?: 'work' | 'rest'` (default `work`) to `Interval`; the editor
+  gains a rest toggle and an "add rest" quick-add.
+- Rest renders distinctly everywhere: dimmed strip segment, "Rest" caption,
+  quieter/neutral cue tone, and it fills a session's rest budget.
+- **Round builder**: author `Work + Rest` as one round — "X rounds of N-s
+  work + M-s rest" expands into the tiled pattern, so "30 on / 30 off for
+  10 minutes" becomes one 60s unit with the off auto-counted as rest.
+- Accounting counts work, not rest gaps: `intervalProgress` shows
+  "current / total work intervals", not every tile.
+- Engine stays pure tiling; `rounds` are an authoring-time expansion, plus
+  small helpers (work-count, is-rest) on the engine side.
+- *Why:* the flagship use case is "do 10 minutes, 30s on / 30s off" — the
+  model must say "rest", not just label a 30s tile.
+
+## Ideas (backlog)
+
+1. **P2 — Exercise visuals** — optional `media` per interval (bundled
+   figure id or image URL); run screen shows a figure/animation of the
+   current move during its interval. Ship bundled silhouettes for the
+   13 mobility moves; generic presets just don't set it. Deferred until the
+   work/rest model is stable.
+2. **P2 — Zero-backend URL share + public host** — compact-encode presets
+   into the URL hash (upgrades the JSON copy/paste to a paste-able link),
+   and deploy the static build on a free tier (Cloudflare Pages / Netlify /
+   Vercel). Fold PWA in here: manifest, service worker, completion
+   notification, offline. localStorage stays the per-browser store; a link
+   shares a snapshot. No accounts, no server sync, no session history.
+3. **Explicitly out of scope** — accounts, server sync, session history,
+   server-side persistence. The app stays a single static page.
 
 ## Suggested order
 
-1. PWA (installable, offline; a notification also hardens the
-   locked-screen case the heartbeat can't reach)
+1. Library (categories + read-only built-ins) — touches the data model the
+   rest depends on.
+2. Work/rest + round builder — same schema change window as the library.
+3. URL share + host — needs the settled preset shape to encode.
+4. Exercise visuals — last; richest once the model is stable.
 
 ## Done
 
@@ -35,7 +88,7 @@ Priorities: **P1** = bug or core-use-case gap, **P2** = structure/a11y,
   All verified in-browser; type-check, 40 tests, and the build stay green.
 - **2026-09-06** — Corrupt-preset self-heal. A mangled `timer-presets`
   payload (invalid JSON, or parsed to a non-array) now reseeds the default
-  7 min preset instead of leaving `savedPresets = []`, so one bad payload
+  preset instead of leaving `savedPresets = []`, so one bad payload
   can no longer permanently wipe the list. Deliberately empty arrays are
   preserved — deleting every preset stays possible. Verified in-browser.
 - **2026-09-05** — TypeScript. Renamed `src/*.js` → `.ts`, strict
@@ -88,9 +141,9 @@ Priorities: **P1** = bug or core-use-case gap, **P2** = structure/a11y,
   "time has passed" — all state stays derived from the wall clock. The
   tick loop split into `advance()` (recompute) and `tick()` (advance +
   schedule rAF). Verified by completing a session with rAF disabled.
-- **2026-09-04** — Extracted the timer math into `src/engine.js`, a pure
+- **2026-09-04** — Extracted the timer math into `src/engine.ts`, a pure
   ES module (tiling, interval state, progress counting, minute marks,
-  ring/format helpers), with 33 Vitest cases in `tests/engine.test.js`.
+  ring/format helpers), with 33 Vitest cases in `tests/engine.test.ts`.
   Introduced Vite along the way: `npm run dev|build|test`, Alpine.js from
   npm (vendored copy deleted), sources under `src/` — the codebase is now
   one rename away from TypeScript. `file://` double-click is replaced by
