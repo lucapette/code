@@ -135,20 +135,26 @@ function timerApp(): TimerApp {
          the default 7 min preset. After that presets are fully user-managed:
          editable and deletable like any other. Also migrates the old
          {id,name,minutes} schema to {id,name,totalSeconds,intervals[]}. */
+      /* Missing or corrupt store (bad JSON, or parsed to a non-array) gets
+         the default 7 min preset seeded back in, so a single mangled
+         payload can't wipe the preset list for good. A deliberate empty
+         array is preserved as-is — the user may legitimately delete every
+         preset. */
+      let loaded: Preset[] | null = null;
       try {
         const raw = localStorage.getItem('timer-presets');
-        if (raw === null) {
-          this.savedPresets = [DEFAULT_7_MIN];
-          localStorage.setItem('timer-presets', JSON.stringify(this.savedPresets));
-        } else {
+        if (raw !== null) {
           const parsed: unknown = JSON.parse(raw);
-          this.savedPresets = Array.isArray(parsed)
-            ? parsed.map(parsePreset)
-            : [];
+          loaded = Array.isArray(parsed) ? parsed.map(parsePreset) : null;
         }
-      } catch (err) {
-        this.savedPresets = [];
+      } catch {
+        loaded = null;
       }
+      if (loaded === null) {
+        loaded = [DEFAULT_7_MIN];
+        localStorage.setItem('timer-presets', JSON.stringify(loaded));
+      }
+      this.savedPresets = loaded;
 
       /* Boot into a real preset: if the stored session id no longer exists
          (e.g. first run, or its preset was deleted), load the first one so the

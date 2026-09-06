@@ -6,12 +6,6 @@ Priorities: **P1** = bug or core-use-case gap, **P2** = structure/a11y,
 
 ## Known issues
 
-### P3 — Corrupt localStorage silently drops all presets
-
-The `JSON.parse` failure path sets `savedPresets = []` and never reseeds,
-so a single corrupted payload permanently empties the preset list. Reseed
-the default on empty/corrupt.
-
 ### P3 — Draft interval rows use index keys
 
 `x-for :key="i"` on the draft interval list: splicing a row shifts bindings
@@ -36,8 +30,6 @@ with the rest of the UI.
    looking.
 3. **Preset import/export** — copy/paste a preset as JSON to share HIIT
    routines between devices.
-4. **TypeScript** — the Vite + ES-module structure is in place; rename
-   `src/*.js` → `.ts` and tighten types.
 5. **Explicitly out of scope** — accounts, server sync, session history.
    The app stays a single static page.
 
@@ -49,6 +41,11 @@ with the rest of the UI.
 
 ## Done
 
+- **2026-09-06** — Corrupt-preset self-heal. A mangled `timer-presets`
+  payload (invalid JSON, or parsed to a non-array) now reseeds the default
+  7 min preset instead of leaving `savedPresets = []`, so one bad payload
+  can no longer permanently wipe the list. Deliberately empty arrays are
+  preserved — deleting every preset stays possible. Verified in-browser.
 - **2026-09-05** — TypeScript. Renamed `src/*.js` → `.ts`, strict
   `tsconfig.json` (`noEmit` + `moduleResolution: bundler`), new
   `src/types.ts` with the shared `Interval`/`Preset`/`Session` shapes, and a
