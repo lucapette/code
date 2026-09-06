@@ -309,10 +309,6 @@ main {
   background: var(--seg-future);
 }
 
-.seg.current {
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 65%, transparent);
-}
-
 .seg::after {
   content: "";
   position: absolute;
@@ -1197,7 +1193,7 @@ select.input {
 }
 
 .session-mode .strip {
-  height: clamp(64px, 13vh, 150px);
+  height: 64px;
 }
 
 .session-mode .session-line {
