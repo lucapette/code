@@ -34,7 +34,10 @@ export interface Preset {
 export type Session = Preset;
 
 export type TimerStatus = 'IDLE' | 'RUNNING' | 'PAUSED';
-export type View = 'timer' | 'edit';
+
+/** App screens: the Library launcher (pick a preset), the Timer (run it),
+    and the Presets editor. */
+export type View = 'library' | 'timer' | 'edit';
 export type Theme = 'light' | 'dark';
 
 export type Urgency = 'normal' | 'warning' | 'danger';

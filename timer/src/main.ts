@@ -210,8 +210,9 @@ function timerApp(): TimerApp {
 
     /* --- Presets & configuration --- */
     savedPresets: [],         // user presets only (built-ins live in code)
-    view: 'timer',            // 'timer' | 'edit'
-    categoryFilter: 'all',    // 'all' or a category name (run screen)
+    view: 'library',          // 'library' | 'timer' | 'edit'
+    returnView: 'library',    // where the back button in the editor goes
+    categoryFilter: 'all',    // 'all' or a category name (library filter)
     draftPresetId: 'new',     // 'new' or an existing savedPresets id
     draftName: '',            // preset name being configured
     draftCategory: 'Other',   // preset category being configured
@@ -644,6 +645,7 @@ function timerApp(): TimerApp {
       this.rafId = null;
       this.heartbeat.stop();
       this.stopWakeLock();
+      this.view = 'library';
 
       if (this.announce.voice) this.speak('Time is up!');
       if (this.announce.beeps) {
@@ -658,6 +660,7 @@ function timerApp(): TimerApp {
     /* --- Presets & configuration -------------------------------------- */
     /* Open the edit view with a fresh draft. */
     openEdit() {
+      this.returnView = this.view;
       this.newDraft();
       this.view = 'edit';
     },
@@ -967,6 +970,7 @@ type TimerAppState = {
   theme: Theme;
   savedPresets: Preset[];
   view: View;
+  returnView: View;
   categoryFilter: string;
   draftPresetId: string;
   draftName: string;

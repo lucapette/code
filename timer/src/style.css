@@ -206,12 +206,29 @@ main {
   padding: 12px 0;
 }
 
+.session-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: clamp(14px, 3vh, 24px);
+  text-align: center;
+}
+
+.session-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+}
+
 .session-name {
-  align-self: flex-start;
-  font-size: 0.95rem;
+  font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.3px;
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
 }
 
 .session {
@@ -451,43 +468,29 @@ main {
   font-size: 0.82rem;
 }
 
-/* --- Preset picks ------------------------------------------------------------ */
-.picks {
+/* --- Preset library ------------------------------------------------------------ */
+.library {
   display: flex;
   flex-direction: column;
   gap: 16px;
   width: 100%;
-}
-
-.pick {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  background: var(--panel);
-  text-align: left;
-  transition: border-color 0.2s ease, background 0.2s ease;
-}
-
-.pick:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-}
-
-.pick.active {
-  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
-  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
-}
-
-.pick:disabled {
-  opacity: 0.45;
+  padding-top: 16px;
 }
 
 .pick-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.pick-min {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 /* --- Preset category filter & groups ----------------------------------- */
@@ -535,25 +538,37 @@ main {
   margin-top: 4px;
 }
 
-.pick-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
+.pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   width: 100%;
 }
 
-.pick {
-  position: relative;
+.pick-row {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 12px 14px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--panel);
   text-align: left;
   transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.pick-row:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.pick-row.active {
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+}
+
+.pick-row:disabled {
+  opacity: 0.45;
 }
 
 .pick-tag,
@@ -1127,7 +1142,8 @@ select.input {
    with viewport-relative units. */
 .session-mode .topbar,
 .session-mode .edit-btn,
-.session-mode .picks {
+.session-mode .pick-filter,
+.session-mode .library {
   display: none;
 }
 
@@ -1137,18 +1153,26 @@ select.input {
 }
 
 .session-mode .hero {
-  padding: 4px 0;
+  padding: 0;
 }
 
 .session-mode .session {
-  min-height: 60vh;
+  min-height: 52vh;
   justify-content: center;
   gap: clamp(18px, 4vh, 44px);
 }
 
+.session-mode .session-head {
+  margin-bottom: clamp(16px, 4vh, 36px);
+}
+
+.session-mode .session-eyebrow {
+  font-size: clamp(0.72rem, 1.6vh, 0.9rem);
+  color: var(--accent);
+}
+
 .session-mode .session-name {
-  font-size: clamp(1.05rem, 2vh, 1.4rem);
-  color: var(--text-primary);
+  font-size: clamp(1.3rem, 3.6vh, 2rem);
 }
 
 .session-mode .time {
@@ -1212,7 +1236,7 @@ select.input {
     height: 44px;
   }
 
-  .picks {
+  .library {
     gap: 12px;
   }
 

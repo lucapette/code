@@ -76,6 +76,14 @@ settled.
 
 ## Done
 
+- **2026-09-06** — Design pass: split the two views into three. The timer
+  no longer lives on the home screen — a compact **Library** launcher
+  (single-row presets grouped by category, filter chips) is the landing
+  view with no timers on it. Picking a preset goes to a dedicated
+  **Timer** screen that stages the plan then runs; finishing or resetting
+  returns to the Library. The running session got a proper header: a small
+  category eyebrow above a larger, centered preset name with tuned spacing
+  (title was small, left-aligned and crowding the clock).
 - **2026-09-06** — Preset library with categories. `Preset` gained a
   `category`; the run screen groups picks under high-level, user-extensible
   categories (Workouts / Productivity / Cooking / …) with filter chips, the

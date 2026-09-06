@@ -17,9 +17,9 @@ TypeScript + Vite app.
 - One big current-interval countdown, with a thin session progress bar and
   left-remaining label underneath
 - Interval chains that tile until the session total is used up
-- Timer and preset editor as two in-app views; presets are picked from the
-  run screen (each showing a mini preview of its plan) and managed
-  (create, edit, delete) in the editor
+- Three views: a compact **Library** launcher (pick a preset, no timers
+  here), a dedicated **Timer** screen you land on when you pick one (it
+  stages the plan, then runs the countdown), and the **Presets editor
 - A preset **library**: read-only bundled built-ins (Mobility, Jump rope,
   Pomodoro classic, Focus, White rice) alongside your own presets, each in
   a high-level **category** (Workouts, Productivity, Cooking, …). Built-ins
