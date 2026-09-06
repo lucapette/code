@@ -34,7 +34,7 @@
             <path d="M12 9v4l2.5 2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             <path d="M12 5V3M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          <span x-text="session.name">7 min</span>
+          <span x-text="session.name">Mobility routine</span>
         </h1>
         <h2 class="topbar-title" x-show="view === 'edit'" x-cloak>Presets</h2>
       </div>
@@ -77,7 +77,7 @@
     <main>
 
       <section class="hero" aria-label="Countdown" x-show="view === 'timer'">
-        <h2 class="session-name" x-show="sessionMode" x-cloak x-text="session.name">7 min</h2>
+        <h2 class="session-name" x-show="sessionMode" x-cloak x-text="session.name">Mobility routine</h2>
         <div class="session">
           <div class="stage">
             <div
@@ -156,7 +156,7 @@
               :class="{ active: activePresetId === preset.id }"
               :aria-pressed="activePresetId === preset.id"
             >
-              <span class="pick-name" x-text="preset.name">7 min</span>
+              <span class="pick-name" x-text="preset.name">Mobility routine</span>
               <span class="pick-strip" aria-hidden="true">
                 <template x-for="(seg, i) in miniStrip(preset)" :key="i">
                   <span class="mini-seg" :style="miniSegStyle(seg, i)"></span>

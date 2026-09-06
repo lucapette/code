@@ -5,7 +5,7 @@
 
    A "session" is a sequence of intervals (a pattern). The pattern tiles
    until the session's total duration is consumed:
-     - 7 min preset  -> seven 1-minute intervals
+     - mobility routine -> 30s exercises, each followed by a 5s rest
    ========================================================================== */
 
 import Alpine, { AlpineComponent } from 'alpinejs';
@@ -100,26 +100,45 @@ function parsePreset(value: unknown): Preset {
   return { id: `c-${Date.now()}`, name: 'Preset', totalSeconds: 420, intervals: [{ seconds: 420, label: '' }] };
 }
 
-const DEFAULT_7_MIN: Preset = {
-  id: 'p7',
-  name: '7 min',
-  totalSeconds: 420,
-  intervals: Array.from({ length: 7 }, () => ({ seconds: 60, label: '' })),
+const MOBILITY_LABELS = [
+  'body bounces',
+  'neck circles',
+  'arm swings',
+  'full twists',
+  'downward up dog',
+  'deepsquat reaches',
+  '90/90s',
+  'bridge pose',
+  'table top pose',
+  'toe touches',
+  'straddles',
+  'cossack',
+  'windshield wipers',
+];
+
+const DEFAULT_PRESET: Preset = {
+  id: 'p-mobility',
+  name: 'Mobility routine',
+  totalSeconds: MOBILITY_LABELS.length * 35,
+  intervals: MOBILITY_LABELS.flatMap((label) => [
+    { seconds: 30, label },
+    { seconds: 5, label: 'rest' },
+  ]),
 };
 
 function timerApp(): TimerApp {
   return {
     /* --- Session definition (currently loaded) ----------------------- */
     session: {
-      id: DEFAULT_7_MIN.id,
-      name: DEFAULT_7_MIN.name,
-      totalSeconds: DEFAULT_7_MIN.totalSeconds,
-      intervals: DEFAULT_7_MIN.intervals.map((iv) => ({ ...iv })),
+      id: DEFAULT_PRESET.id,
+      name: DEFAULT_PRESET.name,
+      totalSeconds: DEFAULT_PRESET.totalSeconds,
+      intervals: DEFAULT_PRESET.intervals.map((iv) => ({ ...iv })),
     },
-    sessionRemaining: 420,    // whole-session time left
+    sessionRemaining: DEFAULT_PRESET.totalSeconds, // whole-session time left
     intervalIndex: 0,         // current interval in the tiled pattern
-    intervalTotal: 60,        // duration of the current interval
-    intervalRemaining: 60,    // time left in the current interval
+    intervalTotal: DEFAULT_PRESET.intervals[0].seconds, // duration of the current interval
+    intervalRemaining: DEFAULT_PRESET.intervals[0].seconds, // time left in the current interval
     announcedIntervalIndex: null, // last interval index whose start was announced
 
     /* --- Timer state --- */
@@ -133,12 +152,12 @@ function timerApp(): TimerApp {
     theme: 'dark',
 
     /* --- Presets & configuration --- */
-    savedPresets: [],         // all presets (seeded with 7 min on first run)
+    savedPresets: [],         // all presets (seeded with mobility routine on first run)
     view: 'timer',            // 'timer' | 'edit'
     draftPresetId: 'new',     // 'new' or an existing savedPresets id
     draftName: '',            // preset name being configured
-    draftTotalMinutes: 7,     // session total being configured (minutes)
-    draftIntervals: [{ id: nextDraftId(), seconds: 420, label: 'until break' }],
+    draftTotalMinutes: 8,     // session total being configured (minutes, default 7:35)
+    draftIntervals: [{ id: nextDraftId(), seconds: 455, label: '' }],
 
     /* --- Announcements & sharing --- */
     announce: { ...DEFAULT_ANNOUNCE },
@@ -163,11 +182,12 @@ function timerApp(): TimerApp {
       this.applyTheme();
 
       /* Load presets. On the very first run there is no stored data, so seed
-         the default 7 min preset. After that presets are fully user-managed:
-         editable and deletable like any other. Also migrates the old
-         {id,name,minutes} schema to {id,name,totalSeconds,intervals[]}. */
+         the default mobility routine. After that presets are fully
+         user-managed: editable and deletable like any other. Also migrates
+         the old {id,name,minutes} schema to
+         {id,name,totalSeconds,intervals[]}. */
       /* Missing or corrupt store (bad JSON, or parsed to a non-array) gets
-         the default 7 min preset seeded back in, so a single mangled
+         the default mobility routine seeded back in, so a single mangled
          payload can't wipe the preset list for good. A deliberate empty
          array is preserved as-is — the user may legitimately delete every
          preset. */
@@ -182,7 +202,7 @@ function timerApp(): TimerApp {
         loaded = null;
       }
       if (loaded === null) {
-        loaded = [DEFAULT_7_MIN];
+        loaded = [DEFAULT_PRESET];
         localStorage.setItem('timer-presets', JSON.stringify(loaded));
       }
       this.savedPresets = loaded;
