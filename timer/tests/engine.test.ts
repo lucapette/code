@@ -5,31 +5,39 @@ import {
   formatClock,
   indexOfInterval,
   intervalState,
+  isRest,
+  kindOf,
+  kindSplit,
   minuteMark,
   nextLabel,
-  patternLength,
   progressCount,
   ringProgress,
   stripLayout,
+  totalDuration,
   urgency,
 } from '../src/engine';
 
-/* Work 40s + Rest 20s — the canonical HIIT tile used across the suite. */
+/* Work 40s + Rest 20s — the canonical HIIT pair used across the suite. */
 const hiit: Interval[] = [
-  { seconds: 40, label: 'Work' },
-  { seconds: 20, label: 'Rest' },
+  { seconds: 40, label: 'Work', kind: 'work' },
+  { seconds: 20, label: 'Rest', kind: 'rest' },
 ];
 
+/* The same pair repeated ten times — a fully-expanded 10-round session. */
+const hiitx10: Interval[] = Array.from({ length: 10 }, () => hiit).flat();
+
+/* Seven 60s intervals, all work. */
 const seven: Interval[] = Array.from({ length: 7 }, (_, i) => ({ seconds: 60, label: `i${i}` }));
 
-describe('patternLength', () => {
+describe('totalDuration', () => {
   it('sums interval seconds', () => {
-    expect(patternLength(hiit)).toBe(60);
-    expect(patternLength(seven)).toBe(420);
+    expect(totalDuration(hiit)).toBe(60);
+    expect(totalDuration(seven)).toBe(420);
+    expect(totalDuration(hiitx10)).toBe(600);
   });
 
   it('is 0 for an empty chain', () => {
-    expect(patternLength([])).toBe(0);
+    expect(totalDuration([])).toBe(0);
   });
 });
 
@@ -44,10 +52,15 @@ describe('indexOfInterval', () => {
     expect(indexOfInterval(hiit, 59.5)).toBe(1);
   });
 
-  it('wraps into the next tile with no gap', () => {
-    expect(indexOfInterval(hiit, 60)).toBe(0);
+  it('does not wrap a finite session', () => {
+    // hiit has only two intervals — nothing tiles
     expect(indexOfInterval(hiit, 100)).toBe(1);
-    expect(indexOfInterval(hiit, 60 * 11 + 5)).toBe(0);
+    expect(indexOfInterval(hiitx10, 60)).toBe(2);
+    expect(indexOfInterval(hiitx10, 65)).toBe(2);
+  });
+
+  it('clamps past the end to the last interval', () => {
+    expect(indexOfInterval(hiit, 400)).toBe(1);
   });
 });
 
@@ -62,17 +75,9 @@ describe('intervalState', () => {
     expect(intervalState(hiit, 55)).toEqual({ index: 1, total: 20, remaining: 5 });
   });
 
-  it('tiles the pattern indefinitely', () => {
-    expect(intervalState(hiit, 60)).toEqual({ index: 0, total: 40, remaining: 40 });
-    expect(intervalState(hiit, 130)).toEqual({ index: 0, total: 40, remaining: 30 });
-    expect(intervalState(hiit, 180)).toEqual({ index: 0, total: 40, remaining: 40 });
-  });
-
-  it('wraps to the next tile at the exact end of the pattern', () => {
-    // pos = 90 % 90 = 0 -> the boundary instant is the next tile's start
-    expect(intervalState([{ seconds: 90, label: '' }], 90)).toEqual({
-      index: 0, total: 90, remaining: 90,
-    });
+  it('walks a repeated pair without tiling math', () => {
+    expect(intervalState(hiitx10, 60)).toEqual({ index: 2, total: 40, remaining: 40 });
+    expect(intervalState(hiitx10, 99)).toEqual({ index: 2, total: 40, remaining: 1 });
   });
 
   it('handles a single long interval', () => {
@@ -87,30 +92,69 @@ describe('intervalState', () => {
 });
 
 describe('progressCount', () => {
-  it('counts full tiles for an exact multiple', () => {
-    // 25 min of a 60s pattern = 25 tiles = 50 intervals
-    expect(progressCount(hiit, 1500, 1500)).toEqual({ current: 1, total: 50 });
-    expect(progressCount(hiit, 1500, 750)).toEqual({ current: 25, total: 50 });
+  it('counts work intervals in the finite session', () => {
+    // 10 rounds = 10 work intervals
+    expect(progressCount(hiitx10, 0)).toEqual({ current: 1, total: 10 });
+    expect(progressCount(hiitx10, 300)).toEqual({ current: 6, total: 10 });
   });
 
-  it('counts the partial final tile', () => {
-    // 400s of a 420s pattern (7x60) still fits 7 intervals
-    expect(progressCount(seven, 400, 400)).toEqual({ current: 1, total: 7 });
-    expect(progressCount(seven, 400, 340)).toEqual({ current: 2, total: 7 });
+  it('stays on the same work count through a rest gap', () => {
+    // 45s in — 40s work done, 5s into rest: still on work unit 1
+    expect(progressCount(hiitx10, 45)).toEqual({ current: 1, total: 10 });
+    // 60s in — next work unit starts
+    expect(progressCount(hiitx10, 60)).toEqual({ current: 2, total: 10 });
   });
 
-  it('counts a truncated mixed pattern', () => {
-    // 90s of 40+20: full tile (2) + Work only (1) = 3
-    expect(progressCount(hiit, 90, 90)).toEqual({ current: 1, total: 3 });
-    expect(progressCount(hiit, 90, 70)).toEqual({ current: 1, total: 3 });
-    expect(progressCount(hiit, 90, 20)).toEqual({ current: 3, total: 3 });
+  it('counts only work intervals, not rest gaps, in a mixed session', () => {
+    // one Work + three Rest + one Work = 2 work units in 4 intervals
+    const mixed: Interval[] = [
+      { seconds: 40, label: 'Work', kind: 'work' },
+      { seconds: 20, label: 'Rest', kind: 'rest' },
+      { seconds: 30, label: 'Rest', kind: 'rest' },
+      { seconds: 40, label: 'Work', kind: 'work' },
+    ];
+    expect(progressCount(mixed, 0)).toEqual({ current: 1, total: 2 });
+    expect(progressCount(mixed, 45)).toEqual({ current: 1, total: 2 });
+    expect(progressCount(mixed, 95)).toEqual({ current: 2, total: 2 });
   });
 
   it('returns null when there is nothing to count', () => {
-    expect(progressCount([{ seconds: 600, label: '' }], 600, 600)).toBeNull();
-    expect(progressCount([{ seconds: 300, label: '' }], 240, 240)).toBeNull();
-    expect(progressCount([], 600, 600)).toBeNull();
-    expect(progressCount([{ seconds: 0, label: '' }], 0, 0)).toBeNull();
+    expect(progressCount([{ seconds: 600, label: '' }], 0)).toBeNull();
+    expect(progressCount([], 0)).toBeNull();
+    expect(progressCount([{ seconds: 0, label: '' }], 0)).toBeNull();
+  });
+});
+
+describe('isRest / kindOf', () => {
+  it('defaults untagged intervals to work', () => {
+    expect(kindOf({ seconds: 40, label: '' })).toBe('work');
+    expect(isRest({ seconds: 40, label: '' })).toBe(false);
+  });
+
+  it('reads an explicit rest kind', () => {
+    expect(kindOf({ seconds: 20, label: 'Rest', kind: 'rest' })).toBe('rest');
+    expect(isRest({ seconds: 20, label: 'Rest', kind: 'rest' })).toBe(true);
+  });
+
+  it('treats an explicit work kind as work', () => {
+    expect(kindOf({ seconds: 40, label: 'Work', kind: 'work' })).toBe('work');
+    expect(isRest({ seconds: 40, label: 'Work', kind: 'work' })).toBe(false);
+  });
+});
+
+describe('kindSplit', () => {
+  it('splits an untagged session as all work', () => {
+    expect(kindSplit(seven)).toEqual({ work: 420, rest: 0 });
+  });
+
+  it('accounts rest across an expanded session', () => {
+    // 10 rounds of 40 work + 20 rest = 400 work + 200 rest
+    expect(kindSplit(hiitx10)).toEqual({ work: 400, rest: 200 });
+  });
+
+  it('handles empty and zero-length inputs', () => {
+    expect(kindSplit([])).toEqual({ work: 0, rest: 0 });
+    expect(kindSplit([{ seconds: 0, label: '' }])).toEqual({ work: 0, rest: 0 });
   });
 });
 
@@ -133,11 +177,19 @@ describe('formatClock', () => {
 });
 
 describe('stripLayout', () => {
-  it('maps each interval to its share of the pattern', () => {
+  it('maps each interval to its share of the session', () => {
     expect(stripLayout(hiit)).toEqual([
-      { seconds: 40, label: 'Work', fraction: 2 / 3 },
-      { seconds: 20, label: 'Rest', fraction: 1 / 3 },
+      { seconds: 40, label: 'Work', kind: 'work', fraction: 2 / 3 },
+      { seconds: 20, label: 'Rest', kind: 'rest', fraction: 1 / 3 },
     ]);
+  });
+
+  it('shares the strip across every expanded interval', () => {
+    const segs = stripLayout(hiitx10);
+    expect(segs).toHaveLength(20);
+    segs.forEach((s, i) => {
+      expect(s.kind).toBe(i % 2 === 0 ? 'work' : 'rest');
+    });
   });
 
   it('returns equal fractions for identical intervals', () => {
@@ -216,29 +268,24 @@ describe('nextLabel', () => {
   ];
 
   it('is hidden outside the final 10 seconds', () => {
-    expect(nextLabel(labeled, 0, 11, 100)).toBe('');
+    expect(nextLabel(labeled, 0, 11)).toBe('');
   });
 
   it('teases the next interval in the final 10 seconds', () => {
-    expect(nextLabel(labeled, 0, 10, 100)).toBe('Rest');
-    expect(nextLabel(labeled, 0, 0.5, 100)).toBe('Rest');
+    expect(nextLabel(labeled, 0, 10)).toBe('Rest');
+    expect(nextLabel(labeled, 0, 0.5)).toBe('Rest');
   });
 
-  it('wraps the pattern for the teaser', () => {
-    expect(nextLabel(labeled, 1, 8, 80)).toBe('Work');
-  });
-
-  it('is hidden when the session ends with this interval', () => {
-    expect(nextLabel(labeled, 1, 5, 5)).toBe('');
-    expect(nextLabel(labeled, 0, 5, 5)).toBe('');
+  it('is hidden when this is the session final interval', () => {
+    expect(nextLabel(labeled, 1, 5)).toBe('');
   });
 
   it('is hidden when the next interval has no label', () => {
     const unlabeled: Interval[] = [{ seconds: 40, label: 'Work' }, { seconds: 20, label: '' }];
-    expect(nextLabel(unlabeled, 0, 5, 100)).toBe('');
+    expect(nextLabel(unlabeled, 0, 5)).toBe('');
   });
 
   it('survives an empty chain', () => {
-    expect(nextLabel([], 0, 5, 100)).toBe('');
+    expect(nextLabel([], 0, 5)).toBe('');
   });
 });

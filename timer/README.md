@@ -1,9 +1,10 @@
 # Interval Timer
 
 A zero-framework interval timer for workouts and focus sessions, built with
-Vite and Alpine.js. A session is a
-chain of named intervals (Work, Rest, …) that repeats until the session's
-total duration is consumed — e.g. 40s + 20s tiled for 25 minutes is HIIT.
+Vite and Alpine.js. A session is a finite sequence of intervals (Work,
+Rest, …) run top to bottom — e.g. ten rounds of 40s + 20s is twenty
+intervals. Presets are templates that store that fully-expanded sequence;
+running one snapshots it into a Session.
 
 Part of the [monorepo](../README.md). Successor in spirit to
 [passata](../passata) (React Pomodoro app, on hold), rebuilt as a plain
@@ -13,10 +14,11 @@ TypeScript + Vite app.
 
 - Plan strip: the session's intervals render as colored segments, current
   one highlighted and draining as it counts down — you can see the whole
-  pattern at a glance
+  plan at a glance
 - One big current-interval countdown, with a thin session progress bar and
   left-remaining label underneath
-- Interval chains that tile until the session total is used up
+- Finite interval sequences: a preset is its fully-expanded run, no hidden
+  repetition
 - Three views: a compact **Library** launcher (pick a preset, no timers
   here), a dedicated **Timer** screen you land on when you pick one (it
   stages the plan, then runs the countdown), and the **Presets editor
@@ -24,9 +26,9 @@ TypeScript + Vite app.
   Pomodoro classic, Focus, White rice) alongside your own presets, each in
   a high-level **category** (Workouts, Productivity, Cooking, …). Built-ins
   can't be deleted or corrupted; editing one forks it into an editable copy
-- Announcement preferences (voice / tones / buzz) toggled in the editor,
-  each interval optionally carrying a distinct low/mid/high cue tone so
-  Work vs Rest is audible without looking
+- Announcement preferences (voice / tones / buzz) toggled in the editor:
+  named intervals are spoken, and an interval with no label plays one fixed
+  tone
 - Voice announcements (Web Speech API) with beep/vibration fallbacks, and
   minute marks announced inside intervals of 60s or longer
 - "Next interval" teaser in the final seconds of the current one
@@ -56,7 +58,7 @@ npm run test:watch  # watch mode
 npm run type-check  # strict TypeScript check (tsc --noEmit)
 ```
 
-The timer math — pattern tiling, interval countdowns, minute marks,
+The timer math — interval countdowns, work/rest accounting, minute marks,
 ring/format helpers — lives in `src/engine.ts` as pure functions and is
 covered by `tests/engine.test.ts`.
 
@@ -84,8 +86,8 @@ properties.
 
 Persisted keys:
 
-- `timer-presets` — array of user presets `{id, name, category, totalSeconds, intervals[]}`
-  (bundled built-ins are read-only and live in code)
+- `timer-presets` — array of user presets `{id, name, category, intervals[]}`
+  (fully expanded; bundled built-ins are read-only and live in code)
 - `timer-theme` — `light` or `dark`
 
 Optional browser capabilities (speech synthesis, wake lock, vibration) are
@@ -97,7 +99,7 @@ used when available and silently skipped otherwise.
 |-----------------------|--------------------------------------------|
 | `index.html`          | Markup + Alpine bindings                    |
 | `src/main.ts`         | Alpine component: state, presets, audio/voice, theme |
-| `src/engine.ts`       | Pure timer math (tiling, countdowns, cues)  |
+| `src/engine.ts`       | Pure timer math (countdowns, accounting, cues) |
 | `src/types.ts`        | Shared `Interval` / `Preset` / `Session` types |
 | `src/heartbeat.ts`    | Hidden-tab heartbeat (Worker + fallback)    |
 | `src/style.css`       | Theming and layout                          |

@@ -1,19 +1,22 @@
 /* ==========================================================================
    Shared domain types for the timer app.
 
-   A session is a chain of `{seconds, label}` intervals (a pattern) that
-   tiles until the session's total duration is consumed. Presets and the
-   currently loaded session share the same shape.
+   A preset is a template: a finite, fully-expanded sequence of intervals
+   (`{seconds, label, kind}`). Nothing is tiled and no total duration is
+   stored — a session's length is the sum of its intervals. Running one
+   snapshots that sequence into a Session, which is a concrete run (not a
+   template) and can later carry when/where it happened, notes, and so on.
    ========================================================================== */
 
-export const TONES = ['low', 'mid', 'high'] as const;
-export type Tone = (typeof TONES)[number];
+/** What an interval is for: effort ('work', the default) or recovery
+    ('rest'). Rest renders dimmed and is excluded from work accounting. */
+export type IntervalKind = 'work' | 'rest';
 
 export interface Interval {
   seconds: number;
   label: string;
-  /** Optional per-interval cue tone; absent means "derive by position". */
-  tone?: Tone;
+  /** 'work' is the default; only 'rest' needs to be stored. */
+  kind?: IntervalKind;
 }
 
 /** A draft row in the editor carries a stable id so x-for keys survive
@@ -26,12 +29,22 @@ export interface Preset {
   id: string;
   name: string;
   category: string;
-  totalSeconds: number;
+  /** The whole run as a finite, fully-expanded sequence. */
   intervals: Interval[];
 }
 
-/** The currently loaded preset; same shape as Preset. */
-export type Session = Preset;
+/** A concrete run, snapshotted from a preset when it's picked. Distinct
+    from a Preset: it is what's actually running, so it can later carry
+    run-specific data (when/where it happened, notes, …) without polluting
+    the reusable template. */
+export interface Session {
+  /** The preset this run came from ('' for an ad-hoc session). */
+  presetId: string;
+  name: string;
+  category: string;
+  /** Snapshot of the finite sequence being run. */
+  intervals: Interval[];
+}
 
 export type TimerStatus = 'IDLE' | 'RUNNING' | 'PAUSED';
 
@@ -53,6 +66,7 @@ export interface AnnounceSettings {
 export interface StripSegment {
   seconds: number;
   label: string;
+  kind: IntervalKind;
   fraction: number;
 }
 

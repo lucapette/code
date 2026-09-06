@@ -293,7 +293,7 @@ main {
   display: flex;
   width: 100%;
   height: 52px;
-  gap: 4px;
+  overflow: hidden;
   border-radius: var(--radius-sm);
 }
 
@@ -301,7 +301,6 @@ main {
   position: relative;
   min-width: 6px;
   height: 100%;
-  border-radius: 6px;
   background: var(--seg-base);
 }
 
@@ -314,15 +313,32 @@ main {
   position: absolute;
   inset: 0;
   width: calc(var(--fill, 0) * 100%);
-  border-radius: 6px;
   background: var(--seg-fill);
 }
 
-/* --- Session progress line ------------------------------------------------ */
+/* --- Session progress bar -------------------------------------------------- */
+/* A flat bar under the interval strip showing whole-session progress. Kept
+   deliberately low and slightly rounded — a bar, not a pill. */
 .session-line {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.session-track {
+  display: block;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.session-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s linear;
 }
 
 .session-meta {
@@ -369,23 +385,6 @@ main {
   font-weight: 600;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
-}
-
-.session-track {
-  display: block;
-  width: 100%;
-  height: 14px;
-  border-radius: 999px;
-  background: var(--track);
-  overflow: hidden;
-}
-
-.session-fill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--accent);
-  transition: width 0.3s linear;
 }
 
 /* --- Controls -------------------------------------------------------------- */
@@ -583,8 +582,10 @@ main {
 /* --- Mini strip (picks + previews) ---------------------------------------- */
 .pick-strip {
   display: flex;
-  gap: 2px;
+  gap: 0;
   height: 12px;
+  overflow: hidden;
+  border-radius: 3px;
 }
 
 .strip-lg {
@@ -594,7 +595,6 @@ main {
 .mini-seg {
   height: 100%;
   min-width: 2px;
-  border-radius: 3px;
   transition: background-color 0.2s ease;
 }
 
@@ -701,7 +701,8 @@ select.input {
   flex: 1;
 }
 
-.tone-picker {
+/* Work / Rest segmented control. */
+.kind-picker {
   display: inline-flex;
   gap: 2px;
   padding: 3px;
@@ -710,7 +711,7 @@ select.input {
   flex-shrink: 0;
 }
 
-.tone-picker button {
+.kind-picker button {
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 0.7rem;
@@ -721,13 +722,35 @@ select.input {
   transition: background 0.2s ease, color 0.2s ease;
 }
 
-.tone-picker button:hover {
+.kind-picker button:hover {
   color: var(--text-primary);
 }
 
-.tone-picker button.active {
+.kind-picker button.active {
   background: var(--accent);
   color: var(--accent-fg);
+}
+
+/* A rest row recedes: its controls and borders mute to neutral. */
+.interval-row.rest {
+  border-color: color-mix(in srgb, var(--text-secondary) 28%, var(--border));
+  background: color-mix(in srgb, var(--text-secondary) 4%, var(--panel));
+}
+
+.interval-row.rest .kind-picker button.active {
+  background: var(--text-secondary);
+  color: var(--bg);
+}
+
+.add-rest-after {
+  flex-shrink: 0;
+}
+
+.interval-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .interval-value-row {
@@ -823,6 +846,69 @@ select.input {
 .btn-add-interval:hover {
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* --- Round builder --------------------------------------------------------- */
+.round-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+}
+
+.round-builder .field-hint {
+  margin: -2px 0 2px;
+}
+
+.round-inputs {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.round-input {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.round-input .big-input {
+  width: 70px;
+}
+
+.input-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+}
+
+.round-summary {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.btn-round {
+  align-self: flex-start;
+}
+
+/* Rest caption (run screen) recedes to a muted tone. */
+.interval-label.rest {
+  color: color-mix(in srgb, var(--text-secondary) 75%, transparent);
+}
+
+.session-kinds {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .value-row {
@@ -1107,10 +1193,12 @@ select.input {
 
 .saved-strip {
   display: flex;
-  gap: 2px;
+  gap: 0;
   width: 100%;
   height: 12px;
   margin-top: 2px;
+  overflow: hidden;
+  border-radius: 3px;
 }
 
 .icon-btn-sm {
@@ -1209,12 +1297,17 @@ select.input {
   font-size: clamp(0.85rem, 1.8vh, 1.15rem);
 }
 
+.session-mode .session-kinds {
+  font-size: clamp(0.9rem, 1.8vh, 1.15rem);
+}
+
 .session-mode .session-count {
   font-size: clamp(0.95rem, 2vh, 1.25rem);
 }
 
 .session-mode .session-track {
-  height: clamp(18px, 4vh, 40px);
+  height: clamp(10px, 2.2vh, 22px);
+  border-radius: 5px;
 }
 
 /* --- Responsive ------------------------------------------------------------ */

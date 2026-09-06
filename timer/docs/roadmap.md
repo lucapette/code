@@ -5,50 +5,14 @@ Priorities: **P1** = bug or core-use-case gap, **P2** = structure/a11y,
 **P3** = polish.
 
 Direction (decided 2026-09-06): stay a single static page — zero backend.
-Ship a curated library of read-only built-ins), let intervals mean
-work/rest/rounds instead of opaque tiles, and make the app shareable by
-link. Exercise figures are deferred (roadmap below) until the core model is
-settled.
+Ship a curated library of read-only built-ins, model sessions as finite
+sequences of work/rest intervals (presets store the fully-expanded run, not
+opaque tiles + a total), and make the app shareable by link. Exercise
+figures are deferred (roadmap below) until the core model is settled.
 
 ## Active
 
-### P1 — Preset library with categories
-
-- Add a `category` field to `Preset`; presets group under it on the run
-  screen (headers + filter), and the editor can set it or type a new one.
-- Categories are **high-level and user-extensible** — not a fixed workout
-  taxonomy. Defaults make room for anything: "Workouts", "Productivity"
-  (a Pomodoro preset), "Cooking" (a 4-timer roast), etc. A preset belongs
-  to exactly one category.
-- Ship a small bundled library of **read-only built-ins**, one per
-  category to start. Editing a built-in **forks** into an editable user
-  copy instead of mutating it; built-ins survive deletes and re-seed if
-  the store is wiped. Contents (decided 2026-09-06):
-  - **Workouts** — Mobility routine (the existing 45s-exercise chain);
-    Jump rope (30s jump / 30s rest, 10 rounds, 10 min).
-  - **Productivity** — Pomodoro classic (4 × 25 work / 5 break + 15 min
-    long break); Focus (25 work / 5 break, repeated).
-  - **Cooking** — White rice (10 min cook / 10 min rest).
-- `savedPresets` splits conceptually into `builtinPresets` + `userPresets`
-  (persisted); backs the migration in `loadPresets()`.
-- *Why:* "a library of presets" needs grouping before it can grow, but the
-  grouping is the user's world (they add a Cooking section), not ours.
-
-### P1 — Intervals express intent: work / rest / rounds
-
-- Add `kind?: 'work' | 'rest'` (default `work`) to `Interval`; the editor
-  gains a rest toggle and an "add rest" quick-add.
-- Rest renders distinctly everywhere: dimmed strip segment, "Rest" caption,
-  quieter/neutral cue tone, and it fills a session's rest budget.
-- **Round builder**: author `Work + Rest` as one round — "X rounds of N-s
-  work + M-s rest" expands into the tiled pattern, so "30 on / 30 off for
-  10 minutes" becomes one 60s unit with the off auto-counted as rest.
-- Accounting counts work, not rest gaps: `intervalProgress` shows
-  "current / total work intervals", not every tile.
-- Engine stays pure tiling; `rounds` are an authoring-time expansion, plus
-  small helpers (work-count, is-rest) on the engine side.
-- *Why:* the flagship use case is "do 10 minutes, 30s on / 30s off" — the
-  model must say "rest", not just label a 30s tile.
+Nothing right now — next up is URL share + host (see Suggested order).
 
 ## Ideas (backlog)
 
@@ -68,14 +32,39 @@ settled.
 
 ## Suggested order
 
-1. Library (categories + read-only built-ins) — touches the data model the
-   rest depends on.
-2. Work/rest + round builder — same schema change window as the library.
+1. ~~Library (categories + read-only built-ins)~~ — done 2026-09-06.
+2. ~~Work/rest + round builder~~ — done 2026-09-06.
 3. URL share + host — needs the settled preset shape to encode.
 4. Exercise visuals — last; richest once the model is stable.
 
 ## Done
 
+- **2026-09-06** — Model rework: a session is a finite sequence of
+  intervals, and a preset is a template storing that fully-expanded run —
+  no tiling, no `totalSeconds`, no hidden repetition. `Preset` (template)
+  and `Session` (the concrete run, with `presetId` provenance and room for
+  future notes/when/where) are now distinct types instead of an alias. The
+  engine drops its whole tiling layer (`patternLength`, modulo indexing,
+  tile-based progress) for a linear walk over the list; `progressCount`
+  and `kindSplit` read the expanded sequence directly. The strip therefore
+  shows every interval (Jump rope renders all 20 half-minutes). The editor
+  holds expanded rows — the round builder writes each round's rows out, and
+  the "total session" field is gone (duration is the sum of rows). Stored
+  presets are validated strictly against the current expanded schema —
+  legacy loaders were deleted, so anything that isn't that shape is simply
+  dropped. Verified in-browser (run, accounting, round builder expansion,
+  save/reload); type-check, 46 tests, build green.
+- **2026-09-06** — Intervals express intent. `Interval` gained an optional
+  `kind` ('work' default / 'rest'); the run screen renders rest dimmed and
+  neutral on the plan strip and mini strips, keeps the clock calm while a
+  rest interval runs, and skips minute-mark chatter during rest. The session
+  meta shows the whole-session work/rest split, and `intervalProgress`
+  counts work intervals only, not rest gaps. The editor gained a per-row
+  Work/Rest toggle and quick-add rest (after a row or at the end). Built-in
+  Jump rope / Pomodoro / Focus breaks are tagged rest (White rice left
+  plain). `engine` got `isRest`, `kindOf` and `kindSplit`, and
+  `progressCount` is rest-aware. Verified in-browser; type-check, tests,
+  build green.
 - **2026-09-06** — Design pass: split the two views into three. The timer
   no longer lives on the home screen — a compact **Library** launcher
   (single-row presets grouped by category, filter chips) is the landing
@@ -98,12 +87,12 @@ settled.
   (`DraftInterval`) so splicing never rebinds x-for keys; `window.confirm`
   is gone — deleting a preset asks inline with keyboard-friendly, focused
   confirm/cancel. Announcement preferences (voice / tones / buzz) are
-  toggleable in the editor and persist per-browser; each interval gets an
-  optional low/mid/high cue tone (cyclical fallback keeps Work vs Rest
-  distinct), routed through the same pure engine flow. Preset import/export
-  lets the whole list be copied as pretty JSON with a same-view paste
-  import that validates shapes (garbage is rejected) and re-ids on arrival.
-  All verified in-browser; type-check, 40 tests, and the build stay green.
+  toggleable in the editor and persist per-browser; a named interval is
+  spoken, and one with no label plays a single fixed tone. Preset
+  import/export lets the whole list be copied as pretty JSON with a
+  same-view paste import that validates shapes (garbage is rejected) and
+  re-ids on arrival. All verified in-browser; type-check, 40 tests, and the
+  build stay green.
 - **2026-09-06** — Corrupt-preset self-heal. A mangled `timer-presets`
   payload (invalid JSON, or parsed to a non-array) now reseeds the default
   preset instead of leaving `savedPresets = []`, so one bad payload

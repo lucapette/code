@@ -102,7 +102,7 @@
               :class="{ 'time-long': intervalRemaining >= 3600 }"
               x-text="displayTime"
             >1:00</div>
-            <div class="interval-label" x-text="intervalCaption">ready to start</div>
+            <div class="interval-label" :class="{ rest: isRestNow }" x-text="intervalCaption">ready to start</div>
             <div class="next" x-show="nextLabel" x-text="nextLabel ? 'next: ' + nextLabel : ''">next: REST</div>
           </div>
 
@@ -122,6 +122,7 @@
           </div>
 
           <div class="session-line">
+            <span class="session-track"><span class="session-fill" :style="{ width: sessionPercent + '%' }"></span></span>
             <div class="session-meta">
               <span class="session-label">Session</span>
               <span class="session-right">
@@ -129,9 +130,10 @@
                 <span class="session-unit">left</span>
                 <span x-show="intervalProgress" class="session-dot" aria-hidden="true">·</span>
                 <span class="session-count" x-show="intervalProgress" x-text="intervalProgress">1 / 7</span>
+                <span x-show="sessionKindsText" class="session-dot" aria-hidden="true">·</span>
+                <span class="session-kinds" x-show="sessionKindsText" x-text="sessionKindsText">25:00 work · 5:00 rest</span>
               </span>
             </div>
-            <span class="session-track"><span class="session-fill" :style="{ width: sessionPercent + '%' }"></span></span>
           </div>
         </div>
       </section>
@@ -214,7 +216,7 @@
                       aria-label="Built-in preset"
                     >Built-in</span>
                   </span>
-                  <span class="pick-min" x-text="Math.round(preset.totalSeconds / 60) + ' min · ' + preset.intervals.length + ' intv'"></span>
+                  <span class="pick-min" x-text="presetMinutes(preset) + ' min · ' + preset.intervals.length + ' intv'"></span>
                 </button>
               </template>
             </div>
@@ -269,39 +271,44 @@
             <p class="field-hint">Intervals play in order as a chain. Add a few to build a routine, or one long one for a plain countdown.</p>
             <div class="interval-list">
               <template x-for="(iv, i) in draftIntervals" :key="iv.id">
-                <div class="interval-row">
+                <div class="interval-row" :class="{ rest: iv.kind === 'rest' }">
                   <div class="interval-top">
+                    <div class="kind-picker" role="group" :aria-label="'Interval ' + (i + 1) + ' kind'">
+                      <button
+                        type="button"
+                        :class="{ active: iv.kind !== 'rest' }"
+                        @click="setDraftKind(i, 'work')"
+                        :aria-label="'Interval ' + (i + 1) + ' as work'"
+                        :aria-pressed="iv.kind !== 'rest'"
+                      >Work</button>
+                      <button
+                        type="button"
+                        :class="{ active: iv.kind === 'rest' }"
+                        @click="setDraftKind(i, 'rest')"
+                        :aria-label="'Interval ' + (i + 1) + ' as rest'"
+                        :aria-pressed="iv.kind === 'rest'"
+                      >Rest</button>
+                    </div>
                     <input
                       class="input interval-label"
                       type="text"
                       x-model="iv.label"
-                      placeholder="Work / Rest"
+                      :placeholder="iv.kind === 'rest' ? 'Rest' : 'Work'"
                       maxlength="32"
                       :aria-label="'Interval ' + (i + 1) + ' label'"
                     />
-                    <div class="tone-picker" role="group" :aria-label="'Interval ' + (i + 1) + ' tone'">
-                      <button
-                        type="button"
-                        :class="{ active: iv.tone === 'low' }"
-                        @click="setDraftTone(i, 'low')"
-                        :aria-label="'Interval ' + (i + 1) + ' low tone'"
-                        :aria-pressed="iv.tone === 'low'"
-                      >low</button>
-                      <button
-                        type="button"
-                        :class="{ active: iv.tone === 'mid' }"
-                        @click="setDraftTone(i, 'mid')"
-                        :aria-label="'Interval ' + (i + 1) + ' mid tone'"
-                        :aria-pressed="iv.tone === 'mid'"
-                      >mid</button>
-                      <button
-                        type="button"
-                        :class="{ active: iv.tone === 'high' }"
-                        @click="setDraftTone(i, 'high')"
-                        :aria-label="'Interval ' + (i + 1) + ' high tone'"
-                        :aria-pressed="iv.tone === 'high'"
-                      >high</button>
-                    </div>
+                    <button
+                      class="icon-btn icon-btn-sm add-rest-after"
+                      type="button"
+                      @click="addDraftRestAfter(i)"
+                      :aria-label="'Add rest after interval ' + (i + 1)"
+                      title="Add rest after"
+                    >
+                      <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 21v-6a3 3 0 0 0-3-3H5v6a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M20 8a3 3 0 0 0-3-3h-3v3a3 3 0 0 1-3 3v3h3a3 3 0 0 0 3-3Z" fill="currentColor"/>
+                      </svg>
+                    </button>
                   </div>
                   <div class="interval-value-row">
                     <input
@@ -332,39 +339,70 @@
                   </div>
                 </div>
               </template>
-              <button class="btn-add-interval" type="button" @click="addDraftInterval()">
-                <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <span>Add interval</span>
-              </button>
+              <div class="interval-actions">
+                <button class="btn-add-interval" type="button" @click="addDraftInterval()">
+                  <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span>Add work</span>
+                </button>
+                <button class="btn-add-interval" type="button" @click="addDraftRest()">
+                  <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 21v-6a3 3 0 0 0-3-3H5v6a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M20 8a3 3 0 0 0-3-3h-3v3a3 3 0 0 1-3 3v3h3a3 3 0 0 0 3-3Z" fill="currentColor"/>
+                  </svg>
+                  <span>Add rest</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <div class="field">
-            <span class="field-label">Total session</span>
-            <div class="value-row">
-              <input
-                class="big-input"
-                type="number"
-                min="1"
-                step="0.5"
-                x-model.number="draftTotalMinutes"
-                aria-label="Total minutes"
-              />
-              <span class="unit">minutes</span>
-              <div class="stepper">
-                <button type="button" @click="draftTotalAdjust(-5)" aria-label="Subtract five minutes">−5</button>
-                <button type="button" @click="draftTotalAdjust(-1)" aria-label="Subtract one minute">−1</button>
-                <button type="button" @click="draftTotalAdjust(1)" aria-label="Add one minute">+1</button>
-                <button type="button" @click="draftTotalAdjust(5)" aria-label="Add five minutes">+5</button>
+          <div class="round-builder">
+            <span class="field-label">Round builder</span>
+            <p class="field-hint">Write a work + rest pair repeated N times into the plan as full rows — e.g. "30s on / 30s off for 10 rounds".</p>
+            <div class="round-inputs">
+              <div class="round-input">
+                <label class="input-label" for="round-work">Work</label>
+                <input
+                  id="round-work"
+                  class="big-input"
+                  type="number"
+                  min="5"
+                  step="1"
+                  x-model.number="draftRoundWork"
+                  aria-label="Round work seconds"
+                />
+                <span class="unit">s</span>
+              </div>
+              <div class="round-input">
+                <label class="input-label" for="round-rest">Rest</label>
+                <input
+                  id="round-rest"
+                  class="big-input"
+                  type="number"
+                  min="0"
+                  step="1"
+                  x-model.number="draftRoundRest"
+                  aria-label="Round rest seconds"
+                />
+                <span class="unit">s</span>
+              </div>
+              <div class="round-input">
+                <label class="input-label" for="round-count">Rounds</label>
+                <input
+                  id="round-count"
+                  class="big-input"
+                  type="number"
+                  min="1"
+                  step="1"
+                  x-model.number="draftRounds"
+                  aria-label="Number of rounds"
+                />
+                <span class="unit">×</span>
               </div>
             </div>
-            <p
-              class="field-hint"
-              x-show="draftSum > draftTotalMinutes * 60"
-              x-text="'Pattern is ' + draftSum + 's — session raised to ' + Math.ceil(draftSum / 60) + ' min.'"
-            ></p>
+            <div class="round-summary" x-text="roundSummary"></div>
+            <button class="btn-ghost btn-round" type="button" @click="buildRounds()">Build round into plan</button>
           </div>
 
           <button class="btn-save" type="button" @click="savePreset()" x-text="draftPresetId === 'new' ? 'Save preset' : 'Update preset'">Save preset</button>
@@ -386,7 +424,7 @@
                         <span x-text="p.name"></span>
                         <span class="saved-tag" x-show="isBuiltin(p.id)" text="Built-in">Built-in</span>
                       </span>
-                      <span class="saved-min" x-text="Math.round(p.totalSeconds / 60) + ' min · ' + p.intervals.length + ' intv'"></span>
+                      <span class="saved-min" x-text="presetMinutes(p) + ' min · ' + p.intervals.length + ' intv'"></span>
                       <span class="saved-strip" aria-hidden="true">
                         <template x-for="(seg, i) in miniStrip(p)" :key="i">
                           <span class="mini-seg" :style="miniSegStyle(seg, i)"></span>
@@ -449,7 +487,7 @@
           <label class="pref-row">
             <span class="pref-text">
               <span class="pref-label">Tones</span>
-              <span class="pref-hint">Distinct cue per interval and finishing chime</span>
+              <span class="pref-hint">Fixed cue for unnamed intervals, plus minute marks and finish chime</span>
             </span>
             <input
               class="switch"

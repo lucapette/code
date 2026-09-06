@@ -3,9 +3,9 @@
    Alpine.js state management, wiring the pure timer engine (engine.ts)
    to the DOM.
 
-   A "session" is a sequence of intervals (a pattern). The pattern tiles
-   until the session's total duration is consumed:
-     - mobility routine -> 45s exercises, no rest intervals
+   A "session" is a finite sequence of intervals run top to bottom — no
+   tiling. A preset is a template storing that fully-expanded sequence;
+   running one snapshots it into a Session (a concrete run).
    ========================================================================== */
 
 import Alpine, { AlpineComponent } from 'alpinejs';
@@ -17,17 +17,16 @@ import type {
   AnnounceSettings,
   DraftInterval,
   Interval,
+  IntervalKind,
   PatternSegment,
   Preset,
   Session,
   StripSegment,
   Theme,
   TimerStatus,
-  Tone,
   Urgency,
   View,
 } from './types';
-import { TONES } from './types';
 
 const URGENCY_COLOR: Record<Urgency, string> = {
   normal: 'var(--accent)',
@@ -35,16 +34,10 @@ const URGENCY_COLOR: Record<Urgency, string> = {
   danger: 'var(--danger)',
 };
 
-/* Distinct cue tone per interval (Work vs Rest). TONE_FREQ maps each of the
-   three selectable tones to a frequency; intervals without an explicit tone
-   fall back to a cyclical pattern so consecutive intervals stay distinct. */
-const TONE_FREQ: Record<Tone, number> = { low: 330, mid: 520, high: 780 };
-
-/* Explicit tone when the interval carries one, otherwise a pleasant cycle
-   (low → mid → high → …) so adjacent Work/Rest pitches never collide. */
-function toneForInterval(iv: Interval | undefined, index: number): Tone {
-  return iv?.tone ?? TONES[index % TONES.length];
-}
+/* The one cue we play when an interval has no spoken label: a single,
+   always-same tone we chose. Nothing is user-selectable anymore. */
+const UNNAMED_CUE_FREQ = 520;
+const UNNAMED_CUE_VOLUME = 0.4;
 
 const DEFAULT_ANNOUNCE: AnnounceSettings = { voice: true, beeps: true, vibrate: true };
 
@@ -75,31 +68,29 @@ function isInterval(value: unknown): value is Interval {
   return isRecord(value) && typeof value.seconds === 'number';
 }
 
-/** Migrates a stored preset payload (new or legacy {id,name,minutes}
-    schema) into a well-formed Preset. */
-function parsePreset(value: unknown): Preset {
-  if (isRecord(value)) {
-    if (typeof value.totalSeconds === 'number' && Array.isArray(value.intervals)) {
-      return {
-        id: typeof value.id === 'string' ? value.id : `c-${Date.now()}`,
-        name: typeof value.name === 'string' ? value.name : 'Preset',
-        category: typeof value.category === 'string' && value.category ? value.category : 'Other',
-        totalSeconds: value.totalSeconds,
-        intervals: value.intervals.filter(isInterval),
-      };
-    }
-    /* Legacy {id, name, minutes} schema. */
-    const minutes = typeof value.minutes === 'number' ? value.minutes : 7;
-    const seconds = minutes * 60;
-    return {
-      id: typeof value.id === 'string' ? value.id : `c-${Date.now()}`,
-      name: typeof value.name === 'string' ? value.name : 'Preset',
-      category: 'Other',
-      totalSeconds: seconds,
-      intervals: [{ seconds, label: '' }],
-    };
-  }
-  return { id: `c-${Date.now()}`, name: 'Preset', category: 'Other', totalSeconds: 420, intervals: [{ seconds: 420, label: '' }] };
+/* Normalizes one stored interval, keeping only well-formed fields. kind is
+   optional; anything else stored is dropped. */
+function sanitizeInterval(value: Interval): Interval {
+  const kind = value.kind === 'rest' ? 'rest' : undefined;
+  return {
+    seconds: Number.isFinite(value.seconds) ? Math.max(0, value.seconds) : 0,
+    label: typeof value.label === 'string' ? value.label : '',
+    ...(kind ? { kind } : {}),
+  };
+}
+
+/** Validates one stored preset against the current expanded schema and
+    returns a well-formed Preset, or null when the payload is anything else
+    (legacy shapes, junk). A preset's intervals are always the full,
+    expanded run — nothing tiles. */
+function parsePreset(value: unknown): Preset | null {
+  if (!isRecord(value)) return null;
+  const id = typeof value.id === 'string' ? value.id : `c-${Date.now()}`;
+  const name = typeof value.name === 'string' ? value.name : 'Preset';
+  const category = typeof value.category === 'string' && value.category ? value.category : 'Other';
+  if (!Array.isArray(value.intervals)) return null;
+  const intervals = value.intervals.filter(isInterval).map(sanitizeInterval);
+  return intervals.length ? { id, name, category, intervals } : null;
 }
 
 const MOBILITY_LABELS = [
@@ -120,57 +111,53 @@ const MOBILITY_LABELS = [
 
 /* Read-only bundled presets. They never change and cannot be deleted — the
    saved (user) store holds only everything else. Editing one forks it into
-   an editable user copy instead of mutating in place. */
+   an editable user copy instead of mutating in place. Each preset stores a
+   fully-expanded finite sequence — nothing repeats implicitly. */
 const BUILTIN_PRESETS: Preset[] = [
   {
     id: 'p-mobility',
     name: 'Mobility routine',
     category: 'Workouts',
-    totalSeconds: MOBILITY_LABELS.length * 45,
     intervals: MOBILITY_LABELS.map((label) => ({ seconds: 45, label })),
   },
   {
     id: 'p-jumprope',
     name: 'Jump rope',
     category: 'Workouts',
-    totalSeconds: 10 * 60,              // 10 rounds of (30s + 30s)
-    intervals: [
+    intervals: Array.from({ length: 10 }, () => [
       { seconds: 30, label: 'Jump' },
-      { seconds: 30, label: 'Rest' },
-    ],
+      { seconds: 30, label: 'Rest', kind: 'rest' as const },
+    ]).flat(),
   },
   {
     id: 'p-pomodoro',
     name: 'Pomodoro classic',
     category: 'Productivity',
-    totalSeconds: 4 * (25 * 60 + 5 * 60) + 15 * 60, // 4× (25+5) + long break
     intervals: [
       { seconds: 25 * 60, label: 'Focus' },
-      { seconds: 5 * 60, label: 'Break' },
+      { seconds: 5 * 60, label: 'Break', kind: 'rest' },
       { seconds: 25 * 60, label: 'Focus' },
-      { seconds: 5 * 60, label: 'Break' },
+      { seconds: 5 * 60, label: 'Break', kind: 'rest' },
       { seconds: 25 * 60, label: 'Focus' },
-      { seconds: 5 * 60, label: 'Break' },
+      { seconds: 5 * 60, label: 'Break', kind: 'rest' },
       { seconds: 25 * 60, label: 'Focus' },
-      { seconds: 5 * 60, label: 'Break' },
-      { seconds: 15 * 60, label: 'Long break' },
+      { seconds: 5 * 60, label: 'Break', kind: 'rest' },
+      { seconds: 15 * 60, label: 'Long break', kind: 'rest' },
     ],
   },
   {
     id: 'p-focus',
     name: 'Focus',
     category: 'Productivity',
-    totalSeconds: 25 * 60 + 5 * 60,     // one pass of 25 + 5
     intervals: [
       { seconds: 25 * 60, label: 'Focus' },
-      { seconds: 5 * 60, label: 'Break' },
+      { seconds: 5 * 60, label: 'Break', kind: 'rest' },
     ],
   },
   {
     id: 'p-rice',
     name: 'White rice',
     category: 'Cooking',
-    totalSeconds: 10 * 60 + 10 * 60,    // cook then rest, over
     intervals: [
       { seconds: 10 * 60, label: 'Cook' },
       { seconds: 10 * 60, label: 'Rest' },
@@ -186,14 +173,13 @@ function timerApp(): TimerApp {
   return {
     /* --- Session definition (currently loaded) ----------------------- */
     session: {
-      id: DEFAULT_PRESET.id,
+      presetId: DEFAULT_PRESET.id,
       name: DEFAULT_PRESET.name,
       category: DEFAULT_PRESET.category,
-      totalSeconds: DEFAULT_PRESET.totalSeconds,
       intervals: DEFAULT_PRESET.intervals.map((iv) => ({ ...iv })),
     },
-    sessionRemaining: DEFAULT_PRESET.totalSeconds, // whole-session time left
-    intervalIndex: 0,         // current interval in the tiled pattern
+    sessionRemaining: TimerEngine.totalDuration(DEFAULT_PRESET.intervals), // whole-session time left
+    intervalIndex: 0,         // current interval (index into the session's list)
     intervalTotal: DEFAULT_PRESET.intervals[0].seconds, // duration of the current interval
     intervalRemaining: DEFAULT_PRESET.intervals[0].seconds, // time left in the current interval
     announcedIntervalIndex: null, // last interval index whose start was announced
@@ -216,8 +202,12 @@ function timerApp(): TimerApp {
     draftPresetId: 'new',     // 'new' or an existing savedPresets id
     draftName: '',            // preset name being configured
     draftCategory: 'Other',   // preset category being configured
-    draftTotalMinutes: 10,    // session total being configured (minutes, default 9:45)
     draftIntervals: [{ id: nextDraftId(), seconds: 585, label: '' }],
+
+    /* Round builder inputs (author "N × (work + rest)" rows). */
+    draftRoundWork: 30,
+    draftRoundRest: 30,
+    draftRounds: 10,
 
     /* --- Announcements & sharing --- */
     announce: { ...DEFAULT_ANNOUNCE },
@@ -242,16 +232,18 @@ function timerApp(): TimerApp {
       this.applyTheme();
 
       /* Load user presets. Built-ins live in code and always appear; the
-         store holds only user-created or imported presets. Migrates the old
-         {id,name,minutes} schema and re-seeds nothing: a missing or corrupt
-         store simply yields an empty user list — the bundled library keeps
+         store holds only user-created or imported presets. A missing or
+         corrupt store (or a stored entry that isn't the current expanded
+         schema) simply yields an empty user list — the bundled library keeps
          the picks populated, so one mangled payload can't wipe the app. */
       let loaded: Preset[] | null = null;
       try {
         const raw = localStorage.getItem('timer-presets');
         if (raw !== null) {
           const parsed: unknown = JSON.parse(raw);
-          loaded = Array.isArray(parsed) ? parsed.map(parsePreset) : null;
+          loaded = Array.isArray(parsed)
+            ? parsed.map(parsePreset).filter((p): p is Preset => p !== null)
+            : null;
         }
       } catch {
         loaded = null;
@@ -275,10 +267,10 @@ function timerApp(): TimerApp {
         }
       } catch { /* malformed prefs — defaults stand */ }
 
-      /* Boot into a real preset: if the stored session id no longer exists
-         (e.g. its preset was deleted), load the first one so the strip shows
+      /* Boot into a real preset: if the stored session's preset no longer
+         exists (e.g. it was deleted), load the first one so the strip shows
          the first interval's label right away. */
-      if (!this.presets.find((p) => p.id === this.session.id) && this.presets.length) {
+      if (!this.presets.find((p) => p.id === this.session.presetId) && this.presets.length) {
         this.applyPreset(this.presets[0].id);
       }
 
@@ -314,25 +306,50 @@ function timerApp(): TimerApp {
       return TimerEngine.formatClock(Math.ceil(Math.max(0, this.sessionRemaining)));
     },
 
+    /* Current interval in the session's finite list. */
+    get currentInterval() {
+      return this.session.intervals[this.intervalIndex];
+    },
+
+    /* Whether the interval under way is a rest gap. */
+    get isRestNow() {
+      return this.currentInterval ? TimerEngine.isRest(this.currentInterval) : false;
+    },
+
+    /* Whole-session split, shown so a run advertises its rest budget. */
+    get sessionKinds() {
+      return TimerEngine.kindSplit(this.session.intervals);
+    },
+
+    get sessionKindsText() {
+      const { work, rest } = this.sessionKinds;
+      if (!rest) return '';
+      return `${TimerEngine.formatClock(work)} work · ${TimerEngine.formatClock(rest)} rest`;
+    },
+
     get intervalCaption() {
       if (this.status === 'PAUSED') return 'paused';
       if (this.status === 'IDLE') {
         const first = (this.session.intervals[0]?.label || '').trim();
         return first || 'ready to start';
       }
-      const label = (this.session.intervals[this.intervalIndex]?.label || '').trim();
-      return label ? label : 'interval';
+      const iv = this.currentInterval;
+      const label = (iv?.label || '').trim();
+      if (!label) return iv && TimerEngine.isRest(iv) ? 'rest' : 'interval';
+      return label;
     },
 
-    /* Color for the big countdown: urgency-driven, idle stays calm. */
+    /* Color for the big countdown: urgency-driven, idle stays calm. A rest
+       interval stays calm (accent) — recovery doesn't turn amber/red. */
     get clockColor() {
+      if (this.isRestNow) return 'var(--accent)';
       return URGENCY_COLOR[TimerEngine.urgency(this.intervalRemaining)];
     },
 
-    /* Position within one pattern tile — the strip repeats the tile, so the
-       current interval's index wraps modulo the chain length. */
+    /* Index of the current interval in the session's list — no wrapping;
+       the list is the whole session, so this is a plain position. */
     get patternIndex() {
-      return this.intervalIndex % Math.max(1, this.session.intervals.length);
+      return this.intervalIndex;
     },
 
     /* The plan strip: one segment per interval, labelled and hue-assigned by
@@ -351,7 +368,7 @@ function timerApp(): TimerApp {
 
     /* Percent of the whole session already elapsed, for the thin bar. */
     get sessionPercent() {
-      const total = this.session.totalSeconds;
+      const total = TimerEngine.totalDuration(this.session.intervals);
       return total ? 100 * (1 - this.sessionRemaining / total) : 0;
     },
 
@@ -370,8 +387,18 @@ function timerApp(): TimerApp {
     /* --- Strip styling -------------------------------------------------- */
     /* The strip segment for the current interval drains left-to-right as it
        counts down (its bright fill is the portion remaining). Colors are
-       theme-explicit so a theme toggle re-resolves them deterministically. */
-    segColor(hue: number) {
+       theme-explicit so a theme toggle re-resolves them deterministically.
+       Rest segments drop the golden-angle hue for a neutral gray — recovery
+       reads as calm, not as another color on the work wheel. */
+    segColor(hue: number, kind: IntervalKind = 'work') {
+      if (kind === 'rest') {
+        const g = 228; // hue stays neutral for rest
+        return {
+          base: this.theme === 'light' ? `hsl(${g} 8% 42% / 0.22)` : `hsl(${g} 12% 58% / 0.16)`,
+          fill: this.theme === 'light' ? `hsl(${g} 7% 45%)` : `hsl(${g} 11% 60%)`,
+          future: this.theme === 'light' ? `hsl(${g} 8% 42% / 0.09)` : `hsl(${g} 12% 58% / 0.07)`,
+        };
+      }
       return {
         base: this.theme === 'light' ? `hsl(${hue} 55% 34% / 0.26)` : `hsl(${hue} 40% 52% / 0.20)`,
         fill: this.theme === 'light' ? `hsl(${hue} 70% 42%)` : `hsl(${hue} 75% 62%)`,
@@ -380,7 +407,7 @@ function timerApp(): TimerApp {
     },
 
     segStyle(seg: PatternSegment, i: number) {
-      const c = this.segColor(seg.hue);
+      const c = this.segColor(seg.hue, seg.kind);
       const running = this.status !== 'IDLE';
       const current = i === this.patternIndex;
       return {
@@ -405,7 +432,7 @@ function timerApp(): TimerApp {
     miniSegStyle(seg: StripSegment, i: number) {
       return {
         width: `${(seg.fraction * 100).toFixed(3)}%`,
-        backgroundColor: this.segColor(segmentHue(i)).fill,
+        backgroundColor: this.segColor(segmentHue(i), seg.kind).fill,
       };
     },
 
@@ -419,20 +446,17 @@ function timerApp(): TimerApp {
       return TimerEngine.nextLabel(
         this.session.intervals,
         this.intervalIndex,
-        this.intervalRemaining,
-        this.sessionRemaining
+        this.intervalRemaining
       );
     },
 
-    /* Interval count inside the tiled session, e.g. "3 / 14", delegated
-       to the engine. Empty for a single-interval session — a plain
-       countdown has nothing to count. */
+    /* Interval count inside the session, e.g. "3 / 10", delegated to the
+       engine. Empty for a session with fewer than two work intervals — a
+       plain countdown has nothing to count. */
     get intervalProgress() {
-      const count = TimerEngine.progressCount(
-        this.session.intervals,
-        this.session.totalSeconds,
-        this.sessionRemaining
-      );
+      const total = TimerEngine.totalDuration(this.session.intervals);
+      const elapsed = Math.max(0, total - this.sessionRemaining);
+      const count = TimerEngine.progressCount(this.session.intervals, elapsed);
       return count ? `${count.current} / ${count.total}` : '';
     },
 
@@ -461,7 +485,7 @@ function timerApp(): TimerApp {
     },
 
     get activePresetId() {
-      const match = this.presets.find((p) => p.id === this.session.id);
+      const match = this.presets.find((p) => p.id === this.session.presetId);
       return match ? match.id : null;
     },
 
@@ -473,6 +497,11 @@ function timerApp(): TimerApp {
     /* Normalize any (possibly missing) category for display/grouping. */
     presetCategory(preset: { category?: string }) {
       return (preset.category || '').trim() || 'Other';
+    },
+
+    /* Total minutes a preset's finite sequence runs, for library labels. */
+    presetMinutes(preset: { intervals: Interval[] }) {
+      return Math.round(TimerEngine.totalDuration(preset.intervals) / 60);
     },
 
     /* Set the run-screen category filter. */
@@ -491,9 +520,10 @@ function timerApp(): TimerApp {
 
     start() {
       if (this.status === 'RUNNING') return;
+      const total = TimerEngine.totalDuration(this.session.intervals);
       if (this.sessionRemaining <= 0) {
         this.baseElapsed = 0;
-        this.sessionRemaining = this.session.totalSeconds;
+        this.sessionRemaining = total;
       }
 
       /* Baseline at the moment we (re)start: tick() computes elapsed as
@@ -521,7 +551,10 @@ function timerApp(): TimerApp {
          last resume would lose it and the session would run too long. */
       this.baseElapsed += (Date.now() - (this.startTimestamp ?? Date.now())) / 1000;
       this.updateIntervalFromElapsed(this.baseElapsed);
-      this.sessionRemaining = Math.max(0, this.session.totalSeconds - this.baseElapsed);
+      this.sessionRemaining = Math.max(
+        0,
+        TimerEngine.totalDuration(this.session.intervals) - this.baseElapsed
+      );
       this.heartbeat.stop();
       this.stopWakeLock();
     },
@@ -531,10 +564,10 @@ function timerApp(): TimerApp {
       cancelAnimationFrame(this.rafId ?? 0);
       this.rafId = null;
       this.baseElapsed = 0;
-      this.sessionRemaining = this.session.totalSeconds;
       const first = this.session.intervals[0];
+      this.sessionRemaining = TimerEngine.totalDuration(this.session.intervals);
       this.intervalIndex = 0;
-      this.intervalTotal = first ? first.seconds : this.session.totalSeconds;
+      this.intervalTotal = first ? first.seconds : 0;
       this.intervalRemaining = this.intervalTotal;
       this.lastSpokenMinute = null;
       this.announcedIntervalIndex = null;
@@ -547,18 +580,17 @@ function timerApp(): TimerApp {
       const preset = this.presets.find((p) => p.id === id);
       if (!preset) return;
       this.session = {
-        id: preset.id,
+        presetId: preset.id,
         name: preset.name,
         category: preset.category,
-        totalSeconds: preset.totalSeconds,
         intervals: preset.intervals.map((iv) => ({ ...iv })),
       };
       this.status = 'IDLE';
       this.baseElapsed = 0;
-      this.sessionRemaining = this.session.totalSeconds;
+      this.sessionRemaining = TimerEngine.totalDuration(this.session.intervals);
       const first = this.session.intervals[0];
       this.intervalIndex = 0;
-      this.intervalTotal = first ? first.seconds : this.session.totalSeconds;
+      this.intervalTotal = first ? first.seconds : 0;
       this.intervalRemaining = this.intervalTotal;
       this.lastSpokenMinute = null;
       this.announcedIntervalIndex = null;
@@ -575,7 +607,8 @@ function timerApp(): TimerApp {
     advance() {
       if (this.status !== 'RUNNING') return;
       const elapsed = this.baseElapsed + (Date.now() - (this.startTimestamp ?? Date.now())) / 1000;
-      this.sessionRemaining = Math.max(0, this.session.totalSeconds - elapsed);
+      const total = TimerEngine.totalDuration(this.session.intervals);
+      this.sessionRemaining = Math.max(0, total - elapsed);
 
       if (this.sessionRemaining <= 0) {
         this.complete();
@@ -586,7 +619,11 @@ function timerApp(): TimerApp {
       if (idx !== this.announcedIntervalIndex) this.onIntervalChange(idx);
 
       this.updateIntervalFromElapsed(elapsed);
-      if (this.intervalTotal >= 60) this.checkMinuteMark(this.intervalRemaining);
+      /* Minute marks are for effort: a long rest stays quiet — its change
+         cue already marks the start. */
+      if (!this.isRestNow && this.intervalTotal >= 60) {
+        this.checkMinuteMark(this.intervalRemaining);
+      }
     },
 
     tick() {
@@ -596,22 +633,19 @@ function timerApp(): TimerApp {
       this.rafId = requestAnimationFrame(() => this.tick());
     },
 
-    /* Announce each interval as it starts. The channel used follows the
-    announcement prefs: a spoken label when voice is on and the interval is
-    named, otherwise a distinct per-interval tone (set in the editor, or
-    derived cyclically by position so Work vs Rest stays audible). */
+    /* Announce each interval as it starts. A named interval is spoken when
+       voice is on; an interval with no label gets the one fixed cue tone we
+       chose (nothing about it is user-selectable anymore). */
     onIntervalChange(idx: number) {
       this.announcedIntervalIndex = idx;
       this.intervalIndex = idx;
       const iv = this.session.intervals[idx];
       const label = (iv?.label || '').trim();
 
-      const spoken = this.announce.voice && !!label;
-      if (spoken) {
+      if (this.announce.voice && label) {
         this.speak(label);
-      }
-      if (this.announce.beeps && !spoken) {
-        this.playBeep(TONE_FREQ[toneForInterval(iv, idx)], 130, 'sine', 0.45);
+      } else if (this.announce.beeps && !label) {
+        this.playBeep(UNNAMED_CUE_FREQ, 130, 'sine', UNNAMED_CUE_VOLUME);
       }
       if (this.announce.vibrate && navigator.vibrate) navigator.vibrate(40);
       this.lastSpokenMinute = Math.ceil(this.intervalTotal / 60);
@@ -649,8 +683,8 @@ function timerApp(): TimerApp {
 
       if (this.announce.voice) this.speak('Time is up!');
       if (this.announce.beeps) {
-        this.playBeep(TONE_FREQ.mid, 160, 'sine', 0.5);
-        this.playBeep(TONE_FREQ.high, 180, 'sine', 0.5);
+        this.playBeep(520, 160, 'sine', 0.5);
+        this.playBeep(780, 180, 'sine', 0.5);
       }
       if (this.announce.vibrate && navigator.vibrate) {
         navigator.vibrate([120, 80, 120, 80, 240]);
@@ -670,13 +704,13 @@ function timerApp(): TimerApp {
       this.draftPresetId = 'new';
       this.draftName = '';
       this.draftCategory = 'Other';
-      this.draftTotalMinutes = 7;
       this.draftIntervals = [{ id: nextDraftId(), seconds: 60, label: '' }];
     },
 
     /* Open the config editor pre-loaded with an existing preset. User
        presets edit in place; built-ins are read-only, so editing one forks
-       it into a new user copy (draftPresetId stays 'new'). */
+       it into a new user copy (draftPresetId stays 'new'). The draft rows
+       are the preset's already-expanded finite sequence. */
     openConfigFor(id: string) {
       const preset = this.presets.find((p) => p.id === id);
       if (!preset) {
@@ -687,12 +721,11 @@ function timerApp(): TimerApp {
       this.draftPresetId = isBuiltin ? 'new' : id;
       this.draftName = preset.name;
       this.draftCategory = preset.category;
-      this.draftTotalMinutes = Math.round((preset.totalSeconds / 60) * 2) / 2;
       this.draftIntervals = preset.intervals.map((iv) => ({
         id: nextDraftId(),
         seconds: iv.seconds,
         label: iv.label,
-        ...(iv.tone ? { tone: iv.tone } : {}),
+        ...(iv.kind ? { kind: iv.kind } : {}),
       }));
       this.view = 'edit';
     },
@@ -708,6 +741,31 @@ function timerApp(): TimerApp {
       this.draftIntervals.push({ id: nextDraftId(), seconds: 60, label: '' });
     },
 
+    /* Quick-add a rest interval after the current row's work, defaulting to
+       the same length as the work that precedes it so a work/rest pair reads
+       naturally. Falls back to 30s for a blank first row. */
+    addDraftRestAfter(index: number) {
+      const anchor = this.draftIntervals[index];
+      const seconds = Math.max(5, anchor?.seconds ? anchor.seconds : 30);
+      this.draftIntervals.splice(index + 1, 0, {
+        id: nextDraftId(),
+        seconds,
+        label: 'Rest',
+        kind: 'rest',
+      });
+    },
+
+    addDraftRest() {
+      const last = this.draftIntervals[this.draftIntervals.length - 1];
+      const seconds = Math.max(5, last?.seconds ? last.seconds : 30);
+      this.draftIntervals.push({
+        id: nextDraftId(),
+        seconds,
+        label: 'Rest',
+        kind: 'rest',
+      });
+    },
+
     removeDraftInterval(index: number) {
       this.draftIntervals.splice(index, 1);
       if (!this.draftIntervals.length) {
@@ -715,19 +773,41 @@ function timerApp(): TimerApp {
       }
     },
 
-    setDraftTone(index: number, tone: Tone | undefined) {
+    setDraftKind(index: number, kind: IntervalKind) {
       const iv = this.draftIntervals[index];
       if (!iv) return;
-      iv.tone = tone;
+      /* Rest is stored explicitly; work is the default, so a toggle back to
+         work drops the field entirely. */
+      if (kind === 'work') {
+        delete iv.kind;
+      } else {
+        iv.kind = 'rest';
+      }
     },
 
-    draftTotalAdjust(delta: number) {
-      const cur = Number.isFinite(this.draftTotalMinutes) ? this.draftTotalMinutes : 7;
-      this.draftTotalMinutes = Math.max(1, cur + delta);
+    /* --- Round builder ------------------------------------------------ */
+    /* Author "X rounds of N-s work + M-s rest" by writing every round's
+       intervals into the draft. The stored preset is the fully-expanded
+       finite sequence — nothing is kept as a compact tiling unit. */
+    buildRounds() {
+      const work = Math.max(5, Math.round(Number(this.draftRoundWork) || 30));
+      const rest = Math.max(0, Math.round(Number(this.draftRoundRest) || 30));
+      const rounds = Math.max(1, Math.round(Number(this.draftRounds) || 1));
+
+      this.draftIntervals = Array.from({ length: rounds }, () => [
+        { id: nextDraftId(), seconds: work, label: 'Work' },
+        ...(rest > 0
+          ? [{ id: nextDraftId(), seconds: rest, label: 'Rest', kind: 'rest' as const }]
+          : []),
+      ]).flat();
     },
 
-    get draftSum() {
-      return this.draftIntervals.reduce((acc, iv) => acc + iv.seconds, 0);
+    get roundSummary() {
+      const work = Math.max(5, Math.round(Number(this.draftRoundWork) || 30));
+      const rest = Math.max(0, Math.round(Number(this.draftRoundRest) || 30));
+      const rounds = Math.max(1, Math.round(Number(this.draftRounds) || 1));
+      const total = rounds * (work + rest);
+      return `${rounds} × (${work}s work${rest > 0 ? ` + ${rest}s rest` : ''}) = ${TimerEngine.formatClock(total)}`;
     },
 
     savePreset() {
@@ -736,22 +816,17 @@ function timerApp(): TimerApp {
           ? Math.max(5, Math.round(iv.seconds))
           : 60,
         label: (iv.label || '').trim(),
-        ...(iv.tone ? { tone: iv.tone } : {}),
+        ...(iv.kind === 'rest' ? { kind: iv.kind } : {}),
       }));
 
       const sum = intervals.reduce((acc, iv) => acc + iv.seconds, 0);
-      const rawTotal = Math.round(this.draftTotalMinutes * 60);
-      const totalSeconds = Math.max(
-        sum,
-        Number.isFinite(rawTotal) ? Math.max(60, rawTotal) : 60
-      );
-      const name = (this.draftName || '').trim() || `${Math.round(totalSeconds / 60)} min`;
+      const name = (this.draftName || '').trim() || `${Math.round(sum / 60)} min`;
       const category = (this.draftCategory || '').trim() || 'Other';
 
       if (this.draftPresetId !== 'new') {
         this.savedPresets = this.savedPresets.map((p) =>
           p.id === this.draftPresetId
-            ? { id: p.id, name, category, totalSeconds, intervals }
+            ? { id: p.id, name, category, intervals }
             : p
         );
         this.applyPreset(this.draftPresetId);
@@ -759,7 +834,7 @@ function timerApp(): TimerApp {
         const id = `c-${Date.now()}`;
         this.savedPresets = [
           ...this.savedPresets,
-          { id, name, category, totalSeconds, intervals },
+          { id, name, category, intervals },
         ];
         this.applyPreset(id);
       }
@@ -784,7 +859,7 @@ function timerApp(): TimerApp {
       const id = this.deleteTarget;
       if (!id) return;
 
-      const wasActive = this.session.id === id;
+      const wasActive = this.session.presetId === id;
       this.savedPresets = this.savedPresets.filter((p) => p.id !== id);
       this.persistPresets();
       this.deleteTarget = null;
@@ -839,15 +914,11 @@ function timerApp(): TimerApp {
         return;
       }
       const list = Array.isArray(parsed) ? parsed : [parsed];
-      /* Only accept well-formed preset shapes; parsePreset's fallback would
-         otherwise fabricate a default preset out of arbitrary JSON junk. */
+      /* Only accept well-formed preset shapes; parsePreset returns null for
+         arbitrary JSON junk, so nothing gets fabricated. */
       const incoming = list
-        .filter(isRecord)
-        .filter((item) => (
-          Array.isArray(item.intervals) || typeof item.minutes === 'number'
-        ))
         .map(parsePreset)
-        .filter((p) => p.intervals.length);
+        .filter((p): p is Preset => p !== null);
       if (!incoming.length) {
         this.importError = 'No valid presets found in that JSON.';
         return;
@@ -975,8 +1046,10 @@ type TimerAppState = {
   draftPresetId: string;
   draftName: string;
   draftCategory: string;
-  draftTotalMinutes: number;
   draftIntervals: DraftInterval[];
+  draftRoundWork: number;
+  draftRoundRest: number;
+  draftRounds: number;
   announce: AnnounceSettings;
   deleteTarget: string | null;
   copiedPresets: boolean;
@@ -988,6 +1061,10 @@ type TimerAppState = {
   /* Getters (readonly, reactively bound). */
   readonly displayTime: string;
   readonly sessionDisplay: string;
+  readonly currentInterval: Interval | undefined;
+  readonly isRestNow: boolean;
+  readonly sessionKinds: { work: number; rest: number };
+  readonly sessionKindsText: string;
   readonly intervalCaption: string;
   readonly clockColor: string;
   readonly patternIndex: number;
@@ -1003,12 +1080,12 @@ type TimerAppState = {
   readonly categories: string[];
   readonly presetGroups: { category: string; presets: Preset[] }[];
   readonly activePresetId: string | null;
-  readonly draftSum: number;
+  readonly roundSummary: string;
 
   /* Methods. */
   init(): void;
   updateIntervalFromElapsed(elapsed: number): void;
-  segColor(hue: number): { base: string; fill: string; future: string };
+  segColor(hue: number, kind?: IntervalKind): { base: string; fill: string; future: string };
   segStyle(seg: PatternSegment, i: number): Record<string, string | number>;
   miniStrip(preset: { intervals: Interval[] }): StripSegment[];
   miniSegStyle(seg: StripSegment, i: number): Record<string, string>;
@@ -1027,9 +1104,11 @@ type TimerAppState = {
   openConfigFor(id: string): void;
   draftIntervalAdjust(index: number, delta: number): void;
   addDraftInterval(): void;
+  addDraftRestAfter(index: number): void;
+  addDraftRest(): void;
   removeDraftInterval(index: number): void;
-  setDraftTone(index: number, tone: Tone | undefined): void;
-  draftTotalAdjust(delta: number): void;
+  setDraftKind(index: number, kind: IntervalKind): void;
+  buildRounds(): void;
   savePreset(): void;
   askDelete(id: string): void;
   cancelDelete(): void;
@@ -1037,6 +1116,7 @@ type TimerAppState = {
   persistPresets(): void;
   isBuiltin(id: string): boolean;
   presetCategory(preset: { category?: string }): string;
+  presetMinutes(preset: { intervals: Interval[] }): number;
   setFilter(cat: string): void;
   setAnnounce(key: keyof AnnounceSettings, on: boolean): void;
   copyPresets(): Promise<void>;
