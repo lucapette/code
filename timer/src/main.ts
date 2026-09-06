@@ -14,6 +14,8 @@ import * as TimerEngine from './engine';
 import { createHeartbeat } from './heartbeat';
 import type { HeartbeatController } from './heartbeat';
 import type {
+  AnnounceSettings,
+  DraftInterval,
   Interval,
   PatternSegment,
   Preset,
@@ -21,15 +23,36 @@ import type {
   StripSegment,
   Theme,
   TimerStatus,
+  Tone,
   Urgency,
   View,
 } from './types';
+import { TONES } from './types';
 
 const URGENCY_COLOR: Record<Urgency, string> = {
   normal: 'var(--accent)',
   warning: 'var(--warning)',
   danger: 'var(--danger)',
 };
+
+/* Distinct cue tone per interval (Work vs Rest). TONE_FREQ maps each of the
+   three selectable tones to a frequency; intervals without an explicit tone
+   fall back to a cyclical pattern so consecutive intervals stay distinct. */
+const TONE_FREQ: Record<Tone, number> = { low: 330, mid: 520, high: 780 };
+
+/* Explicit tone when the interval carries one, otherwise a pleasant cycle
+   (low → mid → high → …) so adjacent Work/Rest pitches never collide. */
+function toneForInterval(iv: Interval | undefined, index: number): Tone {
+  return iv?.tone ?? TONES[index % TONES.length];
+}
+
+const DEFAULT_ANNOUNCE: AnnounceSettings = { voice: true, beeps: true, vibrate: true };
+
+/* Monotonic id source for draft rows (stable x-for keys). */
+let draftSeq = 0;
+function nextDraftId(): number {
+  return ++draftSeq;
+}
 
 /* Stable hue per pattern position (golden-angle spacing keeps adjacent
    segments distinct). Same position across presets → same hue. */
@@ -115,7 +138,15 @@ function timerApp(): TimerApp {
     draftPresetId: 'new',     // 'new' or an existing savedPresets id
     draftName: '',            // preset name being configured
     draftTotalMinutes: 7,     // session total being configured (minutes)
-    draftIntervals: [{ seconds: 420, label: 'until break' }],
+    draftIntervals: [{ id: nextDraftId(), seconds: 420, label: 'until break' }],
+
+    /* --- Announcements & sharing --- */
+    announce: { ...DEFAULT_ANNOUNCE },
+    deleteTarget: null,       // preset id awaiting in-app delete confirmation
+    copiedPresets: false,     // transient "copied to clipboard" feedback
+    importOpen: false,        // whether the import textarea is shown
+    importText: '',           // JSON pasted into the import box
+    importError: '',
 
     /* --- Audio (lazily created) -------------------------------------- */
     audioCtx: null,
@@ -155,6 +186,21 @@ function timerApp(): TimerApp {
         localStorage.setItem('timer-presets', JSON.stringify(loaded));
       }
       this.savedPresets = loaded;
+
+      /* Announcement preferences, with sensible defaults for first run. */
+      try {
+        const raw = localStorage.getItem('timer-announce');
+        if (raw !== null) {
+          const parsed: unknown = JSON.parse(raw);
+          if (isRecord(parsed)) {
+            this.announce = {
+              voice: typeof parsed.voice === 'boolean' ? parsed.voice : DEFAULT_ANNOUNCE.voice,
+              beeps: typeof parsed.beeps === 'boolean' ? parsed.beeps : DEFAULT_ANNOUNCE.beeps,
+              vibrate: typeof parsed.vibrate === 'boolean' ? parsed.vibrate : DEFAULT_ANNOUNCE.vibrate,
+            };
+          }
+        }
+      } catch { /* malformed prefs — defaults stand */ }
 
       /* Boot into a real preset: if the stored session id no longer exists
          (e.g. first run, or its preset was deleted), load the first one so the
@@ -441,17 +487,24 @@ function timerApp(): TimerApp {
       this.rafId = requestAnimationFrame(() => this.tick());
     },
 
-    /* Announce each interval as it starts (Work / Rest / …). */
+    /* Announce each interval as it starts. The channel used follows the
+    announcement prefs: a spoken label when voice is on and the interval is
+    named, otherwise a distinct per-interval tone (set in the editor, or
+    derived cyclically by position so Work vs Rest stays audible). */
     onIntervalChange(idx: number) {
       this.announcedIntervalIndex = idx;
       this.intervalIndex = idx;
-      const label = (this.session.intervals[idx].label || '').trim();
-      if (label) {
+      const iv = this.session.intervals[idx];
+      const label = (iv?.label || '').trim();
+
+      const spoken = this.announce.voice && !!label;
+      if (spoken) {
         this.speak(label);
-      } else {
-        this.playBeep(700, 130, 'sine', 0.45);
-        if (navigator.vibrate) navigator.vibrate(40);
       }
+      if (this.announce.beeps && !spoken) {
+        this.playBeep(TONE_FREQ[toneForInterval(iv, idx)], 130, 'sine', 0.45);
+      }
+      if (this.announce.vibrate && navigator.vibrate) navigator.vibrate(40);
       this.lastSpokenMinute = Math.ceil(this.intervalTotal / 60);
     },
 
@@ -465,13 +518,14 @@ function timerApp(): TimerApp {
       if (minutes === null) return;
 
       this.lastSpokenMinute = minutes;
-      const label = minutes === 1
-        ? '1 minute remaining'
-        : `${minutes} minutes remaining`;
-
-      this.speak(label);
-      this.playBeep(800, 150, 'sine', 0.4);
-      if (navigator.vibrate) navigator.vibrate(50);
+      if (this.announce.voice) {
+        const label = minutes === 1
+          ? '1 minute remaining'
+          : `${minutes} minutes remaining`;
+        this.speak(label);
+      }
+      if (this.announce.beeps) this.playBeep(800, 150, 'sine', 0.4);
+      if (this.announce.vibrate && navigator.vibrate) navigator.vibrate(50);
     },
 
     complete() {
@@ -483,8 +537,14 @@ function timerApp(): TimerApp {
       this.heartbeat.stop();
       this.stopWakeLock();
 
-      this.speak('Time is up!');
-      if (navigator.vibrate) navigator.vibrate([120, 80, 120, 80, 240]);
+      if (this.announce.voice) this.speak('Time is up!');
+      if (this.announce.beeps) {
+        this.playBeep(TONE_FREQ.mid, 160, 'sine', 0.5);
+        this.playBeep(TONE_FREQ.high, 180, 'sine', 0.5);
+      }
+      if (this.announce.vibrate && navigator.vibrate) {
+        navigator.vibrate([120, 80, 120, 80, 240]);
+      }
     },
 
     /* --- Presets & configuration -------------------------------------- */
@@ -499,7 +559,7 @@ function timerApp(): TimerApp {
       this.draftPresetId = 'new';
       this.draftName = '';
       this.draftTotalMinutes = 7;
-      this.draftIntervals = [{ seconds: 60, label: '' }];
+      this.draftIntervals = [{ id: nextDraftId(), seconds: 60, label: '' }];
     },
 
     /* Open the config editor pre-loaded with an existing preset. Editing
@@ -513,7 +573,12 @@ function timerApp(): TimerApp {
       this.draftPresetId = id;
       this.draftName = preset.name;
       this.draftTotalMinutes = Math.round((preset.totalSeconds / 60) * 2) / 2;
-      this.draftIntervals = preset.intervals.map((iv) => ({ seconds: iv.seconds, label: iv.label }));
+      this.draftIntervals = preset.intervals.map((iv) => ({
+        id: nextDraftId(),
+        seconds: iv.seconds,
+        label: iv.label,
+        ...(iv.tone ? { tone: iv.tone } : {}),
+      }));
       this.view = 'edit';
     },
 
@@ -525,14 +590,20 @@ function timerApp(): TimerApp {
     },
 
     addDraftInterval() {
-      this.draftIntervals.push({ seconds: 60, label: '' });
+      this.draftIntervals.push({ id: nextDraftId(), seconds: 60, label: '' });
     },
 
     removeDraftInterval(index: number) {
       this.draftIntervals.splice(index, 1);
       if (!this.draftIntervals.length) {
-        this.draftIntervals.push({ seconds: 60, label: '' });
+        this.draftIntervals.push({ id: nextDraftId(), seconds: 60, label: '' });
       }
+    },
+
+    setDraftTone(index: number, tone: Tone | undefined) {
+      const iv = this.draftIntervals[index];
+      if (!iv) return;
+      iv.tone = tone;
     },
 
     draftTotalAdjust(delta: number) {
@@ -550,6 +621,7 @@ function timerApp(): TimerApp {
           ? Math.max(5, Math.round(iv.seconds))
           : 60,
         label: (iv.label || '').trim(),
+        ...(iv.tone ? { tone: iv.tone } : {}),
       }));
 
       const sum = intervals.reduce((acc, iv) => acc + iv.seconds, 0);
@@ -579,14 +651,27 @@ function timerApp(): TimerApp {
       this.view = 'timer';
     },
 
-    deletePreset(id: string) {
-      const preset = this.savedPresets.find((p) => p.id === id);
-      const name = preset ? `"${preset.name}"` : 'this preset';
-      if (!window.confirm(`Delete ${name}?`)) return;
+    /* In-app delete confirmation (replaces the native window.confirm so the
+       flow matches the rest of the UI and stays keyboard-accessible). */
+    askDelete(id: string) {
+      this.deleteTarget = id;
+      this.$nextTick(() => {
+        (this.$root as HTMLElement).querySelector<HTMLButtonElement>('.confirm-delete')?.focus();
+      });
+    },
+
+    cancelDelete() {
+      this.deleteTarget = null;
+    },
+
+    confirmDelete() {
+      const id = this.deleteTarget;
+      if (!id) return;
 
       const wasActive = this.session.id === id;
       this.savedPresets = this.savedPresets.filter((p) => p.id !== id);
       this.persistPresets();
+      this.deleteTarget = null;
 
       if (wasActive && this.savedPresets.length) {
         this.applyPreset(this.savedPresets[0].id);
@@ -597,6 +682,71 @@ function timerApp(): TimerApp {
 
     persistPresets() {
       localStorage.setItem('timer-presets', JSON.stringify(this.savedPresets));
+    },
+
+    /* Flip one announcement preference and keep it for next time. */
+    setAnnounce(key: keyof AnnounceSettings, on: boolean) {
+      this.announce[key] = on;
+      localStorage.setItem('timer-announce', JSON.stringify(this.announce));
+    },
+
+    /* --- Import / export --------------------------------------------- */
+    /* Copy the whole preset collection as pretty JSON, so a routine moves
+       between devices by paste. Falls back to execCommand on http (clipboard
+       API needs a secure context). */
+    async copyPresets() {
+      const json = JSON.stringify(this.savedPresets, null, 2);
+      try {
+        await navigator.clipboard.writeText(json);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = json;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      this.copiedPresets = true;
+    },
+
+    /* Parse and append whatever was pasted: a single preset object or an
+       array of them. Invalid entries are dropped via parsePreset. */
+    async importPresets() {
+      this.importError = '';
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(this.importText);
+      } catch {
+        this.importError = 'That is not valid JSON.';
+        return;
+      }
+      const list = Array.isArray(parsed) ? parsed : [parsed];
+      /* Only accept well-formed preset shapes; parsePreset's fallback would
+         otherwise fabricate a default preset out of arbitrary JSON junk. */
+      const incoming = list
+        .filter(isRecord)
+        .filter((item) => (
+          Array.isArray(item.intervals) || typeof item.minutes === 'number'
+        ))
+        .map(parsePreset)
+        .filter((p) => p.intervals.length);
+      if (!incoming.length) {
+        this.importError = 'No valid presets found in that JSON.';
+        return;
+      }
+      this.savedPresets = [
+        ...this.savedPresets,
+        ...incoming.map((p, i) => ({
+          ...p,
+          id: `c-${Date.now()}-${i}`,
+        })),
+      ];
+      this.persistPresets();
+      this.importText = '';
+      this.importOpen = false;
+      this.copiedPresets = false;
     },
 
     /* --- Audio --------------------------------------------------------- */
@@ -707,7 +857,13 @@ type TimerAppState = {
   draftPresetId: string;
   draftName: string;
   draftTotalMinutes: number;
-  draftIntervals: Interval[];
+  draftIntervals: DraftInterval[];
+  announce: AnnounceSettings;
+  deleteTarget: string | null;
+  copiedPresets: boolean;
+  importOpen: boolean;
+  importText: string;
+  importError: string;
   audioCtx: AudioContext | null;
 
   /* Getters (readonly, reactively bound). */
@@ -751,10 +907,16 @@ type TimerAppState = {
   draftIntervalAdjust(index: number, delta: number): void;
   addDraftInterval(): void;
   removeDraftInterval(index: number): void;
+  setDraftTone(index: number, tone: Tone | undefined): void;
   draftTotalAdjust(delta: number): void;
   savePreset(): void;
-  deletePreset(id: string): void;
+  askDelete(id: string): void;
+  cancelDelete(): void;
+  confirmDelete(): void;
   persistPresets(): void;
+  setAnnounce(key: keyof AnnounceSettings, on: boolean): void;
+  copyPresets(): Promise<void>;
+  importPresets(): Promise<void>;
   playBeep(freq: number, duration: number, type?: OscillatorType, volume?: number): void;
   speak(text: string): void;
   requestWakeLock(): Promise<void>;

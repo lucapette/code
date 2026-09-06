@@ -6,41 +6,33 @@ Priorities: **P1** = bug or core-use-case gap, **P2** = structure/a11y,
 
 ## Known issues
 
-### P3 — Draft interval rows use index keys
-
-`x-for :key="i"` on the draft interval list: splicing a row shifts bindings
-and focus. Use a stable per-row id.
-
-### P3 — Modal focus management
-
-The delete confirmation uses the native `window.confirm`, which clashes
-with the rest of the UI.
-
-### P3 — Housekeeping
-
-- Root README does not list the project yet
+(none)
 
 ## Ideas
 
 1. **PWA** — manifest, service worker, and a completion notification.
    Makes the app installable, fully offline, and lets "Time is up!" land on
    time even when the tab is hidden (pairs with the heartbeat fallback).
-2. **Announcement preferences** — toggles for voice / beeps / vibration,
-   and distinct tones per interval so Work vs Rest is audible without
-   looking.
-3. **Preset import/export** — copy/paste a preset as JSON to share HIIT
-   routines between devices.
-5. **Explicitly out of scope** — accounts, server sync, session history.
+2. **Explicitly out of scope** — accounts, server sync, session history.
    The app stays a single static page.
 
 ## Suggested order
 
 1. PWA (installable, offline; a notification also hardens the
    locked-screen case the heartbeat can't reach)
-2. A11y + polish batch (remaining P2/P3 items)
 
 ## Done
 
+- **2026-09-06** — Polish batch. Draft rows now carry stable per-row ids
+  (`DraftInterval`) so splicing never rebinds x-for keys; `window.confirm`
+  is gone — deleting a preset asks inline with keyboard-friendly, focused
+  confirm/cancel. Announcement preferences (voice / tones / buzz) are
+  toggleable in the editor and persist per-browser; each interval gets an
+  optional low/mid/high cue tone (cyclical fallback keeps Work vs Rest
+  distinct), routed through the same pure engine flow. Preset import/export
+  lets the whole list be copied as pretty JSON with a same-view paste
+  import that validates shapes (garbage is rejected) and re-ids on arrival.
+  All verified in-browser; type-check, 40 tests, and the build stay green.
 - **2026-09-06** — Corrupt-preset self-heal. A mangled `timer-presets`
   payload (invalid JSON, or parsed to a non-array) now reseeds the default
   7 min preset instead of leaving `savedPresets = []`, so one bad payload

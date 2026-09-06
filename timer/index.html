@@ -195,7 +195,7 @@
             <span class="field-label">Intervals</span>
             <p class="field-hint">Intervals play in order as a chain. Add a few to build a routine, or one long one for a plain countdown.</p>
             <div class="interval-list">
-              <template x-for="(iv, i) in draftIntervals" :key="i">
+              <template x-for="(iv, i) in draftIntervals" :key="iv.id">
                 <div class="interval-row">
                   <div class="interval-top">
                     <input
@@ -206,6 +206,29 @@
                       maxlength="32"
                       :aria-label="'Interval ' + (i + 1) + ' label'"
                     />
+                    <div class="tone-picker" role="group" :aria-label="'Interval ' + (i + 1) + ' tone'">
+                      <button
+                        type="button"
+                        :class="{ active: iv.tone === 'low' }"
+                        @click="setDraftTone(i, 'low')"
+                        :aria-label="'Interval ' + (i + 1) + ' low tone'"
+                        :aria-pressed="iv.tone === 'low'"
+                      >low</button>
+                      <button
+                        type="button"
+                        :class="{ active: iv.tone === 'mid' }"
+                        @click="setDraftTone(i, 'mid')"
+                        :aria-label="'Interval ' + (i + 1) + ' mid tone'"
+                        :aria-pressed="iv.tone === 'mid'"
+                      >mid</button>
+                      <button
+                        type="button"
+                        :class="{ active: iv.tone === 'high' }"
+                        @click="setDraftTone(i, 'high')"
+                        :aria-label="'Interval ' + (i + 1) + ' high tone'"
+                        :aria-pressed="iv.tone === 'high'"
+                      >high</button>
+                    </div>
                   </div>
                   <div class="interval-value-row">
                     <input
@@ -281,38 +304,113 @@
           </div>
           <template x-for="p in savedPresets" :key="p.id">
             <div class="saved-row">
-              <button class="saved-apply" type="button" @click="applyPreset(p.id); view = 'timer'" :aria-label="'Run ' + p.name">
-                <span class="saved-name" x-text="p.name"></span>
-                <span class="saved-min" x-text="Math.round(p.totalSeconds / 60) + ' min · ' + p.intervals.length + ' intv'"></span>
-                <span class="saved-strip" aria-hidden="true">
-                  <template x-for="(seg, i) in miniStrip(p)" :key="i">
-                    <span class="mini-seg" :style="miniSegStyle(seg, i)"></span>
-                  </template>
-                </span>
-              </button>
-              <button
-                class="icon-btn icon-btn-sm"
-                type="button"
-                @click="openConfigFor(p.id)"
-                :aria-label="'Edit preset ' + p.name"
-                :title="'Edit ' + p.name"
-              >
-                <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <button
-                class="icon-btn icon-btn-sm"
-                type="button"
-                @click="deletePreset(p.id)"
-                :aria-label="'Delete preset ' + p.name"
-              >
-                <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
+              <div class="saved-actions" x-show="deleteTarget !== p.id">
+                <button class="saved-apply" type="button" @click="applyPreset(p.id); view = 'timer'" :aria-label="'Run ' + p.name">
+                  <span class="saved-name" x-text="p.name"></span>
+                  <span class="saved-min" x-text="Math.round(p.totalSeconds / 60) + ' min · ' + p.intervals.length + ' intv'"></span>
+                  <span class="saved-strip" aria-hidden="true">
+                    <template x-for="(seg, i) in miniStrip(p)" :key="i">
+                      <span class="mini-seg" :style="miniSegStyle(seg, i)"></span>
+                    </template>
+                  </span>
+                </button>
+                <button
+                  class="icon-btn icon-btn-sm"
+                  type="button"
+                  @click="openConfigFor(p.id)"
+                  :aria-label="'Edit preset ' + p.name"
+                  :title="'Edit ' + p.name"
+                >
+                  <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <button
+                  class="icon-btn icon-btn-sm"
+                  type="button"
+                  @click="askDelete(p.id)"
+                  :aria-label="'Delete preset ' + p.name"
+                >
+                  <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="confirm" x-show="deleteTarget === p.id">
+                <span class="confirm-text">Delete <strong x-text="p.name"></strong>? This can't be undone.</span>
+                <div class="confirm-actions">
+                  <button class="btn-ghost btn-ghost-sm" type="button" @click="cancelDelete()">Cancel</button>
+                  <button class="btn-danger btn-danger-sm confirm-delete" type="button" @click="confirmDelete()">Delete</button>
+                </div>
+              </div>
             </div>
           </template>
+        </div>
+
+        <div class="prefs">
+          <div class="prefs-head">
+            <h3>Announcements</h3>
+          </div>
+          <label class="pref-row">
+            <span class="pref-text">
+              <span class="pref-label">Voice</span>
+              <span class="pref-hint">Speak interval names, minute marks, and completion</span>
+            </span>
+            <input
+              class="switch"
+              type="checkbox"
+              :checked="announce.voice"
+              @change="setAnnounce('voice', $event.target.checked)"
+              aria-label="Voice announcements"
+            />
+          </label>
+          <label class="pref-row">
+            <span class="pref-text">
+              <span class="pref-label">Tones</span>
+              <span class="pref-hint">Distinct cue per interval and finishing chime</span>
+            </span>
+            <input
+              class="switch"
+              type="checkbox"
+              :checked="announce.beeps"
+              @change="setAnnounce('beeps', $event.target.checked)"
+              aria-label="Tone cues"
+            />
+          </label>
+          <label class="pref-row">
+            <span class="pref-text">
+              <span class="pref-label">Buzz</span>
+              <span class="pref-hint">Vibration on interval changes and completion</span>
+            </span>
+            <input
+              class="switch"
+              type="checkbox"
+              :checked="announce.vibrate"
+              @change="setAnnounce('vibrate', $event.target.checked)"
+              aria-label="Vibration cues"
+            />
+          </label>
+
+          <div class="prefs-head prefs-head-share">
+            <h3>Share presets</h3>
+            <span class="copy-feedback" x-show="copiedPresets" x-cloak>Copied!</span>
+          </div>
+          <div class="share-row">
+            <button class="btn-ghost btn-ghost-sm" type="button" @click="copyPresets()">Copy all presets</button>
+            <button class="btn-ghost btn-ghost-sm" type="button" @click="importOpen = !importOpen" :aria-expanded="importOpen">Import JSON</button>
+          </div>
+          <div class="import-box" x-show="importOpen" x-cloak>
+            <textarea
+              class="input import-area"
+              x-model="importText"
+              placeholder='Paste a preset (or several) as JSON…'
+              aria-label="Preset import JSON"
+            ></textarea>
+            <div class="import-actions">
+              <button class="btn-ghost btn-ghost-sm" type="button" @click="importPresets()">Add imported presets</button>
+              <span class="import-error" x-show="importError" x-text="importError" x-cloak></span>
+            </div>
+          </div>
         </div>
 
       </section>

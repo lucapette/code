@@ -6,8 +6,8 @@ chain of named intervals (Work, Rest, …) that repeats until the session's
 total duration is consumed — e.g. 40s + 20s tiled for 25 minutes is HIIT.
 
 Part of the [monorepo](../README.md). Successor in spirit to
-[passata](../passata) (React Pomodoro app, on hold), rebuilt as plain
-vanilla JavaScript.
+[passata](../passata) (React Pomodoro app, on hold), rebuilt as a plain
+TypeScript + Vite app.
 
 ## Features
 
@@ -20,9 +20,14 @@ vanilla JavaScript.
 - Timer and preset editor as two in-app views; presets are picked from the
   run screen (each showing a mini preview of its plan) and managed
   (create, edit, delete) in the editor
-- Voice announcements (Web Speech API) with beep/vibration fallbacks
-- Minute marks announced inside intervals of 60s or longer
+- Announcement preferences (voice / tones / buzz) toggled in the editor,
+  each interval optionally carrying a distinct low/mid/high cue tone so
+  Work vs Rest is audible without looking
+- Voice announcements (Web Speech API) with beep/vibration fallbacks, and
+  minute marks announced inside intervals of 60s or longer
 - "Next interval" teaser in the final seconds of the current one
+- Preset import/export: the whole list copies as pretty JSON and pastes
+  right back in, validated and re-id'd on arrival
 - Screen wake lock while running, plus a Web Worker heartbeat that keeps
   timing on time while the tab is hidden
 - Dark and light themes (follows `prefers-color-scheme` on first run)

@@ -5,6 +5,7 @@ My personal monorepo. A collection of projects, experiments, and tools I've buil
 ## Table of Contents
 
 - [Highlights](#highlights)
+- [Applications](#applications)
 - [Applications (on hold)](#applications-on-hold)
 - [Kafka & Data Engineering](#kafka--data-engineering)
 - [Utilities](#utilities)
@@ -17,6 +18,12 @@ My personal monorepo. A collection of projects, experiments, and tools I've buil
 | [dotfiles](/dotfiles)                     | ![Shell](https://img.shields.io/badge/-Shell-4EAA25?logo=gnu-bash&logoColor=white)       | Shell configuration (zsh, tmux, vim)                                                                 |
 | [web](/web)                               | ![Hugo](https://img.shields.io/badge/-Hugo-FF4088?logo=hugo&logoColor=white)             | My websites ([lucapette.me](https://lucapette.me), [notes.lucapette.me](https://notes.lucapette.me)) |
 | [leading-developers](/leading-developers) | ![Markdown](https://img.shields.io/badge/-Markdown-000000?logo=markdown&logoColor=white) | Engineering leadership book with multi-format publishing (web, PDF, EPUB)                            |
+
+## Applications
+
+| Project             | Stack                                                                                          | Description                                          |
+|---------------------|------------------------------------------------------------------------------------------------|------------------------------------------------------|
+| [timer](/timer)     | ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript&logoColor=white) | Interval timer with plan strip, presets, and alerts  |
 
 ## Applications (on hold)
 
