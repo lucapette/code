@@ -83,6 +83,7 @@ function parsePreset(value: unknown): Preset {
       return {
         id: typeof value.id === 'string' ? value.id : `c-${Date.now()}`,
         name: typeof value.name === 'string' ? value.name : 'Preset',
+        category: typeof value.category === 'string' && value.category ? value.category : 'Other',
         totalSeconds: value.totalSeconds,
         intervals: value.intervals.filter(isInterval),
       };
@@ -93,11 +94,12 @@ function parsePreset(value: unknown): Preset {
     return {
       id: typeof value.id === 'string' ? value.id : `c-${Date.now()}`,
       name: typeof value.name === 'string' ? value.name : 'Preset',
+      category: 'Other',
       totalSeconds: seconds,
       intervals: [{ seconds, label: '' }],
     };
   }
-  return { id: `c-${Date.now()}`, name: 'Preset', totalSeconds: 420, intervals: [{ seconds: 420, label: '' }] };
+  return { id: `c-${Date.now()}`, name: 'Preset', category: 'Other', totalSeconds: 420, intervals: [{ seconds: 420, label: '' }] };
 }
 
 const MOBILITY_LABELS = [
@@ -116,12 +118,69 @@ const MOBILITY_LABELS = [
   'windshield wipers',
 ];
 
-const DEFAULT_PRESET: Preset = {
-  id: 'p-mobility',
-  name: 'Mobility routine',
-  totalSeconds: MOBILITY_LABELS.length * 45,
-  intervals: MOBILITY_LABELS.map((label) => ({ seconds: 45, label })),
-};
+/* Read-only bundled presets. They never change and cannot be deleted — the
+   saved (user) store holds only everything else. Editing one forks it into
+   an editable user copy instead of mutating in place. */
+const BUILTIN_PRESETS: Preset[] = [
+  {
+    id: 'p-mobility',
+    name: 'Mobility routine',
+    category: 'Workouts',
+    totalSeconds: MOBILITY_LABELS.length * 45,
+    intervals: MOBILITY_LABELS.map((label) => ({ seconds: 45, label })),
+  },
+  {
+    id: 'p-jumprope',
+    name: 'Jump rope',
+    category: 'Workouts',
+    totalSeconds: 10 * 60,              // 10 rounds of (30s + 30s)
+    intervals: [
+      { seconds: 30, label: 'Jump' },
+      { seconds: 30, label: 'Rest' },
+    ],
+  },
+  {
+    id: 'p-pomodoro',
+    name: 'Pomodoro classic',
+    category: 'Productivity',
+    totalSeconds: 4 * (25 * 60 + 5 * 60) + 15 * 60, // 4× (25+5) + long break
+    intervals: [
+      { seconds: 25 * 60, label: 'Focus' },
+      { seconds: 5 * 60, label: 'Break' },
+      { seconds: 25 * 60, label: 'Focus' },
+      { seconds: 5 * 60, label: 'Break' },
+      { seconds: 25 * 60, label: 'Focus' },
+      { seconds: 5 * 60, label: 'Break' },
+      { seconds: 25 * 60, label: 'Focus' },
+      { seconds: 5 * 60, label: 'Break' },
+      { seconds: 15 * 60, label: 'Long break' },
+    ],
+  },
+  {
+    id: 'p-focus',
+    name: 'Focus',
+    category: 'Productivity',
+    totalSeconds: 25 * 60 + 5 * 60,     // one pass of 25 + 5
+    intervals: [
+      { seconds: 25 * 60, label: 'Focus' },
+      { seconds: 5 * 60, label: 'Break' },
+    ],
+  },
+  {
+    id: 'p-rice',
+    name: 'White rice',
+    category: 'Cooking',
+    totalSeconds: 10 * 60 + 10 * 60,    // cook then rest, over
+    intervals: [
+      { seconds: 10 * 60, label: 'Cook' },
+      { seconds: 10 * 60, label: 'Rest' },
+    ],
+  },
+];
+
+const BUILTIN_IDS = new Set(BUILTIN_PRESETS.map((p) => p.id));
+
+const DEFAULT_PRESET = BUILTIN_PRESETS[0];
 
 function timerApp(): TimerApp {
   return {
@@ -129,6 +188,7 @@ function timerApp(): TimerApp {
     session: {
       id: DEFAULT_PRESET.id,
       name: DEFAULT_PRESET.name,
+      category: DEFAULT_PRESET.category,
       totalSeconds: DEFAULT_PRESET.totalSeconds,
       intervals: DEFAULT_PRESET.intervals.map((iv) => ({ ...iv })),
     },
@@ -149,10 +209,12 @@ function timerApp(): TimerApp {
     theme: 'dark',
 
     /* --- Presets & configuration --- */
-    savedPresets: [],         // all presets (seeded with mobility routine on first run)
+    savedPresets: [],         // user presets only (built-ins live in code)
     view: 'timer',            // 'timer' | 'edit'
+    categoryFilter: 'all',    // 'all' or a category name (run screen)
     draftPresetId: 'new',     // 'new' or an existing savedPresets id
     draftName: '',            // preset name being configured
+    draftCategory: 'Other',   // preset category being configured
     draftTotalMinutes: 10,    // session total being configured (minutes, default 9:45)
     draftIntervals: [{ id: nextDraftId(), seconds: 585, label: '' }],
 
@@ -178,16 +240,11 @@ function timerApp(): TimerApp {
       }
       this.applyTheme();
 
-      /* Load presets. On the very first run there is no stored data, so seed
-         the default mobility routine. After that presets are fully
-         user-managed: editable and deletable like any other. Also migrates
-         the old {id,name,minutes} schema to
-         {id,name,totalSeconds,intervals[]}. */
-      /* Missing or corrupt store (bad JSON, or parsed to a non-array) gets
-         the default mobility routine seeded back in, so a single mangled
-         payload can't wipe the preset list for good. A deliberate empty
-         array is preserved as-is — the user may legitimately delete every
-         preset. */
+      /* Load user presets. Built-ins live in code and always appear; the
+         store holds only user-created or imported presets. Migrates the old
+         {id,name,minutes} schema and re-seeds nothing: a missing or corrupt
+         store simply yields an empty user list — the bundled library keeps
+         the picks populated, so one mangled payload can't wipe the app. */
       let loaded: Preset[] | null = null;
       try {
         const raw = localStorage.getItem('timer-presets');
@@ -198,11 +255,9 @@ function timerApp(): TimerApp {
       } catch {
         loaded = null;
       }
-      if (loaded === null) {
-        loaded = [DEFAULT_PRESET];
-        localStorage.setItem('timer-presets', JSON.stringify(loaded));
-      }
-      this.savedPresets = loaded;
+      /* Legacy stores had the default mobility routine persisted at
+         p-mobility; it now ships as a built-in, so drop duplicates. */
+      this.savedPresets = (loaded ?? []).filter((p) => !BUILTIN_IDS.has(p.id));
 
       /* Announcement preferences, with sensible defaults for first run. */
       try {
@@ -220,10 +275,10 @@ function timerApp(): TimerApp {
       } catch { /* malformed prefs — defaults stand */ }
 
       /* Boot into a real preset: if the stored session id no longer exists
-         (e.g. first run, or its preset was deleted), load the first one so the
-         strip shows the first interval's label right away. */
-      if (!this.savedPresets.find((p) => p.id === this.session.id) && this.savedPresets.length) {
-        this.applyPreset(this.savedPresets[0].id);
+         (e.g. its preset was deleted), load the first one so the strip shows
+         the first interval's label right away. */
+      if (!this.presets.find((p) => p.id === this.session.id) && this.presets.length) {
+        this.applyPreset(this.presets[0].id);
       }
 
       /* Page visibility: recompute from the wall clock and re-acquire the
@@ -380,13 +435,48 @@ function timerApp(): TimerApp {
       return count ? `${count.current} / ${count.total}` : '';
     },
 
+    /* All presets: built-ins first, then user presets in saved order. */
     get presets() {
-      return this.savedPresets;
+      return [...BUILTIN_PRESETS, ...this.savedPresets];
+    },
+
+    /* Distinct visible categories in library order (built-ins define the
+       leading order, then any user categories not already present). */
+    get categories() {
+      const seen = new Set<string>();
+      for (const p of this.presets) {
+        const cat = (p.category || '').trim() || 'Other';
+        if (!seen.has(cat)) seen.add(cat);
+      }
+      return [...seen];
+    },
+
+    /* Category sections (unfiltered — the run screen applies the filter). */
+    get presetGroups() {
+      return this.categories.map((cat) => ({
+        category: cat,
+        presets: this.presets.filter((p) => ((p.category || '').trim() || 'Other') === cat),
+      }));
     },
 
     get activePresetId() {
       const match = this.presets.find((p) => p.id === this.session.id);
       return match ? match.id : null;
+    },
+
+    /* True for built-in (bundled, read-only) presets. */
+    isBuiltin(id: string) {
+      return BUILTIN_IDS.has(id);
+    },
+
+    /* Normalize any (possibly missing) category for display/grouping. */
+    presetCategory(preset: { category?: string }) {
+      return (preset.category || '').trim() || 'Other';
+    },
+
+    /* Set the run-screen category filter. */
+    setFilter(cat: string) {
+      this.categoryFilter = cat;
     },
 
     /* --- Controls ------------------------------------------------------ */
@@ -458,6 +548,7 @@ function timerApp(): TimerApp {
       this.session = {
         id: preset.id,
         name: preset.name,
+        category: preset.category,
         totalSeconds: preset.totalSeconds,
         intervals: preset.intervals.map((iv) => ({ ...iv })),
       };
@@ -575,20 +666,24 @@ function timerApp(): TimerApp {
     newDraft() {
       this.draftPresetId = 'new';
       this.draftName = '';
+      this.draftCategory = 'Other';
       this.draftTotalMinutes = 7;
       this.draftIntervals = [{ id: nextDraftId(), seconds: 60, label: '' }];
     },
 
-    /* Open the config editor pre-loaded with an existing preset. Editing
-       always happens in place — there are no locked built-ins. */
+    /* Open the config editor pre-loaded with an existing preset. User
+       presets edit in place; built-ins are read-only, so editing one forks
+       it into a new user copy (draftPresetId stays 'new'). */
     openConfigFor(id: string) {
-      const preset = this.savedPresets.find((p) => p.id === id);
+      const preset = this.presets.find((p) => p.id === id);
       if (!preset) {
         this.newDraft();
         return;
       }
-      this.draftPresetId = id;
+      const isBuiltin = BUILTIN_IDS.has(id);
+      this.draftPresetId = isBuiltin ? 'new' : id;
       this.draftName = preset.name;
+      this.draftCategory = preset.category;
       this.draftTotalMinutes = Math.round((preset.totalSeconds / 60) * 2) / 2;
       this.draftIntervals = preset.intervals.map((iv) => ({
         id: nextDraftId(),
@@ -648,11 +743,12 @@ function timerApp(): TimerApp {
         Number.isFinite(rawTotal) ? Math.max(60, rawTotal) : 60
       );
       const name = (this.draftName || '').trim() || `${Math.round(totalSeconds / 60)} min`;
+      const category = (this.draftCategory || '').trim() || 'Other';
 
       if (this.draftPresetId !== 'new') {
         this.savedPresets = this.savedPresets.map((p) =>
           p.id === this.draftPresetId
-            ? { id: p.id, name, totalSeconds, intervals }
+            ? { id: p.id, name, category, totalSeconds, intervals }
             : p
         );
         this.applyPreset(this.draftPresetId);
@@ -660,7 +756,7 @@ function timerApp(): TimerApp {
         const id = `c-${Date.now()}`;
         this.savedPresets = [
           ...this.savedPresets,
-          { id, name, totalSeconds, intervals },
+          { id, name, category, totalSeconds, intervals },
         ];
         this.applyPreset(id);
       }
@@ -690,8 +786,8 @@ function timerApp(): TimerApp {
       this.persistPresets();
       this.deleteTarget = null;
 
-      if (wasActive && this.savedPresets.length) {
-        this.applyPreset(this.savedPresets[0].id);
+      if (wasActive && this.presets.length) {
+        this.applyPreset(this.presets[0].id);
       } else if (wasActive) {
         this.reset();
       }
@@ -871,8 +967,10 @@ type TimerAppState = {
   theme: Theme;
   savedPresets: Preset[];
   view: View;
+  categoryFilter: string;
   draftPresetId: string;
   draftName: string;
+  draftCategory: string;
   draftTotalMinutes: number;
   draftIntervals: DraftInterval[];
   announce: AnnounceSettings;
@@ -898,6 +996,8 @@ type TimerAppState = {
   readonly nextLabel: string;
   readonly intervalProgress: string;
   readonly presets: Preset[];
+  readonly categories: string[];
+  readonly presetGroups: { category: string; presets: Preset[] }[];
   readonly activePresetId: string | null;
   readonly draftSum: number;
 
@@ -931,6 +1031,9 @@ type TimerAppState = {
   cancelDelete(): void;
   confirmDelete(): void;
   persistPresets(): void;
+  isBuiltin(id: string): boolean;
+  presetCategory(preset: { category?: string }): string;
+  setFilter(cat: string): void;
   setAnnounce(key: keyof AnnounceSettings, on: boolean): void;
   copyPresets(): Promise<void>;
   importPresets(): Promise<void>;

@@ -152,22 +152,59 @@
         </div>
 
         <div class="picks" role="group" aria-label="Presets" x-show="view === 'timer'">
-          <template x-for="preset in presets" :key="preset.id">
+          <div class="pick-filter" role="group" aria-label="Filter presets by category" x-show="categories.length > 1">
             <button
-              class="pick"
+              class="chip"
               type="button"
-              @click="applyPreset(preset.id)"
-              :disabled="status === 'RUNNING'"
-              :class="{ active: activePresetId === preset.id }"
-              :aria-pressed="activePresetId === preset.id"
+              :class="{ active: categoryFilter === 'all' }"
+              @click="setFilter('all')"
+              :aria-pressed="categoryFilter === 'all'"
+            >All</button>
+            <template x-for="cat in categories" :key="cat">
+              <button
+                class="chip"
+                type="button"
+                :class="{ active: categoryFilter === cat }"
+                @click="setFilter(cat)"
+                :aria-pressed="categoryFilter === cat"
+                x-text="cat"
+              ></button>
+            </template>
+          </div>
+
+          <template x-for="group in presetGroups" :key="group.category">
+            <section
+              class="pick-group"
+              :aria-label="group.category + ' presets'"
+              x-show="categoryFilter === 'all' || categoryFilter === group.category"
             >
-              <span class="pick-name" x-text="preset.name">Mobility routine</span>
-              <span class="pick-strip" aria-hidden="true">
-                <template x-for="(seg, i) in miniStrip(preset)" :key="i">
-                  <span class="mini-seg" :style="miniSegStyle(seg, i)"></span>
+              <h3 class="pick-group-title" x-text="group.category">Workouts</h3>
+              <div class="pick-grid">
+                <template x-for="preset in group.presets" :key="preset.id">
+                  <button
+                    class="pick"
+                    type="button"
+                    @click="applyPreset(preset.id)"
+                    :disabled="status === 'RUNNING'"
+                    :class="{ active: activePresetId === preset.id }"
+                    :aria-pressed="activePresetId === preset.id"
+                  >
+                    <span class="pick-name" x-text="preset.name">Mobility routine</span>
+                    <span
+                      class="pick-tag"
+                      x-show="isBuiltin(preset.id)"
+                      x-cloak
+                      aria-label="Built-in preset"
+                    >Built-in</span>
+                    <span class="pick-strip" aria-hidden="true">
+                      <template x-for="(seg, i) in miniStrip(preset)" :key="i">
+                        <span class="mini-seg" :style="miniSegStyle(seg, i)"></span>
+                      </template>
+                    </span>
+                  </button>
                 </template>
-              </span>
-            </button>
+              </div>
+            </section>
           </template>
         </div>
       </section>
@@ -194,6 +231,24 @@
               placeholder="e.g. HIIT 25"
               maxlength="32"
             />
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="preset-category">Category</label>
+            <input
+              id="preset-category"
+              class="input"
+              type="text"
+              x-model="draftCategory"
+              placeholder="e.g. Workouts, Productivity"
+              maxlength="32"
+              list="category-suggestions"
+            />
+            <datalist id="category-suggestions">
+              <template x-for="cat in categories" :key="cat">
+                <option :value="cat" x-text="cat"></option>
+              </template>
+            </datalist>
           </div>
 
           <div class="field">
@@ -302,52 +357,61 @@
           <button class="btn-save" type="button" @click="savePreset()" x-text="draftPresetId === 'new' ? 'Save preset' : 'Update preset'">Save preset</button>
         </div>
 
-        <div class="preset-list" x-show="savedPresets.length">
+        <div class="preset-list" x-show="presets.length">
           <div class="preset-list-head">
-            <h3>Your presets</h3>
+            <h3>Library</h3>
             <button class="btn-ghost btn-ghost-sm" type="button" @click="newDraft()">New</button>
           </div>
-          <template x-for="p in savedPresets" :key="p.id">
-            <div class="saved-row">
-              <div class="saved-actions" x-show="deleteTarget !== p.id">
-                <button class="saved-apply" type="button" @click="applyPreset(p.id); view = 'timer'" :aria-label="'Run ' + p.name">
-                  <span class="saved-name" x-text="p.name"></span>
-                  <span class="saved-min" x-text="Math.round(p.totalSeconds / 60) + ' min · ' + p.intervals.length + ' intv'"></span>
-                  <span class="saved-strip" aria-hidden="true">
-                    <template x-for="(seg, i) in miniStrip(p)" :key="i">
-                      <span class="mini-seg" :style="miniSegStyle(seg, i)"></span>
-                    </template>
-                  </span>
-                </button>
-                <button
-                  class="icon-btn icon-btn-sm"
-                  type="button"
-                  @click="openConfigFor(p.id)"
-                  :aria-label="'Edit preset ' + p.name"
-                  :title="'Edit ' + p.name"
-                >
-                  <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-                <button
-                  class="icon-btn icon-btn-sm"
-                  type="button"
-                  @click="askDelete(p.id)"
-                  :aria-label="'Delete preset ' + p.name"
-                >
-                  <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="confirm" x-show="deleteTarget === p.id">
-                <span class="confirm-text">Delete <strong x-text="p.name"></strong>? This can't be undone.</span>
-                <div class="confirm-actions">
-                  <button class="btn-ghost btn-ghost-sm" type="button" @click="cancelDelete()">Cancel</button>
-                  <button class="btn-danger btn-danger-sm confirm-delete" type="button" @click="confirmDelete()">Delete</button>
+          <template x-for="group in presetGroups" :key="group.category">
+            <div class="saved-category">
+              <h4 class="saved-category-title" x-text="group.category">Workouts</h4>
+              <template x-for="p in group.presets" :key="p.id">
+                <div class="saved-row">
+                  <div class="saved-actions" x-show="deleteTarget !== p.id">
+                    <button class="saved-apply" type="button" @click="applyPreset(p.id); view = 'timer'" :aria-label="'Run ' + p.name">
+                      <span class="saved-name">
+                        <span x-text="p.name"></span>
+                        <span class="saved-tag" x-show="isBuiltin(p.id)" text="Built-in">Built-in</span>
+                      </span>
+                      <span class="saved-min" x-text="Math.round(p.totalSeconds / 60) + ' min · ' + p.intervals.length + ' intv'"></span>
+                      <span class="saved-strip" aria-hidden="true">
+                        <template x-for="(seg, i) in miniStrip(p)" :key="i">
+                          <span class="mini-seg" :style="miniSegStyle(seg, i)"></span>
+                        </template>
+                      </span>
+                    </button>
+                    <button
+                      class="icon-btn icon-btn-sm"
+                      type="button"
+                      @click="openConfigFor(p.id)"
+                      :aria-label="(isBuiltin(p.id) ? 'Duplicate preset ' : 'Edit preset ') + p.name"
+                      :title="isBuiltin(p.id) ? 'Duplicate ' + p.name : 'Edit ' + p.name"
+                    >
+                      <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                    <button
+                      class="icon-btn icon-btn-sm"
+                      type="button"
+                      @click="askDelete(p.id)"
+                      x-show="!isBuiltin(p.id)"
+                      :aria-label="'Delete preset ' + p.name"
+                    >
+                      <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="confirm" x-show="deleteTarget === p.id">
+                    <span class="confirm-text">Delete <strong x-text="p.name"></strong>? This can't be undone.</span>
+                    <div class="confirm-actions">
+                      <button class="btn-ghost btn-ghost-sm" type="button" @click="cancelDelete()">Cancel</button>
+                      <button class="btn-danger btn-danger-sm confirm-delete" type="button" @click="confirmDelete()">Delete</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </template>
             </div>
           </template>
         </div>

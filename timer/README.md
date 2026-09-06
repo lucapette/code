@@ -20,6 +20,10 @@ TypeScript + Vite app.
 - Timer and preset editor as two in-app views; presets are picked from the
   run screen (each showing a mini preview of its plan) and managed
   (create, edit, delete) in the editor
+- A preset **library**: read-only bundled built-ins (Mobility, Jump rope,
+  Pomodoro classic, Focus, White rice) alongside your own presets, each in
+  a high-level **category** (Workouts, Productivity, Cooking, …). Built-ins
+  can't be deleted or corrupted; editing one forks it into an editable copy
 - Announcement preferences (voice / tones / buzz) toggled in the editor,
   each interval optionally carrying a distinct low/mid/high cue tone so
   Work vs Rest is audible without looking
@@ -80,7 +84,8 @@ properties.
 
 Persisted keys:
 
-- `timer-presets` — array of `{id, name, totalSeconds, intervals[]}`
+- `timer-presets` — array of user presets `{id, name, category, totalSeconds, intervals[]}`
+  (bundled built-ins are read-only and live in code)
 - `timer-theme` — `light` or `dark`
 
 Optional browser capabilities (speech synthesis, wake lock, vibration) are

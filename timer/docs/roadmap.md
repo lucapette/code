@@ -76,6 +76,16 @@ settled.
 
 ## Done
 
+- **2026-09-06** — Preset library with categories. `Preset` gained a
+  `category`; the run screen groups picks under high-level, user-extensible
+  categories (Workouts / Productivity / Cooking / …) with filter chips, the
+  editor has a category field with suggestions, and a bundled library of
+  read-only built-ins (Mobility, Jump rope, Pomodoro classic, Focus, White
+  rice) now ships in code. `savedPresets` holds only user presets (built-ins
+  survive deletes and re-seed on a wiped/corrupt store); editing a built-in
+  forks it into an editable user copy. Legacy stores drop duplicate
+  built-in ids at load. Verified in-browser (grouping, filter, fork-on-edit,
+  delete user-only, timer smoke); type-check, 40 tests, build stay green.
 - **2026-09-06** — Polish batch. Draft rows now carry stable per-row ids
   (`DraftInterval`) so splicing never rebinds x-for keys; `window.confirm`
   is gone — deleting a preset asks inline with keyboard-friendly, focused

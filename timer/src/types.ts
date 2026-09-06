@@ -25,6 +25,7 @@ export interface DraftInterval extends Interval {
 export interface Preset {
   id: string;
   name: string;
+  category: string;
   totalSeconds: number;
   intervals: Interval[];
 }
