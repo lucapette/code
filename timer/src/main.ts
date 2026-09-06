@@ -93,20 +93,22 @@ function parsePreset(value: unknown): Preset | null {
   return intervals.length ? { id, name, category, intervals } : null;
 }
 
+/* Standing warm-up first (top-down), then descend once for the floor
+   block, and finish seated. Each move preps the next. */
 const MOBILITY_LABELS = [
   'body bounces',
   'neck circles',
   'arm swings',
   'full twists',
-  'downward up dog',
   'deepsquat reaches',
-  '90/90s',
-  'bridge pose',
-  'table top pose',
-  'toe touches',
-  'straddles',
   'cossack',
+  'downward up dog',
+  'table top pose',
+  'bridge pose',
   'windshield wipers',
+  '90/90s',
+  'straddles',
+  'toe touches',
 ];
 
 /* Read-only bundled presets. They never change and cannot be deleted — the
