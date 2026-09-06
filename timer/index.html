@@ -143,7 +143,12 @@
             type="button"
             @click="reset()"
             :disabled="status === 'IDLE'"
-          >Reset</button>
+          >
+            <svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7Z"/>
+            </svg>
+            Reset
+          </button>
         </div>
 
         <div class="picks" role="group" aria-label="Presets" x-show="view === 'timer'">

@@ -5,7 +5,7 @@
 
    A "session" is a sequence of intervals (a pattern). The pattern tiles
    until the session's total duration is consumed:
-     - mobility routine -> 30s exercises, each followed by a 5s rest
+     - mobility routine -> 45s exercises, no rest intervals
    ========================================================================== */
 
 import Alpine, { AlpineComponent } from 'alpinejs';
@@ -119,11 +119,8 @@ const MOBILITY_LABELS = [
 const DEFAULT_PRESET: Preset = {
   id: 'p-mobility',
   name: 'Mobility routine',
-  totalSeconds: MOBILITY_LABELS.length * 35,
-  intervals: MOBILITY_LABELS.flatMap((label) => [
-    { seconds: 30, label },
-    { seconds: 5, label: 'rest' },
-  ]),
+  totalSeconds: MOBILITY_LABELS.length * 45,
+  intervals: MOBILITY_LABELS.map((label) => ({ seconds: 45, label })),
 };
 
 function timerApp(): TimerApp {
@@ -156,8 +153,8 @@ function timerApp(): TimerApp {
     view: 'timer',            // 'timer' | 'edit'
     draftPresetId: 'new',     // 'new' or an existing savedPresets id
     draftName: '',            // preset name being configured
-    draftTotalMinutes: 8,     // session total being configured (minutes, default 7:35)
-    draftIntervals: [{ id: nextDraftId(), seconds: 455, label: '' }],
+    draftTotalMinutes: 10,    // session total being configured (minutes, default 9:45)
+    draftIntervals: [{ id: nextDraftId(), seconds: 585, label: '' }],
 
     /* --- Announcements & sharing --- */
     announce: { ...DEFAULT_ANNOUNCE },

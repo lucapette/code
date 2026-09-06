@@ -396,8 +396,7 @@ main {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  flex: 1;
-  padding: 14px 20px;
+  padding: 14px 22px;
   border-radius: var(--radius-sm);
   background: var(--accent);
   color: var(--accent-fg);
@@ -420,6 +419,10 @@ main {
 }
 
 .btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 14px 22px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
@@ -427,6 +430,11 @@ main {
   font-weight: 600;
   color: var(--text-secondary);
   transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-ghost .ico {
+  width: 18px;
+  height: 18px;
 }
 
 .btn-ghost:hover:not(:disabled) {
