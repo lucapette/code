@@ -391,11 +391,13 @@ function timerApp(): TimerApp {
     },
 
     /* --- Strip styling -------------------------------------------------- */
-    /* The strip segment for the current interval drains left-to-right as it
-       counts down (its bright fill is the portion remaining). Colors are
-       theme-explicit so a theme toggle re-resolves them deterministically.
-       Rest segments drop the golden-angle hue for a neutral gray — recovery
-       reads as calm, not as another color on the work wheel. */
+    /* The strip segment for the current interval drains toward the right as
+       it counts down (its right-anchored bright fill is the portion
+       remaining), in step with the session bar growing left-to-right — both
+       fronts sweep the same direction. Colors are theme-explicit so a theme
+       toggle re-resolves them deterministically. Rest segments drop the
+       golden-angle hue for a neutral gray — recovery reads as calm, not as
+       another color on the work wheel. */
     segColor(hue: number, kind: IntervalKind = 'work') {
       if (kind === 'rest') {
         const g = 228; // hue stays neutral for rest

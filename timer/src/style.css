@@ -288,7 +288,8 @@ main {
 /* --- Plan strip ------------------------------------------------------------ */
 /* Each interval is one segment, hue-colored by pattern position. The current
    segment carries a bright fill (`--fill` = remaining fraction) that drains
-   as the interval counts down. Colors are theme-explicit, set inline. */
+   toward the right as the interval counts down, mirroring the session bar's
+   left-to-right growth. Colors are theme-explicit, set inline. */
 .strip {
   display: flex;
   width: 100%;
@@ -311,7 +312,9 @@ main {
 .seg::after {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
   width: calc(var(--fill, 0) * 100%);
   background: var(--seg-fill);
 }
