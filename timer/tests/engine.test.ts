@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Interval } from '../src/types';
 import {
+  finalStretch,
   formatClock,
   indexOfInterval,
   intervalState,
@@ -258,6 +259,24 @@ describe('minuteMark', () => {
   it('keeps quiet in a 60s interval — the change cue covers it', () => {
     expect(minuteMark(60, 59.9, 1)).toBeNull();
     expect(minuteMark(60, 0.5, 1)).toBeNull();
+  });
+});
+
+describe('finalStretch', () => {
+  it('is inactive until the last 10 seconds of an interval', () => {
+    expect(finalStretch(40, 40)).toBe(false);
+    expect(finalStretch(40, 11)).toBe(false);
+  });
+
+  it('activates once inside the last 10 seconds', () => {
+    expect(finalStretch(40, 10)).toBe(true);
+    expect(finalStretch(40, 0.5)).toBe(true);
+  });
+
+  it('never fires for short intervals — the change cue covers them', () => {
+    expect(finalStretch(10, 10)).toBe(false);
+    expect(finalStretch(8, 1)).toBe(false);
+    expect(finalStretch(5, 0)).toBe(false);
   });
 });
 

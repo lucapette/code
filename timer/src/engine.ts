@@ -141,6 +141,14 @@ export function stripLayout(intervals: Interval[]): StripSegment[] {
   }));
 }
 
+/* Whether an interval's final 10-second stretch is active. Only intervals
+   longer than 10s have a real stretch — a shorter one's whole run is
+   covered by the interval-change cue. Same window as the danger color and
+   the next-label teaser, so the beep, the color and the teaser agree. */
+export function finalStretch(intervalTotal: number, intervalRemaining: number): boolean {
+  return intervalTotal > 10 && intervalRemaining <= 10;
+}
+
 /* Label of the upcoming interval, for the teaser in the final seconds of
    the current one (same window as the danger color). Empty when the window
    hasn't started, this is the session's final interval, or the next

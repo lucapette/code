@@ -39,7 +39,11 @@ const URGENCY_COLOR: Record<Urgency, string> = {
 const UNNAMED_CUE_FREQ = 520;
 const UNNAMED_CUE_VOLUME = 0.4;
 
-const DEFAULT_ANNOUNCE: AnnounceSettings = { voice: true, beeps: true, vibrate: true };
+/* Tone for the moment a countdown enters its final 10 seconds. Always on. */
+const FINAL_STRETCH_FREQ = 880;
+const FINAL_STRETCH_DURATION = 160;
+
+const DEFAULT_ANNOUNCE: AnnounceSettings = { voice: true, vibrate: true };
 
 /* Monotonic id source for draft rows (stable x-for keys). */
 let draftSeq = 0;
@@ -185,6 +189,7 @@ function timerApp(): TimerApp {
     intervalTotal: DEFAULT_PRESET.intervals[0].seconds, // duration of the current interval
     intervalRemaining: DEFAULT_PRESET.intervals[0].seconds, // time left in the current interval
     announcedIntervalIndex: null, // last interval index whose start was announced
+    stretchBeeped: false,         // whether the final-10s beep already fired for this interval
 
     /* --- Timer state --- */
     status: 'IDLE',           // IDLE | RUNNING | PAUSED
@@ -262,7 +267,6 @@ function timerApp(): TimerApp {
           if (isRecord(parsed)) {
             this.announce = {
               voice: typeof parsed.voice === 'boolean' ? parsed.voice : DEFAULT_ANNOUNCE.voice,
-              beeps: typeof parsed.beeps === 'boolean' ? parsed.beeps : DEFAULT_ANNOUNCE.beeps,
               vibrate: typeof parsed.vibrate === 'boolean' ? parsed.vibrate : DEFAULT_ANNOUNCE.vibrate,
             };
           }
@@ -536,6 +540,7 @@ function timerApp(): TimerApp {
       /* A fresh start (elapsed 0) must announce the first interval; on resume
          the current interval was already announced, so skip it. */
       this.announcedIntervalIndex = this.baseElapsed > 0 ? this.intervalIndex : null;
+      this.stretchBeeped = this.baseElapsed > 0;
       this.lastSpokenMinute = Math.ceil(this.intervalRemaining / 60);
       this.status = 'RUNNING';
       this.requestWakeLock();
@@ -573,6 +578,7 @@ function timerApp(): TimerApp {
       this.intervalRemaining = this.intervalTotal;
       this.lastSpokenMinute = null;
       this.announcedIntervalIndex = null;
+      this.stretchBeeped = false;
       this.heartbeat.stop();
       this.stopWakeLock();
     },
@@ -596,6 +602,7 @@ function timerApp(): TimerApp {
       this.intervalRemaining = this.intervalTotal;
       this.lastSpokenMinute = null;
       this.announcedIntervalIndex = null;
+      this.stretchBeeped = false;
     },
 
     /* --- Engine -------------------------------------------------------- */
@@ -626,6 +633,12 @@ function timerApp(): TimerApp {
       if (!this.isRestNow && this.intervalTotal >= 60) {
         this.checkMinuteMark(this.intervalRemaining);
       }
+      /* One beep the moment an interval enters its final 10 seconds —
+         never optional, so it sounds even with voice and buzz both off. */
+      if (!this.stretchBeeped && TimerEngine.finalStretch(this.intervalTotal, this.intervalRemaining)) {
+        this.stretchBeeped = true;
+        this.playBeep(FINAL_STRETCH_FREQ, FINAL_STRETCH_DURATION, 'sine', 0.5);
+      }
     },
 
     tick() {
@@ -641,12 +654,14 @@ function timerApp(): TimerApp {
     onIntervalChange(idx: number) {
       this.announcedIntervalIndex = idx;
       this.intervalIndex = idx;
+      /* A new interval's final stretch hasn't been announced yet. */
+      this.stretchBeeped = false;
       const iv = this.session.intervals[idx];
       const label = (iv?.label || '').trim();
 
       if (this.announce.voice && label) {
         this.speak(label);
-      } else if (this.announce.beeps && !label) {
+      } else if (!label) {
         this.playBeep(UNNAMED_CUE_FREQ, 130, 'sine', UNNAMED_CUE_VOLUME);
       }
       if (this.announce.vibrate && navigator.vibrate) navigator.vibrate(40);
@@ -669,7 +684,7 @@ function timerApp(): TimerApp {
           : `${minutes} minutes remaining`;
         this.speak(label);
       }
-      if (this.announce.beeps) this.playBeep(800, 150, 'sine', 0.4);
+      this.playBeep(800, 150, 'sine', 0.4);
       if (this.announce.vibrate && navigator.vibrate) navigator.vibrate(50);
     },
 
@@ -684,10 +699,8 @@ function timerApp(): TimerApp {
       this.view = 'library';
 
       if (this.announce.voice) this.speak('Time is up!');
-      if (this.announce.beeps) {
-        this.playBeep(520, 160, 'sine', 0.5);
-        this.playBeep(780, 180, 'sine', 0.5);
-      }
+      this.playBeep(520, 160, 'sine', 0.5);
+      this.playBeep(780, 180, 'sine', 0.5);
       if (this.announce.vibrate && navigator.vibrate) {
         navigator.vibrate([120, 80, 120, 80, 240]);
       }
@@ -1033,6 +1046,7 @@ type TimerAppState = {
   intervalTotal: number;
   intervalRemaining: number;
   announcedIntervalIndex: number | null;
+  stretchBeeped: boolean;
   status: TimerStatus;
   rafId: number | null;
   heartbeat: HeartbeatController;

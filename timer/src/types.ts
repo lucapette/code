@@ -55,10 +55,11 @@ export type Theme = 'light' | 'dark';
 
 export type Urgency = 'normal' | 'warning' | 'danger';
 
-/** Which alert channels are active: spoken voice, beeps/tone cues, buzzing. */
+/** Which alert channels are active: spoken voice, buzzing. Tone cues play
+    always — the final-stretch beep and interval/limit tones are never
+    optional. */
 export interface AnnounceSettings {
   voice: boolean;
-  beeps: boolean;
   vibrate: boolean;
 }
 

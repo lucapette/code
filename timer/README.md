@@ -26,11 +26,11 @@ TypeScript + Vite app.
   Pomodoro classic, Focus, White rice) alongside your own presets, each in
   a high-level **category** (Workouts, Productivity, Cooking, …). Built-ins
   can't be deleted or corrupted; editing one forks it into an editable copy
-- Announcement preferences (voice / tones / buzz) toggled in the editor:
-  named intervals are spoken, and an interval with no label plays one fixed
-  tone
-- Voice announcements (Web Speech API) with beep/vibration fallbacks, and
-  minute marks announced inside intervals of 60s or longer
+- Announcement preferences (voice / buzz) toggled in the editor: named
+  intervals are spoken, and an interval with no label plays one fixed tone
+- Voice announcements (Web Speech API) with always-on tones, and minute
+  marks announced inside intervals of 60s or longer
+- A beep the moment an interval hits its final 10 seconds, always on
 - "Next interval" teaser in the final seconds of the current one
 - Preset import/export: the whole list copies as pretty JSON and pastes
   right back in, validated and re-id'd on arrival

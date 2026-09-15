@@ -486,19 +486,6 @@
           </label>
           <label class="pref-row">
             <span class="pref-text">
-              <span class="pref-label">Tones</span>
-              <span class="pref-hint">Fixed cue for unnamed intervals, plus minute marks and finish chime</span>
-            </span>
-            <input
-              class="switch"
-              type="checkbox"
-              :checked="announce.beeps"
-              @change="setAnnounce('beeps', $event.target.checked)"
-              aria-label="Tone cues"
-            />
-          </label>
-          <label class="pref-row">
-            <span class="pref-text">
               <span class="pref-label">Buzz</span>
               <span class="pref-hint">Vibration on interval changes and completion</span>
             </span>
