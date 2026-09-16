@@ -43,6 +43,17 @@ const UNNAMED_CUE_VOLUME = 0.4;
 const FINAL_STRETCH_FREQ = 880;
 const FINAL_STRETCH_DURATION = 160;
 
+/* The countdown, the way interval timers do it: three identical ticks a
+   second apart, then the last tone held for a full second an octave up. The
+   held tone starts on T-1 and ends on the boundary, so the next interval's
+   announcement follows it the moment it stops. Shares its pitch with the
+   ten-second beep on purpose. */
+const COUNTDOWN_TICK_FREQ = 440;
+const COUNTDOWN_TICK_DURATION = 100;
+const COUNTDOWN_LONG_FREQ = FINAL_STRETCH_FREQ;
+const COUNTDOWN_LONG_DURATION = 1000;
+const TICK_VOLUME = 0.4;
+
 const DEFAULT_ANNOUNCE: AnnounceSettings = { voice: true, vibrate: true };
 
 /* Monotonic id source for draft rows (stable x-for keys). */
@@ -190,6 +201,7 @@ function timerApp(): TimerApp {
     intervalRemaining: DEFAULT_PRESET.intervals[0].seconds, // time left in the current interval
     announcedIntervalIndex: null, // last interval index whose start was announced
     stretchBeeped: false,         // whether the final-10s beep already fired for this interval
+    lastCountdownTick: null,      // last countdown cue beaten for this interval (4 | 3 | 2 | 1 | null)
 
     /* --- Timer state --- */
     status: 'IDLE',           // IDLE | RUNNING | PAUSED
@@ -458,6 +470,17 @@ function timerApp(): TimerApp {
       );
     },
 
+    /* Tail-of-interval cue classes: a geometric frame around the stage that
+       fades in for the final-10s stretch and flashes per 3-2-1 tick. */
+    get stagePulse(): string {
+      if (this.status !== 'RUNNING') return '';
+      const stretch = TimerEngine.finalStretch(this.intervalTotal, this.intervalRemaining)
+        ? 'stretch'
+        : '';
+      const tick = this.lastCountdownTick !== null ? `tick-${this.lastCountdownTick}` : '';
+      return [stretch, tick].filter(Boolean).join(' ');
+    },
+
     /* Interval count inside the session, e.g. "3 / 10", delegated to the
        engine. Empty for a session with fewer than two work intervals — a
        plain countdown has nothing to count. */
@@ -528,6 +551,10 @@ function timerApp(): TimerApp {
 
     start() {
       if (this.status === 'RUNNING') return;
+      /* Create/resume the AudioContext inside the Start tap — beeps fire
+         later from rAF, where browsers will not let a suspended context
+         start, leaving the tone silent. */
+      this.unlockAudio();
       const total = TimerEngine.totalDuration(this.session.intervals);
       if (this.sessionRemaining <= 0) {
         this.baseElapsed = 0;
@@ -542,7 +569,12 @@ function timerApp(): TimerApp {
       /* A fresh start (elapsed 0) must announce the first interval; on resume
          the current interval was already announced, so skip it. */
       this.announcedIntervalIndex = this.baseElapsed > 0 ? this.intervalIndex : null;
-      this.stretchBeeped = this.baseElapsed > 0;
+      /* A fresh start keeps the interval cues unsent; on resume they stay
+         as they were so the 10s beep and the 3-2-1 ticks don't replay. */
+      if (this.baseElapsed === 0) {
+        this.stretchBeeped = false;
+        this.lastCountdownTick = null;
+      }
       this.lastSpokenMinute = Math.ceil(this.intervalRemaining / 60);
       this.status = 'RUNNING';
       this.requestWakeLock();
@@ -581,6 +613,7 @@ function timerApp(): TimerApp {
       this.lastSpokenMinute = null;
       this.announcedIntervalIndex = null;
       this.stretchBeeped = false;
+      this.lastCountdownTick = null;
       this.heartbeat.stop();
       this.stopWakeLock();
     },
@@ -605,6 +638,7 @@ function timerApp(): TimerApp {
       this.lastSpokenMinute = null;
       this.announcedIntervalIndex = null;
       this.stretchBeeped = false;
+      this.lastCountdownTick = null;
     },
 
     /* --- Engine -------------------------------------------------------- */
@@ -641,6 +675,18 @@ function timerApp(): TimerApp {
         this.stretchBeeped = true;
         this.playBeep(FINAL_STRETCH_FREQ, FINAL_STRETCH_DURATION, 'sine', 0.5);
       }
+      /* The countdown: three short ticks then a held tone, each one also
+         flashing the frame around the stage. */
+      const tick = TimerEngine.countdownTick(this.intervalRemaining, this.lastCountdownTick);
+      if (tick !== null) {
+        this.lastCountdownTick = tick;
+        this.playBeep(
+          tick === 1 ? COUNTDOWN_LONG_FREQ : COUNTDOWN_TICK_FREQ,
+          tick === 1 ? COUNTDOWN_LONG_DURATION : COUNTDOWN_TICK_DURATION,
+          'sine',
+          TICK_VOLUME
+        );
+      }
     },
 
     tick() {
@@ -658,6 +704,7 @@ function timerApp(): TimerApp {
       this.intervalIndex = idx;
       /* A new interval's final stretch hasn't been announced yet. */
       this.stretchBeeped = false;
+      this.lastCountdownTick = null;
       const iv = this.session.intervals[idx];
       const label = (iv?.label || '').trim();
 
@@ -954,7 +1001,10 @@ function timerApp(): TimerApp {
     },
 
     /* --- Audio --------------------------------------------------------- */
-    playBeep(freq: number, duration: number, type: OscillatorType = 'sine', volume = 0.5) {
+    /* Prime Web Audio on a user gesture: a context born outside one starts
+       suspended and its currentTime stays frozen, so later beeps scheduled
+       against it never sound. A one-sample silent buffer unlocks iOS too. */
+    unlockAudio() {
       try {
         const webkitWindow = window as WebkitWindow;
         const Ctx = window.AudioContext || webkitWindow.webkitAudioContext;
@@ -963,20 +1013,44 @@ function timerApp(): TimerApp {
           this.audioCtx = new Ctx();
         }
         if (this.audioCtx.state === 'suspended') void this.audioCtx.resume();
+        const src = this.audioCtx.createBufferSource();
+        src.buffer = this.audioCtx.createBuffer(1, 1, 22050);
+        src.connect(this.audioCtx.destination);
+        src.start(0);
+      } catch (err) {
+        console.warn('Audio failed:', err);
+      }
+    },
 
-        const osc = this.audioCtx.createOscillator();
-        const gain = this.audioCtx.createGain();
-        const t = this.audioCtx.currentTime;
+    playBeep(freq: number, duration: number, type: OscillatorType = 'sine', volume = 0.5) {
+      try {
+        const webkitWindow = window as WebkitWindow;
+        const Ctx = window.AudioContext || webkitWindow.webkitAudioContext;
+        if (!Ctx) return;
+        if (!this.audioCtx || this.audioCtx.state === 'closed') {
+          this.audioCtx = new Ctx();
+        }
+        const ctx = this.audioCtx;
+        /* Resume first, then schedule: a suspended context freezes
+           currentTime, so scheduling now would land the tone in the past
+           (and stay silent) once resume completes. */
+        void ctx.resume()
+          .then(() => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            const t = ctx.currentTime;
 
-        osc.type = type;
-        osc.frequency.value = freq;
+            osc.type = type;
+            osc.frequency.value = freq;
 
-        gain.gain.setValueAtTime(volume, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + duration / 1000);
+            gain.gain.setValueAtTime(volume, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + duration / 1000);
 
-        osc.connect(gain).connect(this.audioCtx.destination);
-        osc.start(t);
-        osc.stop(t + duration / 1000);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + duration / 1000);
+          })
+          .catch((err) => console.warn('Audio failed:', err));
       } catch (err) {
         console.warn('Audio failed:', err);
       }
@@ -1049,6 +1123,7 @@ type TimerAppState = {
   intervalRemaining: number;
   announcedIntervalIndex: number | null;
   stretchBeeped: boolean;
+  lastCountdownTick: number | null;
   status: TimerStatus;
   rafId: number | null;
   heartbeat: HeartbeatController;
@@ -1093,6 +1168,7 @@ type TimerAppState = {
   readonly sessionMode: boolean;
   readonly draftStrip: StripSegment[];
   readonly nextLabel: string;
+  readonly stagePulse: string;
   readonly intervalProgress: string;
   readonly presets: Preset[];
   readonly categories: string[];
@@ -1139,6 +1215,7 @@ type TimerAppState = {
   setAnnounce(key: keyof AnnounceSettings, on: boolean): void;
   copyPresets(): Promise<void>;
   importPresets(): Promise<void>;
+  unlockAudio(): void;
   playBeep(freq: number, duration: number, type?: OscillatorType, volume?: number): void;
   speak(text: string): void;
   requestWakeLock(): Promise<void>;

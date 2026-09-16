@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Interval } from '../src/types';
 import {
+  countdownTick,
   finalStretch,
   formatClock,
   indexOfInterval,
@@ -277,6 +278,33 @@ describe('finalStretch', () => {
     expect(finalStretch(10, 10)).toBe(false);
     expect(finalStretch(8, 1)).toBe(false);
     expect(finalStretch(5, 0)).toBe(false);
+  });
+});
+
+describe('countdownTick', () => {
+  it('is silent outside the final four seconds', () => {
+    expect(countdownTick(10, null)).toBeNull();
+    expect(countdownTick(4.1, null)).toBeNull();
+  });
+
+  it('cues 4, then 3, then 2, then the held 1', () => {
+    expect(countdownTick(4, null)).toBe(4);
+    expect(countdownTick(4, 4)).toBeNull();
+    expect(countdownTick(3, 4)).toBe(3);
+    expect(countdownTick(2, 3)).toBe(2);
+    expect(countdownTick(1, 2)).toBe(1);
+    expect(countdownTick(0.5, 1)).toBeNull();
+  });
+
+  it('hands the boundary straight to the announcement', () => {
+    expect(countdownTick(1, null)).toBe(1);
+    expect(countdownTick(2, 3)).toBe(2);
+  });
+
+  it('still works across a fractional remaining value', () => {
+    expect(countdownTick(3.9999, null)).toBe(4);
+    expect(countdownTick(1.9999, 3)).toBe(2);
+    expect(countdownTick(0.9999, 2)).toBe(1);
   });
 });
 

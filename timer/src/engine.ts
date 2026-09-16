@@ -149,6 +149,26 @@ export function finalStretch(intervalTotal: number, intervalRemaining: number): 
   return intervalTotal > 10 && intervalRemaining <= 10;
 }
 
+/* The countdown cue: returns the next cue (4, 3, 2 or 1) as the countdown
+   first enters its second, or null when nothing has changed since lastTick.
+   Four cues across the last four seconds — the first three are the short
+   ticks, the last is the tone held for a full second. Cue 1 starts on T-1 and
+   ends on the boundary, so the next interval's announcement follows it the
+   moment it stops (its own cue marks the switch). */
+export function countdownTick(
+  intervalRemaining: number,
+  lastTick: number | null
+): number | null {
+  const tick = intervalRemaining <= 1 ? 1
+    : intervalRemaining <= 2 ? 2
+    : intervalRemaining <= 3 ? 3
+    : intervalRemaining <= 4 ? 4
+    : null;
+  if (tick === null) return null;
+  if (lastTick !== null && tick >= lastTick) return null;
+  return tick;
+}
+
 /* Label of the upcoming interval, for the teaser in the final seconds of
    the current one (same window as the danger color). Empty when the window
    hasn't started, this is the session's final interval, or the next
