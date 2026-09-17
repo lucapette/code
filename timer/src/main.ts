@@ -470,15 +470,11 @@ function timerApp(): TimerApp {
       );
     },
 
-    /* Tail-of-interval cue classes: a geometric frame around the stage that
-       fades in for the final-10s stretch and flashes per 3-2-1 tick. */
+    /* Tail-of-interval cue classes: one class per countdown cue, so each beat
+       restarts the sweep under the clock. */
     get stagePulse(): string {
       if (this.status !== 'RUNNING') return '';
-      const stretch = TimerEngine.finalStretch(this.intervalTotal, this.intervalRemaining)
-        ? 'stretch'
-        : '';
-      const tick = this.lastCountdownTick !== null ? `tick-${this.lastCountdownTick}` : '';
-      return [stretch, tick].filter(Boolean).join(' ');
+      return this.lastCountdownTick !== null ? `tick-${this.lastCountdownTick}` : '';
     },
 
     /* Interval count inside the session, e.g. "3 / 10", delegated to the

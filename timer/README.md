@@ -31,9 +31,9 @@ TypeScript + Vite app.
 - Voice announcements (Web Speech API) with always-on tones, and minute
   marks announced inside intervals of 60s or longer
 - A beep the moment an interval hits its final 10 seconds, always on
-- A thin frame around the countdown for the final 10 seconds, plus the usual
-  four-cue countdown (three identical ticks, then the last tone held a second
-  an octave up, ending on the boundary) with a frame flash per cue
+- A four-cue countdown (three identical ticks, then the last tone held a
+  second an octave up, ending on the boundary) with a thin rule that sweeps
+  out under the clock on each cue
 - "Next interval" teaser in the final seconds of the current one
 - Preset import/export: the whole list copies as pretty JSON and pastes
   right back in, validated and re-id'd on arrival
