@@ -129,8 +129,8 @@ const MOBILITY_INTERVALS: Interval[] = [
   { seconds: 30, label: 'table top pose' },
   { seconds: 30, label: 'bridge pose' },
   { seconds: 30, label: 'windshield wipers' },
-  { seconds: 30, label: 'pigeon pose left' },
-  { seconds: 30, label: 'pigeon pose right' },
+  { seconds: 30, label: '90/90s left' },
+  { seconds: 30, label: '90/90s right' },
   { seconds: 45, label: 'straddles' },
   { seconds: 30, label: 'toe touches' },
 ];
@@ -163,6 +163,30 @@ const BUILTIN_PRESETS: Preset[] = [
       { seconds: 35, label: 'ankle stretch' },
       { seconds: 35, label: 'arm circles' },
       { seconds: 30, label: 'final warmup' },
+    ],
+  },
+  /* The warmup's cooldown sibling from the same channel: eight stretches
+     at 30s a hold, the one-sided ones split left/right so the spoken
+     label calls the switch — seven minutes flat. */
+  {
+    id: 'p-running-cooldown',
+    name: 'Running cooldown',
+    category: 'Workouts',
+    intervals: [
+      { seconds: 30, label: 'side stretch left' },
+      { seconds: 30, label: 'side stretch right' },
+      { seconds: 30, label: 'calf stretch left' },
+      { seconds: 30, label: 'calf stretch right' },
+      { seconds: 30, label: 'hamstring stretch left' },
+      { seconds: 30, label: 'hamstring stretch right' },
+      { seconds: 30, label: 'quad stretch left' },
+      { seconds: 30, label: 'quad stretch right' },
+      { seconds: 30, label: 'cross leg fold left' },
+      { seconds: 30, label: 'cross leg fold right' },
+      { seconds: 30, label: 'wide legged flat back stretch' },
+      { seconds: 30, label: 'wide legged forward fold' },
+      { seconds: 30, label: 'glute & piriformis left' },
+      { seconds: 30, label: 'glute & piriformis right' },
     ],
   },
   {

@@ -23,8 +23,8 @@ TypeScript + Vite app.
   here), a dedicated **Timer** screen you land on when you pick one (it
   stages the plan, then runs the countdown), and the **Presets editor
 - A preset **library**: read-only bundled built-ins (Mobility, Running
-  warmup, Jump rope, Pomodoro classic, Focus, White rice) alongside your
-  own presets, each in
+  warmup, Running cooldown, Jump rope, Pomodoro classic, Focus, White
+  rice) alongside your own presets, each in
   a high-level **category** (Workouts, Productivity, Cooking, …). Built-ins
   can't be deleted or corrupted; editing one forks it into an editable copy
 - Announcement preferences (voice / buzz) toggled in the editor: named
