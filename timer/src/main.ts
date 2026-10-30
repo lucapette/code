@@ -109,21 +109,30 @@ function parsePreset(value: unknown): Preset | null {
 }
 
 /* Standing warm-up first (top-down), then descend once for the floor
-   block, and finish seated. Each move preps the next. */
-const MOBILITY_LABELS = [
-  'body bounces',
-  'neck circles',
-  'arm swings',
-  'full twists',
-  'deepsquat reaches',
-  'cossack',
-  'downward up dog',
-  'table top pose',
-  'bridge pose',
-  'windshield wipers',
-  '90/90s',
-  'straddles',
-  'toe touches',
+   block, and finish seated. Each move preps the next. Durations follow
+   the move, not one clock: rhythmic moves get 30s (clean reps through
+   range do the work, not time), the two marinate holds get 45s, and
+   one-sided moves split into left/right intervals at 30s a side — the
+   spoken label doubles as the switch cue. */
+const MOBILITY_INTERVALS: Interval[] = [
+  { seconds: 30, label: 'body bounces' },
+  { seconds: 30, label: 'neck circles' },
+  { seconds: 30, label: 'arm swings' },
+  { seconds: 30, label: 'full twists' },
+  { seconds: 45, label: 'deepsquat reaches' },
+  { seconds: 30, label: 'cossack left' },
+  { seconds: 30, label: 'cossack right' },
+  { seconds: 30, label: 'hip flexor stretch left' },
+  { seconds: 30, label: 'hip flexor stretch right' },
+  { seconds: 30, label: 'cat-cow' },
+  { seconds: 30, label: 'downward up dog' },
+  { seconds: 30, label: 'table top pose' },
+  { seconds: 30, label: 'bridge pose' },
+  { seconds: 30, label: 'windshield wipers' },
+  { seconds: 30, label: 'pigeon pose left' },
+  { seconds: 30, label: 'pigeon pose right' },
+  { seconds: 45, label: 'straddles' },
+  { seconds: 30, label: 'toe touches' },
 ];
 
 /* Read-only bundled presets. They never change and cannot be deleted — the
@@ -135,7 +144,26 @@ const BUILTIN_PRESETS: Preset[] = [
     id: 'p-mobility',
     name: 'Mobility routine',
     category: 'Workouts',
-    intervals: MOBILITY_LABELS.map((label) => ({ seconds: 45, label })),
+    intervals: MOBILITY_INTERVALS.map((iv) => ({ ...iv })),
+  },
+  /* Chapter list of the follow-along video it came from, squeezed to a
+     flat five minutes: ankles and hips first, leg swing runs longest,
+     then stretch, open up, and finish with the final burst. */
+  {
+    id: 'p-running-warmup',
+    name: 'Running warmup',
+    category: 'Workouts',
+    intervals: [
+      { seconds: 30, label: 'roll ankle in and out' },
+      { seconds: 30, label: 'forward and back' },
+      { seconds: 30, label: 'hip flexion' },
+      { seconds: 30, label: 'hip rotation' },
+      { seconds: 50, label: 'leg swing' },
+      { seconds: 30, label: 'side swing' },
+      { seconds: 35, label: 'ankle stretch' },
+      { seconds: 35, label: 'arm circles' },
+      { seconds: 30, label: 'final warmup' },
+    ],
   },
   {
     id: 'p-jumprope',
