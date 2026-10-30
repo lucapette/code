@@ -453,6 +453,98 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
+/* --- Session rundown ------------------------------------------------------- */
+/* The pre-start plan list: every interval by name and length before the
+   session commits, folding away the moment it runs. Dots match the plan
+   strip segment hues one-for-one. */
+.rundown {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.rundown-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.rundown-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.rundown-head svg {
+  transition: transform 0.2s ease;
+}
+
+.rundown.closed .rundown-head svg {
+  transform: rotate(-90deg);
+}
+
+.rundown-body {
+  max-height: 300px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+}
+
+.rd-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  font-size: 0.84rem;
+}
+
+.rd-row + .rd-row {
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.rd-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.rd-lbl {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rd-sec {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* The interval the clock opens on gets a quiet accent wash. */
+.rd-row.up {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+
+.rd-row.up .rd-lbl {
+  font-weight: 700;
+}
+
+.rd-row.rest .rd-lbl,
+.rd-row.rest .rd-sec {
+  color: var(--text-secondary);
+}
+
 /* --- Controls -------------------------------------------------------------- */
 .controls {
   display: flex;
@@ -630,6 +722,21 @@ main {
 
 .pick-row:disabled {
   opacity: 0.45;
+}
+
+/* Two-line pick rows: the name/meta line over a mini plan strip. */
+.pick-main {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: 100%;
+}
+
+.pick-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .pick-tag,

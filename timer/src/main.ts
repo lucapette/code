@@ -270,6 +270,7 @@ function timerApp(): TimerApp {
     view: 'library',          // 'library' | 'timer' | 'edit'
     returnView: 'library',    // where the back button in the editor goes
     categoryFilter: 'all',    // 'all' or a category name (library filter)
+    rundownOpen: true,        // session rundown card on the staging screen
     draftPresetId: 'new',     // 'new' or an existing savedPresets id
     draftName: '',            // preset name being configured
     draftCategory: 'Other',   // preset category being configured
@@ -374,6 +375,11 @@ function timerApp(): TimerApp {
 
     get sessionDisplay() {
       return TimerEngine.formatClock(Math.ceil(Math.max(0, this.sessionRemaining)));
+    },
+
+    /* Whole-session length for the rundown header — it never counts down. */
+    get sessionTotalDisplay() {
+      return TimerEngine.formatClock(TimerEngine.totalDuration(this.session.intervals));
     },
 
     /* Current interval in the session's finite list. */
@@ -510,6 +516,19 @@ function timerApp(): TimerApp {
 
     get draftStrip() {
       return this.miniStrip({ intervals: this.draftIntervals });
+    },
+
+    /* Rundown rows: each interval's name over its seconds, the first one
+       flagged as the one the clock will open on. Unnamed intervals fall
+       back to the strip's own naming. */
+    rundownLabel(iv: Interval, i: number) {
+      const name = iv.label || (iv.kind === 'rest' ? 'rest' : `interval ${i + 1}`);
+      return i === 0 ? `${name} · up first` : name;
+    },
+
+    /* The rundown's hue dots match the plan strip segment by segment. */
+    rundownDotStyle(iv: Interval, i: number) {
+      return { backgroundColor: this.segColor(segmentHue(i), iv.kind).fill };
     },
 
     /* Label of the upcoming interval, shown as a teaser in the final
@@ -678,6 +697,7 @@ function timerApp(): TimerApp {
       };
       this.status = 'IDLE';
       this.baseElapsed = 0;
+      this.rundownOpen = true;
       this.sessionRemaining = TimerEngine.totalDuration(this.session.intervals);
       const first = this.session.intervals[0];
       this.intervalIndex = 0;
@@ -1184,6 +1204,7 @@ type TimerAppState = {
   view: View;
   returnView: View;
   categoryFilter: string;
+  rundownOpen: boolean;
   draftPresetId: string;
   draftName: string;
   draftCategory: string;
@@ -1202,6 +1223,7 @@ type TimerAppState = {
   /* Getters (readonly, reactively bound). */
   readonly displayTime: string;
   readonly sessionDisplay: string;
+  readonly sessionTotalDisplay: string;
   readonly currentInterval: Interval | undefined;
   readonly isRestNow: boolean;
   readonly sessionKinds: { work: number; rest: number };
@@ -1231,6 +1253,8 @@ type TimerAppState = {
   segStyle(seg: PatternSegment, i: number): Record<string, string | number>;
   miniStrip(preset: { intervals: Interval[] }): StripSegment[];
   miniSegStyle(seg: StripSegment, i: number): Record<string, string>;
+  rundownLabel(iv: Interval, i: number): string;
+  rundownDotStyle(iv: Interval, i: number): Record<string, string>;
   togglePlay(): void;
   start(): void;
   pause(): void;

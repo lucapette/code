@@ -135,6 +135,33 @@
               </span>
             </div>
           </div>
+
+          <div class="rundown" x-show="status === 'IDLE'" x-cloak :class="{ closed: !rundownOpen }">
+            <button
+              class="rundown-head"
+              type="button"
+              @click="rundownOpen = !rundownOpen"
+              :aria-expanded="rundownOpen"
+              aria-controls="session-rundown"
+            >
+              <span>Session rundown</span>
+              <span class="rundown-meta">
+                <span x-text="sessionTotalDisplay + ' total'"></span>
+                <svg class="ico-sm" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </button>
+            <div class="rundown-body" id="session-rundown" x-show="rundownOpen" x-cloak>
+              <template x-for="(iv, i) in session.intervals" :key="i">
+                <div class="rd-row" :class="{ up: i === 0, rest: iv.kind === 'rest' }">
+                  <span class="rd-dot" :style="rundownDotStyle(iv, i)" aria-hidden="true"></span>
+                  <span class="rd-lbl" x-text="rundownLabel(iv, i)"></span>
+                  <span class="rd-sec" x-text="iv.seconds + 's'"></span>
+                </div>
+              </template>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -207,16 +234,25 @@
                   :class="{ active: activePresetId === preset.id }"
                   :aria-pressed="activePresetId === preset.id"
                 >
-                  <span class="pick-name">
-                    <span x-text="preset.name">Mobility routine</span>
-                    <span
-                      class="pick-tag"
-                      x-show="isBuiltin(preset.id)"
-                      x-cloak
-                      aria-label="Built-in preset"
-                    >Built-in</span>
+                  <span class="pick-main">
+                    <span class="pick-top">
+                      <span class="pick-name">
+                        <span x-text="preset.name">Mobility routine</span>
+                        <span
+                          class="pick-tag"
+                          x-show="isBuiltin(preset.id)"
+                          x-cloak
+                          aria-label="Built-in preset"
+                        >Built-in</span>
+                      </span>
+                      <span class="pick-min" x-text="presetMinutes(preset) + ' min · ' + preset.intervals.length + ' intv'"></span>
+                    </span>
+                    <span class="pick-strip" aria-hidden="true">
+                      <template x-for="(seg, i) in miniStrip(preset)" :key="i">
+                        <span class="mini-seg" :style="miniSegStyle(seg, i)"></span>
+                      </template>
+                    </span>
                   </span>
-                  <span class="pick-min" x-text="presetMinutes(preset) + ' min · ' + preset.intervals.length + ' intv'"></span>
                 </button>
               </template>
             </div>

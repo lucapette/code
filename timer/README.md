@@ -15,6 +15,9 @@ TypeScript + Vite app.
 - Plan strip: the session's intervals render as colored segments, current
   one highlighted and draining as it counts down — you can see the whole
   plan at a glance
+- A pre-start **session rundown**: before you press Start, the whole plan
+  lists out — every interval's name, length, and the session total — and
+  it folds away the moment the session runs
 - One big current-interval countdown, with a thin session progress bar and
   left-remaining label underneath
 - Finite interval sequences: a preset is its fully-expanded run, no hidden
@@ -27,6 +30,8 @@ TypeScript + Vite app.
   rice) alongside your own presets, each in
   a high-level **category** (Workouts, Productivity, Cooking, …). Built-ins
   can't be deleted or corrupted; editing one forks it into an editable copy
+- Library rows carry a mini plan strip, so a preset's shape — its long
+  blocks and short beats — reads at a glance before you pick it
 - Announcement preferences (voice / buzz) toggled in the editor: named
   intervals are spoken, and an interval with no label plays one fixed tone
 - Voice announcements (Web Speech API) with always-on tones, and minute
