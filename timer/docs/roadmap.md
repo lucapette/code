@@ -39,6 +39,18 @@ Nothing right now — next up is URL share + host (see Suggested order).
 
 ## Done
 
+- **2026-11-11** — Workouts-only library. Dropped the bundled Pomodoro
+  classic, Focus and White rice presets along with their Productivity /
+  Cooking categories; the built-ins are now Mobility routine, Running
+  warmup, Running cooldown and Jump rope, all under Workouts. Extracted the
+  library (and its interval data) out of the Alpine component into
+  `src/presets.ts` — exported `BUILTIN_PRESETS`, `BUILTIN_IDS` and
+  `DEFAULT_PRESET` — so preset data is testable; new
+  `tests/presets.test.ts`. The round builder now honors a rest time of 0s
+  (`Number(x) || 30` silently turned it into 30 and lied in the summary),
+  and its expansion moved into a pure `roundPlan()` helper. Type-check, 63
+  tests and the build are green; browser-smoked the library, timer screen
+  and editor.
 - **2026-09-06** — Model rework: a session is a finite sequence of
   intervals, and a preset is a template storing that fully-expanded run —
   no tiling, no `totalSeconds`, no hidden repetition. `Preset` (template)

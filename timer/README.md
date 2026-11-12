@@ -1,10 +1,10 @@
 # Interval Timer
 
-A zero-framework interval timer for workouts and focus sessions, built with
-Vite and Alpine.js. A session is a finite sequence of intervals (Work,
-Rest, …) run top to bottom — e.g. ten rounds of 40s + 20s is twenty
-intervals. Presets are templates that store that fully-expanded sequence;
-running one snapshots it into a Session.
+A zero-framework interval timer for workouts, built with Vite and Alpine.js.
+A session is a finite sequence of intervals (Work, Rest, …) run top to
+bottom — e.g. ten rounds of 40s + 20s is twenty intervals. Presets are
+templates that store that fully-expanded sequence; running one snapshots it
+into a Session.
 
 Part of the [monorepo](../README.md). Successor in spirit to
 [passata](../passata) (React Pomodoro app, on hold), rebuilt as a plain
@@ -24,12 +24,12 @@ TypeScript + Vite app.
   repetition
 - Three views: a compact **Library** launcher (pick a preset, no timers
   here), a dedicated **Timer** screen you land on when you pick one (it
-  stages the plan, then runs the countdown), and the **Presets editor
-- A preset **library**: read-only bundled built-ins (Mobility, Running
-  warmup, Running cooldown, Jump rope, Pomodoro classic, Focus, White
-  rice) alongside your own presets, each in
-  a high-level **category** (Workouts, Productivity, Cooking, …). Built-ins
-  can't be deleted or corrupted; editing one forks it into an editable copy
+  stages the plan, then runs the countdown), and the **Presets editor**
+- A preset **library**: read-only bundled built-ins (Mobility routine,
+  Running warmup, Running cooldown, Jump rope) alongside your own presets,
+  each in a high-level **category** (the bundled library is Workouts-only;
+  your own presets can use any category). Built-ins can't be deleted or
+  corrupted; editing one forks it into an editable copy
 - Library rows carry a mini plan strip, so a preset's shape — its long
   blocks and short beats — reads at a glance before you pick it
 - Announcement preferences (voice / buzz) toggled in the editor: named
@@ -69,7 +69,8 @@ npm run type-check  # strict TypeScript check (tsc --noEmit)
 
 The timer math — interval countdowns, work/rest accounting, minute marks,
 ring/format helpers — lives in `src/engine.ts` as pure functions and is
-covered by `tests/engine.test.ts`.
+covered by `tests/engine.test.ts`. The built-in library and the round-builder
+expansion live in `src/presets.ts`, covered by `tests/presets.test.ts`.
 
 ## How it works
 
@@ -88,7 +89,8 @@ on some platforms — the wake lock covers that case where granted, and a
 notification (see `docs/roadmap.md`) is the eventual fix.
 
 State is held in a single Alpine.js component (`src/main.ts`) bound to the
-DOM in `index.html`; shared types live in `src/types.ts`; `src/style.css`
+DOM in `index.html`; shared types live in `src/types.ts`; bundled built-ins
+and the round-builder expansion live in `src/presets.ts`; `src/style.css`
 implements a flat, minimal theme
 (dark/light via CSS `light-dark()` on a dark-first base) with CSS custom
 properties.
@@ -108,11 +110,13 @@ used when available and silently skipped otherwise.
 |-----------------------|--------------------------------------------|
 | `index.html`          | Markup + Alpine bindings                    |
 | `src/main.ts`         | Alpine component: state, presets, audio/voice, theme |
+| `src/presets.ts`      | Bundled workout library + round-builder expansion |
 | `src/engine.ts`       | Pure timer math (countdowns, accounting, cues) |
 | `src/types.ts`        | Shared `Interval` / `Preset` / `Session` types |
 | `src/heartbeat.ts`    | Hidden-tab heartbeat (Worker + fallback)    |
 | `src/style.css`       | Theming and layout                          |
 | `tests/engine.test.ts`| Vitest coverage for the engine              |
+| `tests/presets.test.ts`| Vitest coverage for built-ins + round plan |
 | `package.json`        | Vite/Vitest tooling, Alpine.js dependency   |
 
 See [docs/roadmap.md](docs/roadmap.md) for known issues and planned work.
