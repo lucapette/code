@@ -1,0 +1,244 @@
+package main
+
+import (
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// newLibraryServer wires the library and HSK routes onto a store in a temp dir
+// and a small fixture vocabulary.
+func newLibraryServer(t *testing.T) *httptest.Server {
+	t.Helper()
+
+	items, err := newStore(t.TempDir())
+	require.NoError(t, err)
+	hsk, err := parseHSK([]byte(fixtureVocabulary))
+	require.NoError(t, err)
+
+	application := newApp("http://127.0.0.1:1/v1/chat/completions", items, hsk)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/items", application.listItemsHandler)
+	mux.HandleFunc("POST /api/items", application.createItemHandler)
+	mux.HandleFunc("GET /api/items/export", application.exportItemsHandler)
+	mux.HandleFunc("PATCH /api/items/{id}", application.updateItemHandler)
+	mux.HandleFunc("DELETE /api/items/{id}", application.deleteItemHandler)
+	mux.HandleFunc("GET /api/hsk", application.hskHandler)
+
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+	return server
+}
+
+func send(t *testing.T, server *httptest.Server, method, path, body string) *http.Response {
+	t.Helper()
+
+	var reader io.Reader
+	if body != "" {
+		reader = strings.NewReader(body)
+	}
+	req, err := http.NewRequest(method, server.URL+path, reader)
+	require.NoError(t, err)
+	if body != "" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+	return resp
+}
+
+func readItem(t *testing.T, resp *http.Response) Item {
+	t.Helper()
+	var item Item
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&item))
+	return item
+}
+
+func TestItemsCreateAndList(t *testing.T) {
+	server := newLibraryServer(t)
+
+	created := send(t, server, http.MethodPost, "/api/items",
+		`{"chinese":"你好","meaning":"hello","tags":["greeting"]}`)
+	assert.Equal(t, http.StatusCreated, created.StatusCode)
+	item := readItem(t, created)
+	assert.NotEmpty(t, item.ID)
+	assert.Equal(t, "你好", item.Chinese)
+	assert.Equal(t, []string{"greeting"}, item.Tags)
+
+	listed := send(t, server, http.MethodGet, "/api/items", "")
+	assert.Equal(t, http.StatusOK, listed.StatusCode)
+
+	var body struct {
+		Items []Item `json:"items"`
+	}
+	require.NoError(t, json.NewDecoder(listed.Body).Decode(&body))
+	require.Len(t, body.Items, 1)
+	assert.Equal(t, item.ID, body.Items[0].ID)
+}
+
+func TestItemsCreateValidates(t *testing.T) {
+	server := newLibraryServer(t)
+
+	tests := []struct {
+		name       string
+		body       string
+		wantStatus int
+		wantError  string
+	}{
+		{
+			name:       "chinese is the only required field",
+			body:       `{"meaning":"no chinese"}`,
+			wantStatus: http.StatusBadRequest,
+			wantError:  "chinese is required",
+		},
+		{
+			name:       "blank chinese",
+			body:       `{"chinese":"   "}`,
+			wantStatus: http.StatusBadRequest,
+			wantError:  "chinese is required",
+		},
+		{
+			name:       "malformed json",
+			body:       `{nope`,
+			wantStatus: http.StatusBadRequest,
+			wantError:  "invalid request body",
+		},
+		{
+			name:       "oversized body",
+			body:       `{"chinese":"` + strings.Repeat("a", maxItemBodyBytes) + `"}`,
+			wantStatus: http.StatusRequestEntityTooLarge,
+			wantError:  "item too large",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp := send(t, server, http.MethodPost, "/api/items", tt.body)
+			assert.Equal(t, tt.wantStatus, resp.StatusCode)
+
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			assert.JSONEq(t, `{"error":"`+tt.wantError+`"}`, string(body))
+		})
+	}
+}
+
+func TestItemsUpdateAndDelete(t *testing.T) {
+	server := newLibraryServer(t)
+
+	created := readItem(t, send(t, server, http.MethodPost, "/api/items", `{"chinese":"银行"}`))
+
+	patched := send(t, server, http.MethodPatch, "/api/items/"+created.ID,
+		`{"meaning":"bank","where":"a sign at the mall"}`)
+	assert.Equal(t, http.StatusOK, patched.StatusCode)
+	updated := readItem(t, patched)
+	assert.Equal(t, "银行", updated.Chinese, "a patch leaves untouched fields alone")
+	assert.Equal(t, "bank", updated.Meaning)
+	assert.Equal(t, "a sign at the mall", updated.Where)
+
+	deleted := send(t, server, http.MethodDelete, "/api/items/"+created.ID, "")
+	assert.Equal(t, http.StatusNoContent, deleted.StatusCode)
+
+	listed := send(t, server, http.MethodGet, "/api/items", "")
+	var body struct {
+		Items []Item `json:"items"`
+	}
+	require.NoError(t, json.NewDecoder(listed.Body).Decode(&body))
+	assert.Empty(t, body.Items)
+}
+
+func TestItemsUnknownID(t *testing.T) {
+	server := newLibraryServer(t)
+
+	for _, tt := range []struct{ method, path, body string }{
+		{http.MethodPatch, "/api/items/missing", `{"meaning":"x"}`},
+		{http.MethodDelete, "/api/items/missing", ""},
+	} {
+		resp := send(t, server, tt.method, tt.path, tt.body)
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		assert.JSONEq(t, `{"error":"item not found"}`, string(body))
+	}
+}
+
+func TestItemsExportIsADownload(t *testing.T) {
+	server := newLibraryServer(t)
+
+	readItem(t, send(t, server, http.MethodPost, "/api/items", `{"chinese":"你好","note":"from my tutor"}`))
+
+	resp := send(t, server, http.MethodGet, "/api/items/export", "")
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Contains(t, resp.Header.Get("Content-Disposition"), "attachment; filename=")
+	assert.Contains(t, resp.Header.Get("Content-Disposition"), "seta-library-")
+
+	var exported struct {
+		Version    int    `json:"version"`
+		ExportedAt string `json:"exported_at"`
+		Items      []Item `json:"items"`
+	}
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&exported))
+	assert.Equal(t, storeVersion, exported.Version)
+	assert.NotEmpty(t, exported.ExportedAt)
+	require.Len(t, exported.Items, 1)
+	assert.Equal(t, "from my tutor", exported.Items[0].Note)
+}
+
+func TestHSKHandlerCoverage(t *testing.T) {
+	server := newLibraryServer(t)
+
+	empty := send(t, server, http.MethodGet, "/api/hsk", "")
+	assert.Equal(t, http.StatusOK, empty.StatusCode)
+
+	var report coverageReport
+	require.NoError(t, json.NewDecoder(empty.Body).Decode(&report))
+	assert.Equal(t, 1, report.Current)
+	assert.Len(t, report.Levels, 4)
+	assert.Equal(t, 3, report.GapTotal)
+	assert.Equal(t, "的", report.Gaps[0].Simplified, "most frequent first")
+	assert.NotEmpty(t, report.Gaps[0].Pinyin)
+	assert.NotEmpty(t, report.Gaps[0].Gloss)
+
+	// Saving a sentence moves the map.
+	readItem(t, send(t, server, http.MethodPost, "/api/items", `{"chinese":"我去银行"}`))
+
+	after := send(t, server, http.MethodGet, "/api/hsk", "")
+	require.NoError(t, json.NewDecoder(after.Body).Decode(&report))
+
+	seen := map[int]int{}
+	for _, row := range report.Levels {
+		seen[row.Level] = row.Seen
+	}
+	assert.Equal(t, 1, seen[1])
+	assert.Equal(t, 1, seen[3], "银行 counts at level 3")
+	assert.Equal(t, 0, seen[2], "...and not as the standalone 行 at level 2")
+}
+
+func TestHSKHandlerGapPaging(t *testing.T) {
+	server := newLibraryServer(t)
+
+	one := send(t, server, http.MethodGet, "/api/hsk?gaps=1", "")
+	var report coverageReport
+	require.NoError(t, json.NewDecoder(one.Body).Decode(&report))
+	assert.Len(t, report.Gaps, 1)
+	assert.Equal(t, 3, report.GapTotal)
+	assert.True(t, report.More, "there is more to load")
+
+	all := send(t, server, http.MethodGet, "/api/hsk?gaps=50", "")
+	require.NoError(t, json.NewDecoder(all.Body).Decode(&report))
+	assert.Len(t, report.Gaps, 3)
+	assert.False(t, report.More)
+
+	bad := send(t, server, http.MethodGet, "/api/hsk?gaps=abc", "")
+	assert.Equal(t, http.StatusBadRequest, bad.StatusCode)
+}

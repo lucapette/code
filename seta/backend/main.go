@@ -38,17 +38,22 @@ const (
 )
 
 // app carries the handler's collaborators: where the model lives, how to talk
-// to it, and how long to wait between its chunks before calling it dead.
+// to it, how long to wait between its chunks before calling it dead, the saved
+// library, and the embedded HSK vocabulary.
 type app struct {
 	upstreamURL string
 	client      *http.Client
 	idleTimeout time.Duration
+	items       *store
+	hsk         *hskIndex
 }
 
 // newApp builds the application with its defaults applied.
-func newApp(upstreamURL string) *app {
+func newApp(upstreamURL string, items *store, hsk *hskIndex) *app {
 	return &app{
 		upstreamURL: upstreamURL,
+		items:       items,
+		hsk:         hsk,
 		idleTimeout: envDuration("STREAM_IDLE_TIMEOUT", defaultStreamIdleTimeout),
 		// No overall timeout: the response is a long-lived stream. Bound the
 		// phases instead — connect, and waiting for the model's first headers
@@ -76,12 +81,31 @@ func (a *app) streamTimeout() time.Duration {
 func main() {
 	upstreamURL := envOr("UPSTREAM_URL", defaultUpstreamURL)
 	addr := envOr("ADDR", defaultAddr)
-	application := newApp(upstreamURL)
+	dataDir := envOr("DATA_DIR", "data")
+
+	items, err := newStore(dataDir)
+	if err != nil {
+		log.Fatalf("library: %v", err)
+	}
+	hsk, err := loadHSK()
+	if err != nil {
+		log.Fatalf("vocabulary: %v", err)
+	}
+	log.Printf("library %s (%d items) · vocabulary %d words, HSK %v",
+		items.path, len(items.List()), len(hsk.byWord), hsk.levels)
+
+	application := newApp(upstreamURL, items, hsk)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/translate", application.translateHandler)
 	mux.HandleFunc("GET /api/health", healthHandler)           // liveness: the process is up
 	mux.HandleFunc("GET /api/ready", application.readyHandler) // readiness: the model answers
+	mux.HandleFunc("GET /api/items", application.listItemsHandler)
+	mux.HandleFunc("POST /api/items", application.createItemHandler)
+	mux.HandleFunc("GET /api/items/export", application.exportItemsHandler)
+	mux.HandleFunc("PATCH /api/items/{id}", application.updateItemHandler)
+	mux.HandleFunc("DELETE /api/items/{id}", application.deleteItemHandler)
+	mux.HandleFunc("GET /api/hsk", application.hskHandler)
 	mux.Handle("/", staticHandler(distFS))
 
 	srv := &http.Server{
