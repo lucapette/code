@@ -48,7 +48,9 @@ Alpine.js ──POST /api/translate──▶ Go ──OpenAI-compatible──▶
 
 - **Streaming translation** both ways, direction inferred from the text: any
   CJK ideograph means zh→en
-- **Pinyin** under a Chinese translation, word-aware (银行 → yín háng), toggleable
+- **Pinyin wherever Chinese is shown** — under the translation, under every
+  library row, under the save sheet's field, under a pasted lookup — word-aware
+  (银行 → yín háng) and toggleable from the top bar
 - **Copy** and **speak** everywhere a Chinese string is shown
 - **Speak** uses the browser's voices — and *hides itself* when the OS has no
   Chinese voice, instead of reading hanzi in English
@@ -176,6 +178,13 @@ learner does not want. So practice uses a local model instead:
 | Runtime | `onnxruntime-web` (wasm), in the browser, no server round-trip, no network |
 | Frontend | 16 kHz log-mel, 80 bins, 25 ms/10 ms frames, per-utterance CMVN — [practice/mel.ts](frontend/src/practice/mel.ts) |
 | Scoring | CTC forced alignment (Viterbi) per expected syllable, then a confidence over the frames that are actually speech, so a pause in front of a word cannot tank its score — [practice/ctc.ts](frontend/src/practice/ctc.ts) |
+
+Press practice once and say the sentence: the take ends itself after the speech
+stops (900 ms of quiet, 10 s at most), then you get a score, the pinyin the model
+heard, and one chip per character — green heard right, amber wrong tone, red
+different syllable, grey too quiet to judge — with the expected tone underneath
+when it differs. A take that recorded nothing says so ("I did not hear anything —
+check which microphone is selected") instead of grading silence.
 
 `make model` fetches the weights (the author states no licence, so they are
 **not** committed — `frontend/public/models/` is gitignored) and the build embeds

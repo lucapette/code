@@ -48,6 +48,7 @@ import type {
 export const THEME_KEY = 'seta-theme';
 export const PINYIN_KEY = 'seta-pinyin';
 
+const CJK = /[\u4e00-\u9fff]/;
 const COPIED_MS = 1500;
 const TOAST_MS = 1800;
 const READY_POLL_MS = 10_000;
@@ -116,6 +117,8 @@ export function setaApp(): SetaApp {
     _copiedTimer: null as number | null,
     _unsubscribeVoices: null as (() => void) | null,
     _recorders: {} as Record<string, Recorder>,
+    _practiceTimer: null as number | null,
+    _pinyinCache: new Map<string, string>(),
 
     init() {
       const stored = window.localStorage.getItem(THEME_KEY);
@@ -142,6 +145,21 @@ export function setaApp(): SetaApp {
     },
 
     /* --- Derived state --------------------------------------------- */
+
+    /** Tone-marked pinyin for any Chinese on screen: rows, sheets, lookups.
+        Cached per text because Alpine re-renders often and the converter,
+        while fast, is dictionary work. */
+    pinyinOf(text: string): string {
+      // Only Chinese has a reading: pinyin-pro hands Latin and punctuation
+      // straight back, which would echo the English under the source box.
+      if (!this.showPinyin || !CJK.test(text)) return '';
+      const cached = this._pinyinCache.get(text);
+      if (cached !== undefined) return cached;
+
+      const reading = pinyinFor(text);
+      this._pinyinCache.set(text, reading);
+      return reading;
+    },
 
     get sourceBytes(): number {
       return countBytes(this.sourceText);
@@ -368,8 +386,20 @@ export function setaApp(): SetaApp {
       }
 
       try {
-        this._recorders[item.id] = await startRecording();
+        this._recorders[item.id] = await startRecording({
+          // Finish by itself when the learner stops talking: one press, no
+          // guessing how long to leave it running.
+          onFinished: () => {
+            void this.stopPractice(item);
+          },
+        });
         this.practice[item.id] = { recording: true, busy: false, assessment: null, error: null };
+
+        // A forgotten recording should end by itself rather than listen until
+        // the tab closes.
+        this._practiceTimer = window.setTimeout(() => {
+          void this.stopPractice(item);
+        }, 12_000);
       } catch (error) {
         this.practice[item.id] = {
           recording: false,
@@ -381,14 +411,26 @@ export function setaApp(): SetaApp {
     },
 
     async stopPractice(item: Item) {
+      if (this._practiceTimer !== null) {
+        window.clearTimeout(this._practiceTimer);
+        this._practiceTimer = null;
+      }
+
       const recorder = this._recorders[item.id];
       delete this._recorders[item.id];
       if (!recorder) return;
 
       this.practice[item.id] = { recording: false, busy: true, assessment: null, error: null };
       try {
-        const audio = await recorder.stop();
-        const assessment = await (await practiceEngine()).assessRecording(audio, item.chinese);
+        const take = await recorder.stop();
+
+        // A take with nothing in it is a microphone problem, not a
+        // pronunciation one: say so instead of grading silence.
+        if (take.seconds < 0.2 || take.peak < 0.01) {
+          throw new Error('I did not hear anything — check which microphone is selected');
+        }
+
+        const assessment = await (await practiceEngine()).assessRecording(take.audio, item.chinese);
         this.practice[item.id] = { recording: false, busy: false, assessment, error: null };
       } catch (error) {
         this.practice[item.id] = {
@@ -402,6 +444,10 @@ export function setaApp(): SetaApp {
 
     /** Stops anything listening — used when leaving the tab. */
     cancelPractices() {
+      if (this._practiceTimer !== null) {
+        window.clearTimeout(this._practiceTimer);
+        this._practiceTimer = null;
+      }
       for (const [id, recorder] of Object.entries(this._recorders)) {
         recorder.cancel();
         delete this._recorders[id];
@@ -596,7 +642,10 @@ interface SetaAppState {
   _copiedTimer: number | null;
   _unsubscribeVoices: (() => void) | null;
   _recorders: Record<string, Recorder>;
+  _practiceTimer: number | null;
+  _pinyinCache: Map<string, string>;
 
+  pinyinOf(text: string): string;
   readonly sourceBytes: number;
   readonly maxBytes: number;
   readonly overLimit: boolean;

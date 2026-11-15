@@ -44,6 +44,16 @@
           translating
         </span>
         <button
+          class="act act-icon"
+          type="button"
+          @click="togglePinyin()"
+          :aria-pressed="showPinyin"
+          :title="showPinyin ? 'Hide pinyin' : 'Show pinyin'"
+          :aria-label="showPinyin ? 'Hide pinyin' : 'Show pinyin'"
+        >
+          <svg class="act-ico" aria-hidden="true"><use :href="showPinyin ? '#i-eye' : '#i-eye-off'"/></svg>
+        </button>
+        <button
           class="icon-btn"
           type="button"
           @click="toggleTheme()"
@@ -105,24 +115,15 @@
             placeholder="English to translate, or Chinese to look up…"
             spellcheck="false"
           ></textarea>
+          <p class="reading" lang="zh-Latn-pinyin"
+             x-show="showPinyin && pinyinOf(sourceText)"
+             x-text="pinyinOf(sourceText)"></p>
         </section>
 
         <section class="pane" aria-label="Translation">
           <div class="pane-head">
             <span class="pane-label" x-text="outputIsChinese ? '简体中文' : 'English'"></span>
-            <div class="pane-actions">
-              <button
-                class="act"
-                type="button"
-                x-show="outputIsChinese"
-                @click="togglePinyin()"
-                :aria-pressed="showPinyin"
-                :title="showPinyin ? 'Hide pinyin' : 'Show pinyin'"
-              >
-                <svg class="act-ico" aria-hidden="true"><use :href="showPinyin ? '#i-eye' : '#i-eye-off'"/></svg>
-                <span class="act-label" x-text="showPinyin ? 'pinyin' : 'pinyin off'"></span>
-              </button>
-            </div>
+            <div class="pane-actions"></div>
           </div>
           <!-- aria-live stays off while streaming: announcing every fragment
                would drown a screen reader. Completion is announced once. -->
@@ -138,7 +139,8 @@
               x-text="pinyinText"
             ></div>
 
-            <!-- The actions live on the card they act on, next to the text. -->
+            <!-- The actions sit immediately under the translation, not pinned
+                 to the bottom of a tall card. -->
             <div class="card-foot" x-show="canSaveTranslation" x-cloak>
               <button class="act" type="button" @click="copyTranslation()"
                       :title="copied ? 'Copied' : 'Copy the translation'"
@@ -188,6 +190,8 @@
               <button class="item-row" type="button" @click="toggleItem(item.id)"
                       :aria-expanded="expandedId === item.id">
                 <span class="item-chinese" lang="zh-Hans" x-text="item.chinese"></span>
+                <span class="item-pinyin" lang="zh-Latn-pinyin" x-show="pinyinOf(item.chinese)"
+                      x-text="pinyinOf(item.chinese)"></span>
                 <span class="item-meaning" x-show="item.meaning" x-text="item.meaning"></span>
                 <span class="item-where" x-show="item.where" x-text="item.where"></span>
                 <span class="tags" x-show="item.tags && item.tags.length">
@@ -230,22 +234,24 @@
                 </button>
               </div>
 
-              <p class="hint" x-show="practice[item.id]?.recording ?? false" x-cloak>
-                listening — say it now, then press stop
+              <p class="recording" x-show="practice[item.id]?.recording ?? false" x-cloak>
+                <span class="rec-dot" aria-hidden="true"></span>
+                recording — say it now, then press stop (it ends by itself after 12s)
               </p>
               <p class="hint" x-show="practice[item.id]?.busy ?? false" x-cloak>checking your tones…</p>
-              <p class="error" role="alert" x-show="practice[item.id]?.error ?? ''" x-cloak
+              <p class="error" role="alert" x-show="practice[item.id]?.error" x-cloak
                  x-text="practice[item.id]?.error ?? ''"></p>
 
-              <div class="verdicts" x-show="practice[item.id]?.assessment ?? null" x-cloak>
+              <div class="verdicts" x-show="practice[item.id]?.assessment" x-cloak>
                 <p class="verdict-summary">
-                  <strong x-text="practice[item.id]?.assessment ?? null?.score + '/100'"></strong>
-                  <span x-show="practice[item.id]?.assessment ?? null?.unclear"
-                        x-text="'· ' + practice[item.id]?.assessment ?? null?.unclear + ' not clear'"></span>
-                  <span class="verdict-heard" x-text="'heard: ' + (practice[item.id]?.assessment ?? null?.heardText || '—')"></span>
+                  <strong x-text="(practice[item.id]?.assessment?.score ?? 0) + '/100'"></strong>
+                  <span x-show="practice[item.id]?.assessment?.unclear"
+                        x-text="'· ' + (practice[item.id]?.assessment?.unclear ?? 0) + ' not clear'"></span>
+                  <span class="verdict-heard"
+                        x-text="'heard: ' + (practice[item.id]?.assessment?.heardText || '—')"></span>
                 </p>
                 <ul class="verdict-list">
-                  <template x-for="syllable in practice[item.id]?.assessment ?? null?.syllables ?? []" :key="syllable.index">
+                  <template x-for="syllable in practice[item.id]?.assessment?.syllables ?? []" :key="syllable.index">
                     <li class="verdict" :class="'verdict-' + syllable.verdict"
                         :title="verdictLabel(syllable.verdict)">
                       <span class="verdict-char" lang="zh-Hans" x-text="syllable.text"></span>
@@ -333,6 +339,8 @@
           <span class="field-label">Chinese <span class="required" aria-hidden="true">*</span></span>
           <textarea class="field-input field-chinese" rows="2" x-model="sheet.chinese" lang="zh-Hans"
                     placeholder="汉字" autocomplete="off"></textarea>
+          <span class="reading" lang="zh-Latn-pinyin" x-show="pinyinOf(sheet.chinese)"
+                x-text="pinyinOf(sheet.chinese)"></span>
         </label>
 
         <label class="field">

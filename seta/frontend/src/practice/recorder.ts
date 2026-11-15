@@ -5,6 +5,10 @@
    the buffer goes straight into the model in this tab.
    ========================================================================== */
 
+/* file: recorder.ts — see the header for what this does */
+
+import { initialActivity, observe, peak, rms, shouldFinish } from './activity';
+
 /** What the model was trained on. */
 export const MODEL_RATE = 16000;
 
@@ -12,14 +16,28 @@ export const MODEL_RATE = 16000;
     forever; a browser that simply hangs is worse than one that refuses. */
 const PERMISSION_TIMEOUT_MS = 10_000;
 
+export interface Recording {
+  /** Resampled to 16 kHz mono. */
+  audio: Float32Array;
+  seconds: number;
+  /** Loudest sample: ~0 means the microphone heard nothing. */
+  peak: number;
+}
+
 export interface Recorder {
-  /** Stops recording and resolves the audio, resampled for the model. */
-  stop(): Promise<Float32Array>;
+  /** Stops recording and resolves the take. */
+  stop(): Promise<Recording>;
   /** Stops and throws the audio away. */
   cancel(): void;
 }
 
-export async function startRecording(): Promise<Recorder> {
+export interface RecordOptions {
+  /** Called when the learner has spoken and then gone quiet, so the caller can
+      finish the take without a second press. */
+  onFinished?: () => void;
+}
+
+export async function startRecording({ onFinished }: RecordOptions = {}): Promise<Recorder> {
   if (!navigator.mediaDevices?.getUserMedia) {
     throw new Error('this browser cannot record audio');
   }
@@ -38,7 +56,27 @@ export async function startRecording(): Promise<Recorder> {
   });
   recorder.start();
 
+  // Watch the level so the take can end when the speaking does.
+  const analyser = new AudioContext();
+  const meter = analyser.createAnalyser();
+  meter.fftSize = 1024;
+  analyser.createMediaStreamSource(stream).connect(meter);
+  const window = new Float32Array(meter.fftSize);
+  let activity = initialActivity();
+  let finished = false;
+
+  const watch = setInterval(() => {
+    meter.getFloatTimeDomainData(window);
+    activity = observe(activity, rms(window));
+    if (!finished && shouldFinish(activity)) {
+      finished = true;
+      onFinished?.();
+    }
+  }, 100);
+
   const release = () => {
+    clearInterval(watch);
+    void analyser.close();
     for (const track of stream.getTracks()) track.stop();
   };
 
@@ -52,7 +90,8 @@ export async function startRecording(): Promise<Recorder> {
       release();
 
       const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-      return toModelAudio(await blob.arrayBuffer());
+      const audio = await toModelAudio(await blob.arrayBuffer());
+      return { audio, seconds: audio.length / MODEL_RATE, peak: peak(audio) };
     },
     cancel() {
       if (recorder.state !== 'inactive') recorder.stop();

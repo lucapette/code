@@ -14,7 +14,11 @@ const mocks = vi.hoisted(() => ({
     heardText: 'xie4 shi4',
   })),
   startRecording: vi.fn(async () => ({
-    stop: vi.fn(async () => new Float32Array(16000)),
+    stop: vi.fn(async () => ({
+      audio: new Float32Array(16000),
+      seconds: 1,
+      peak: 0.4,
+    })),
     cancel: vi.fn(),
   })),
 }));
@@ -474,6 +478,23 @@ describe('setaApp', () => {
     expect(app.toast).toContain('copy failed');
   });
 
+  it('shows a reading only for Chinese, never for English', () => {
+    const app = mount();
+
+    expect(app.pinyinOf('你好')).toBe('nǐ hǎo');
+    expect(app.pinyinOf('The caravan carried silk west.')).toBe('');
+    expect(app.pinyinOf('')).toBe('');
+
+    app.showPinyin = false;
+    expect(app.pinyinOf('你好')).toBe('');
+  });
+
+  it('caches readings per text', () => {
+    const app = mount();
+    expect(app.pinyinOf('银行')).toBe('yín háng');
+    expect(app._pinyinCache.get('银行')).toBe('yín háng');
+  });
+
   /* --- practice ---------------------------------------------------- */
 
   it('offers practice only when the model and a microphone are both there', async () => {
@@ -506,6 +527,26 @@ describe('setaApp', () => {
     expect(mocks.assessRecording).toHaveBeenCalledWith(expect.any(Float32Array), '谢谢');
     expect(app.practice.x1.recording).toBe(false);
     expect(app.practice.x1.assessment?.score).toBe(50);
+  });
+
+  it('refuses to grade a take that contains nothing', async () => {
+    mocks.startRecording.mockResolvedValueOnce({
+      stop: async () => ({ audio: new Float32Array(16000), seconds: 1, peak: 0.0001 }),
+      cancel: () => {},
+    });
+    const app = mount({ items: [makeItem({ id: 'silent' })] });
+    app.init();
+    await tick();
+
+    await app.togglePractice(app.items[0]);
+    await app.stopPractice(app.items[0]);
+
+    expect(app.practice.silent.assessment).toBeNull();
+    expect(app.practice.silent.error).toContain('did not hear anything');
+    expect(mocks.assessRecording).not.toHaveBeenCalledWith(
+      expect.anything(),
+      '你好',
+    );
   });
 
   it('surfaces a microphone that never grants permission', async () => {
