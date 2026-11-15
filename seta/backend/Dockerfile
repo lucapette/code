@@ -19,8 +19,12 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /seta .
 
 # --- runtime --------------------------------------------------------------
 FROM alpine:3
-RUN adduser -D -u 10001 seta
+RUN adduser -D -u 10001 seta \
+    && mkdir -p /data \
+    && chown seta:seta /data
 COPY --from=backend /seta /usr/local/bin/seta
+# The library (a single JSON file) lives here; mount a volume over it to keep it.
+ENV DATA_DIR=/data
 USER seta
 EXPOSE 8080
 

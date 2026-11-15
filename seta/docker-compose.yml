@@ -48,6 +48,9 @@ services:
     environment:
       - UPSTREAM_URL=http://hy-mt:8000/v1/chat/completions
       - STREAM_IDLE_TIMEOUT=30s
+      - DATA_DIR=/data
+    volumes:
+      - seta-data:/data # the library: one JSON file, backed up by exporting it
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/health"]
@@ -82,3 +85,4 @@ services:
 
 volumes:
   hy-mt-cache:
+  seta-data:

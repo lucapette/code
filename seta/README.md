@@ -1,184 +1,207 @@
 # seta
 
-A local English → Simplified Chinese translator with streaming output.
-Type on one side, watch the translation arrive on the other, token by token.
+A local Chinese notebook for a programmer learning Chinese: translate what you
+meet, keep it, and see how much of HSK you have actually touched.
 
 **seta** is Italian for *silk*, after the Via della Seta — the Silk Road, the
-original West↔East exchange. Translation is only the first mile of that
-road: the app is meant to grow into a Chinese study companion (vocabulary,
-idioms, spaced repetition), so the name points at the destination, not at v0.
+original West↔East exchange. Translation is the first mile of that road; the
+notebook and the HSK map are the next ones.
 
 Part of the [monorepo](../README.md). Frontend sibling in style to
 [timer](../timer) (plain TypeScript + Vite + Alpine.js, same theme system).
 
+## What it is
+
+Three tabs. Not four, not five.
+
+| Tab | What it does |
+|-----|--------------|
+| **Translate** | Type or paste; the direction is inferred. Chinese out, or English out when you pasted Chinese. Each result can be copied, spoken, or saved. |
+| **Library** | The notebook: one free-form list of things you saved, with one search box and a JSON export. |
+| **HSK** | Read-only map: how much of each HSK 3.0 level your saved text has actually covered, and which frequent words of your current level you have not met yet. |
+
+The unit of learning is the sentence you met in the wild. There is no
+curriculum, no lesson list, no grammar drill, and no spaced repetition yet —
+deliberately. Saving an item requires **one field: the Chinese text**;
+everything else is optional and can be filled in later.
+
 ## Stack
 
 ```
-Alpine.js ──POST /api/translate──▶ Go (thin proxy) ──OpenAI-compatible──▶ HY-MT1.5-1.8B
-           ◀──SSE deltas────────  (this binary)    ◀──SSE chunks────────  (Docker, GPU)
+Alpine.js ──POST /api/translate──▶ Go ──OpenAI-compatible──▶ HY-MT1.5-1.8B
+           ◀──SSE deltas────────  (one binary)  ◀──SSE──  (Docker, GPU or CPU)
+                                  │
+                                  ├── items.json      (your library, one file)
+                                  └── HSK 3.0 words   (go:embed, ~880 KB)
 ```
 
-- **Model**: Tencent HY-MT1.5-1.8B, a translation-only 1.8B model. en→zh is
-  one of its strongest directions. Served behind an OpenAI-compatible
-  `/v1/chat/completions` endpoint — llama.cpp by default, vLLM on GPU boxes.
-- **Go layer**: a deliberately thin orchestrator. It never runs inference —
-  it validates the request, builds the prompt, proxies the stream, and
-  normalizes errors. The same binary embeds and serves the frontend, so
-  there is exactly one public-facing service on one port.
-- **Frontend**: one Alpine.js component owning UI state, one module owning
-  the wire. Nothing else. No language selectors — the direction is fixed.
+- **Model**: Tencent HY-MT1.5-1.8B, a translation-only 1.8B model. Served behind
+  an OpenAI-compatible `/v1/chat/completions` endpoint — llama.cpp by default,
+  vLLM on GPU boxes.
+- **Go layer**: a thin orchestrator. It builds the prompt, infers the direction,
+  proxies the stream, normalizes errors, matches your saved text against the
+  embedded vocabulary, and writes your library. It never runs inference.
+- **Frontend**: one Alpine.js component over a few plain modules. No framework
+  build step in production — the binary embeds the built assets.
 
 ## Features
 
-- Streaming translation: every delta renders the moment it arrives
-- **Pinyin under the translation**: tone-marked, word-aware reading
-  (银行 → yín háng, 音乐 → yīn yuè), recomputed live as the hanzi streams —
-  and toggleable, with the choice remembered
-- **Copy** the translation in one click
-- **Keyboard**: `⌘/Ctrl+Enter` translates immediately, `Esc` clears both panes
-- Debounced, abortable requests — typing a new sentence *or clearing the box*
-  cancels the stale generation all the way through to the model
-- A byte counter against the server's cap, so a long paste warns before the
-  413 does
-- Clean errors for everything upstream: never a raw vLLM body
-  (those can leak model paths, GPU diagnostics, internal hostnames)
-- **Engine readiness**: while the model is still loading, the output pane says
-  so ("Model is warming up…") instead of failing one translation at a time
-- Dark and light themes (follows `prefers-color-scheme` on first run)
-- Security headers (CSP, `nosniff`, `Referrer-Policy`, `frame-ancestors`) and
-  correct caching for everything the binary serves
-- One self-contained binary: `bin/seta` serves the app and the API
+- **Streaming translation** both ways, direction inferred from the text: any
+  CJK ideograph means zh→en
+- **Pinyin** under a Chinese translation, word-aware (银行 → yín háng), toggleable
+- **Copy** and **speak** everywhere a Chinese string is shown
+- **Speak** uses the browser's voices — and *hides itself* when the OS has no
+  Chinese voice, instead of reading hanzi in English
+- **Save sheet** shared by all three tabs: Chinese (required), meaning, where
+  you found it, note, free-form tags as chips
+- **HSK coverage** per level, current level detected from your own coverage, and
+  a frequency-sorted gap list you can page through and save from
+- **Export** the library as JSON at any time
+- Dark and light themes, keyboard shortcuts (`⌘/Ctrl+Enter`, `Esc`)
+- One self-contained binary; no accounts, no telemetry, no external APIs
 
 ## Run it
 
-Three ways in. All three need a model behind `UPSTREAM_URL` (default
-`http://localhost:8000/v1/chat/completions`) — see *Serving the model* below.
+Three ways in. All need a model behind `UPSTREAM_URL` (default
+`http://localhost:8000/v1/chat/completions`) — see *Serving the model*.
 
 ```sh
 # 1. use it: build once, one binary, one port
 make run          # = make build, then serve → http://localhost:8080
 
 # 2. work on it: the same service + Vite with live reload
-make dev          # → build the UI at http://localhost:5173 (edit here)
+make dev          # → edit the UI at http://localhost:5173
 
 # 3. whole stack in containers (model included; GPU if you have one)
 docker compose up # → http://localhost:8080
 ```
 
-### What `make dev` actually runs
+Your library lives in `DATA_DIR` (default `./data`) as a single `items.json`.
+In Docker it is the `seta-data` volume. Nothing else is written.
 
-`make dev` starts **two** processes and leaves both in your terminal:
+### What `make dev` actually runs
 
 | Port | Process | Serves |
 |------|---------|--------|
-| `:8080` | `./bin/seta` (the real service) | the embedded build — the same thing `make run` serves |
-| `:5173` | Vite (`npm run dev`) | the app from source, with HMR, proxying `/api` → `:8080` |
+| `:8080` | `./bin/seta` (the real service) | the embedded build |
+| `:5173` | Vite (`npm run dev`) | the app from source, HMR, proxying `/api` → `:8080` |
 
-So while you are editing `frontend/`:
-
-- **Open http://localhost:5173** — that is the live app. Change `style.css`,
-  `index.html`, or a `.ts` file and the page updates in place; no `make build`,
-  no restart.
-- Open http://localhost:8080 only when you want to see what the *embedded*
-  build does (that one needs a rebuild to change).
-- Both talk to the same Go service, so `/api/translate`, `/api/ready` and the
-  error mapping behave identically in either tab. Nothing in the frontend is
-  mocked.
-
-Use `localhost`, not `127.0.0.1`, for the Vite port: it binds IPv6 `[::1]`, so
-`http://127.0.0.1:5173` is refused. Point the proxy at a different backend with
-`BACKEND_URL=http://host:port make dev`.
-
-`Ctrl-C` stops both processes (the Go binary is killed by the same trap that
-started it).
+**Open http://localhost:5173** while editing `frontend/`; open
+http://localhost:8080 to see what the embedded build does. Both talk to the same
+Go service, so translate, library and coverage behave identically. Use
+`localhost`, not `127.0.0.1`, for the Vite port (it binds IPv6 `[::1]`).
 
 ### If translation says "unreachable"
 
-The UI loads without a model — that is deliberate, so you can work on layout
-with nothing running. Translating then fails with `translation engine
-unavailable`, and the output pane says *Translation engine is unreachable* /
-*Model is warming up…* from `GET /api/ready`. Those are readiness states, not
-bugs; start one of the model options below and the pane recovers on its own
-(it re-probes every 10s).
+The UI loads without a model — useful for working on layout. Translating then
+fails with `translation engine unavailable`, and the output pane says
+*Model is warming up…* from `GET /api/ready`. That is a readiness state, not a
+bug: start the model and the pane recovers on its own (it re-probes every 10s).
 
-Other knobs: `ADDR` (default `:8080`) and `STREAM_IDLE_TIMEOUT` (default
-`30s`, see below).
+Other knobs: `ADDR` (default `:8080`), `DATA_DIR` (default `data`),
+`STREAM_IDLE_TIMEOUT` (default `30s`).
 
 ### Serving the model
 
 Default (`docker-compose.yml`): llama.cpp with the official
 [tencent/HY-MT1.5-1.8B-GGUF](https://huggingface.co/tencent/HY-MT1.5-1.8B-GGUF)
-Q4_K_M quant. This runs on any Docker host, GPU or not — Docker on Apple
-Silicon has no NVIDIA runtime, so vLLM can't start there at all. First boot
-downloads the ~1.1 GB model into the `hy-mt-cache` volume; watch
-`docker compose logs -f hy-mt`. Tencent's recommended sampling
-(`top_k 20`, `repetition_penalty 1.05`) is set as server launch flags so
-the wire request stays minimal.
+Q4_K_M quant — runs on any Docker host, GPU or not. First boot downloads the
+~1.1 GB model into the `hy-mt-cache` volume; watch `docker compose logs -f hy-mt`.
+Tencent's recommended sampling (`top_k 20`, `repetition_penalty 1.05`) is set as
+server launch flags so the wire request stays minimal.
 
-The model container is internal (`expose`, not `ports`): the app is the only
-public door. It carries a `curl /health` healthcheck — llama-server answers 503
-while the weights load and 200 once slots are ready — and the app waits for
-`service_healthy`, so `docker compose up` returns with a stack that can
-actually translate. Uncomment the `ports` line in `docker-compose.yml` when you
-want to poke the model directly while debugging.
+The model container is internal (`expose`, not `ports`) and carries a
+`curl /health` healthcheck — llama-server answers 503 while loading and 200 when
+ready — so the app can wait for `service_healthy` instead of 503ing through the
+first download.
 
-NVIDIA GPU box, best quality — swap the `hy-mt` service for the vLLM
-variant commented at the bottom of `docker-compose.yml`:
+NVIDIA GPU box, best quality — swap in the vLLM variant commented at the bottom
+of `docker-compose.yml`:
 
 ```sh
 docker run --gpus all -p 8000:8000 vllm/vllm-openai:latest \
   --model tencent/HY-MT1.5-1.8B --served-model-name hy-mt-1.8b
 ```
 
-Fastest on a Mac: skip Docker for the model and run llama-server natively
-(Metal instead of the Docker VM's CPU) — same contract, point
-`UPSTREAM_URL` at it:
+Fastest on a Mac: skip Docker for the model, run it natively (Metal):
 
 ```sh
 brew install llama.cpp
 llama-server -hf tencent/HY-MT1.5-1.8B-GGUF:Q4_K_M --alias hy-mt-1.8b --port 8000
+make run
 ```
 
-Precision is a one-way door only in hardware terms: BF16 (vLLM, best) →
-FP8 → Int4 → GGUF Q8_0 → Q4_K_M. Pick by hardware, not by mood — en→zh
-degrades gently, but it still degrades.
+Precision is a one-way door only in hardware terms: BF16 (vLLM, best) → FP8 →
+Int4 → GGUF Q8_0 → Q4_K_M. en→zh degrades gently, but it degrades.
+
+## The HSK map
+
+**Data**: [TheOpenDictionary/complete-hsk-vocabulary](https://github.com/TheOpenDictionary/complete-hsk-vocabulary)
+(MIT), trimmed to the new HSK 3.0 bands and committed as
+[backend/data/hsk.json](backend/data/hsk.json) — 10,969 words, ~880 KB, embedded
+in the binary. Provenance, schema and filtering rules live in
+[backend/data/PROVENANCE.md](backend/data/PROVENANCE.md). Nothing is fetched at
+runtime; regenerate with `make hsk` (source pinned to a commit).
+
+**Counts**: HSK 1 506 · 2 750 · 3 953 · 4 972 · 5 1059 · 6 1123 · 7–9 5606. A
+word listed in several bands keeps the lowest one, so per-level numbers do not
+double count.
+
+**"Seen"** means the word appears in your saved Chinese. Matching is forward
+maximum matching against the vocabulary itself: at each position the longest
+word that fits wins, so 银行 inside a saved sentence counts as 银行 and not as
+银 + 行, and a lone 的 is not counted from the middle of an unrelated word. No
+segmenter, no extra data — the dictionary is the segmenter.
+
+**Current level** is the lowest level still under 80% coverage; once everything
+clears it, the map's edge is the highest level. The gap list is that level's
+unseen words, most frequent first, 50 at a time.
+
+Two things the data cannot do, both fine at this stage: a word with several
+readings gets one pinyin (行 → háng, so 行动 will read as háng dòng in the gap
+list), and glosses are trimmed to the first sense or two.
+
+## Data and backups
+
+- `items.json`: `{"version": 1, "items": [...]}` in `DATA_DIR`, replaced
+  atomically on every write (temp file + rename), so a crash cannot truncate it.
+- Adding fields later means adding columns with defaults — old rows never become
+  invalid.
+- The export button (`GET /api/items/export`) gives the same file as a download.
+  That is the escape hatch when the data model changes shape in a few months.
 
 ## Test it
 
 ```sh
 make test         # go test -race + frontend tests + type check
 make lint         # go vet + gofmt
-cd backend && go test ./...
-cd frontend && npm test && npm run type-check
 ```
 
-Go: prompt building, upstream request shape, delta extraction, every error
-mapping, the byte-cap boundary, the stall watchdog, abort propagation, the
-health/readiness probes and the static handler (against an in-memory fs) —
-[backend/translate_test.go](backend/translate_test.go),
-[backend/stream_test.go](backend/stream_test.go),
-[backend/health_test.go](backend/health_test.go),
-[backend/static_test.go](backend/static_test.go).
+Go: prompt building for both directions, direction inference, the SSE proxy
+(stall watchdog, empty stream, abort propagation, error mapping), the store
+(validation, caps, atomic writes, reload, export shape), and the HSK engine
+(max matching, per-level coverage, current level, gap paging) — 57 tests across
+[backend](backend).
 
-Frontend: SSE line parsing, the streaming client (split events, mid-stream
-errors, abort, `[DONE]`), and the component's state machine — superseded
-requests, clearing mid-stream, the byte cap, pinyin and theme persistence —
-[frontend/tests](frontend/tests).
+Frontend: SSE parsing, the streaming client, library helpers (search, sheet
+pre-fills, tag parsing), speech availability, and the component's state machine
+(tabs, superseded requests, save/edit, chip editor, coverage paging) — 79 tests
+across [frontend/tests](frontend/tests).
 
-## How it works
+## Endpoints
 
-### The prompt
-
-HY-MT takes **no system prompt** — instruction and text share a single user
-turn — and for Chinese ⇔ other pairs the official guidance is the Chinese
-template (the English one is for non-Chinese ⇔ non-Chinese pairs). The
-prompt is therefore a hardcoded constant, and there is no `source_lang` /
-`target_lang` anywhere: the model infers the source, the direction is the
-product.
-
-Sampling: `temperature 0.7`, `top_p 0.6`, `max_tokens 2048` (Tencent's
-recommended values). `top_k`/`repetition_penalty` are vLLM-specific extras —
-set them as launch flags if you want them, not in the request.
+| Route | What it is |
+|-------|------------|
+| `GET /` | the embedded app |
+| `POST /api/translate` | validate → infer direction → prompt → proxy the model stream (SSE). Answers `X-Seta-Direction: en-zh\|zh-en` |
+| `GET /api/items` | the whole library, newest first |
+| `POST /api/items` | save one item (`chinese` required) |
+| `PATCH /api/items/{id}` | partial update |
+| `DELETE /api/items/{id}` | remove |
+| `GET /api/items/export` | the library as a JSON download |
+| `GET /api/hsk?gaps=50` | coverage per level, current level, gap page |
+| `GET /api/health` | liveness; never touches the model |
+| `GET /api/ready` | readiness; probes the model's `/v1/models`, 503 while warming |
 
 ### The stream contract
 
@@ -190,112 +213,95 @@ POST /api/translate {"text":"…"}
   data: [DONE]          terminator
 ```
 
-The Go handler commits SSE headers lazily: until the first event is known
-good, a failure can still surface as a clean status instead of a broken 200
-stream. Every event is flushed immediately — no buffering.
+Headers are committed lazily: until the first event is known good, a failure is
+still a clean status instead of a broken 200 stream. Every event is flushed
+immediately.
 
-A 200 upstream that yields **no deltas** (an empty completion, or a bare
-`[DONE]`) is a 502 here: there is no translation to show, and an empty stream
-would read in the UI as "you typed nothing".
-
-**Abort propagation**: the frontend aborts in-flight fetches on every
-keystroke burst — and when the textarea is cleared. The handler passes
-`r.Context()` into the upstream request, so an abandoned textarea actually
-cancels the model's generation instead of burning GPU cycles on it (verified by
-test).
-
-**Stall watchdog**: there is no overall request timeout — a long translation is
-legitimate — but no upstream chunk for `STREAM_IDLE_TIMEOUT` (default 30s, set
-per deployment) ends the stream with `{"error":"translation timed out"}` and
-`[DONE]`, or with a 504 if nothing had been sent yet. Without it a wedged model
-leaves the browser spinning forever.
-
-### Endpoints
-
-| Route              | What it is                                                   |
-|--------------------|--------------------------------------------------------------|
-| `GET /`            | the embedded app                                             |
-| `POST /api/translate` | validate → prompt → proxy the model stream (SSE)          |
-| `GET /api/health`  | liveness: the process is up. Never touches the model          |
-| `GET /api/ready`   | readiness: does the model answer `GET /v1/models` yet? 503 while warming |
-
-The UI polls `/api/ready` (every 10s until it answers) so a cold start reads as
-"warming up" rather than as a translator that silently does nothing. The app
-container's `HEALTHCHECK` uses `/api/health` instead, deliberately: a model that
-is still loading must not mark the app itself unhealthy.
+A 200 upstream that yields no deltas (empty completion, or a bare `[DONE]`) is a
+502 here — there is no translation to show. There is no overall request timeout
+(a long translation is legitimate), but `STREAM_IDLE_TIMEOUT` bounds the gap
+between chunks: a wedged model ends the stream with
+`{"error":"translation timed out"}` and `[DONE]`, or a 504 if nothing was sent
+yet.
 
 ### Errors
 
-| Condition                        | Status | Body                               |
-|----------------------------------|--------|------------------------------------|
-| Missing/blank text, bad JSON     | 400    | `{"error":"text is required"}`     |
-| Text over 5,000 bytes            | 413    | `{"error":"text exceeds limit"}`  |
-| Upstream unreachable             | 503    | `{"error":"translation engine unavailable"}` |
-| Empty or malformed upstream      | 502    | `{"error":"invalid upstream response"}` |
-| Upstream stalled (before output) | 504    | `{"error":"translation timed out"}` |
+| Condition | Status | Body |
+|-----------|--------|------|
+| Missing/blank text, bad JSON | 400 | `{"error":"text is required"}` |
+| Text over 5,000 bytes | 413 | `{"error":"text exceeds limit"}` |
+| Upstream unreachable | 503 | `{"error":"translation engine unavailable"}` |
+| Empty or malformed upstream | 502 | `{"error":"invalid upstream response"}` |
+| Upstream stalled before output | 504 | `{"error":"translation timed out"}` |
+| Item without `chinese` | 400 | `{"error":"chinese is required"}` |
+| Item field over its cap | 400 | `{"error":"note exceeds 2000 bytes"}` |
+| Unknown item id | 404 | `{"error":"item not found"}` |
+| Item body over 64 KiB | 413 | `{"error":"item too large"}` |
 
-The byte cap exists so a pasted document can't silently eat the whole
-`max_tokens` budget and stall the stream; the raw request body is capped
-separately (64 KiB) so an oversized POST is refused before it is decoded. The
-client counts the same cap in the source pane, and refuses to send text over it.
+Raw upstream error bodies are never forwarded — they leak model paths, GPU
+diagnostics and internal hostnames — but they are logged for the operator.
 
-### Pinyin
+## How the model is prompted
 
-The model is translation-only: asking it to also emit pinyin would leave
-its trained prompt template and degrade the hanzi. Instead the pinyin line
-is converted **client-side** from the accumulated translation with
-[pinyin-pro](https://github.com/pinyin-pro/pinyin-pro)
-([frontend/src/pinyin.ts](frontend/src/pinyin.ts)) — a dictionary lookup,
-so it is instant, offline, and word-aware where per-character tables get
-polyphones wrong (行 is xíng in 行动 but háng in 银行). The wire contract
-stays translation-only; rare polyphone words outside the dictionary can
-still come out with the first reading.
+HY-MT takes **no system prompt**: instruction and text share a single user turn.
+The Chinese templates are the official guidance for Chinese ⇔ other pairs:
 
-Cheap enough to recompute from scratch on every delta: a full conversion of a
-paragraph is ~0.06 ms, well under a frame.
+```
+en→zh: 将以下文本翻译为简体中文，注意只需要输出翻译后的结果，不要额外解释： {text}
+zh→en: 将以下文本翻译为英文，注意只需要输出翻译后的结果，不要额外解释： {text}
+```
 
-### Frontend
+Direction is inferred by the Go service (any CJK ideograph → zh→en) and reported
+to the client in a response header, so the UI knows whether the output is
+Chinese without keeping its own copy of the rule. No direction toggle in the UI.
 
-Same approach as timer: a single Alpine component
-([frontend/src/component.ts](frontend/src/component.ts)) bound to
-[frontend/index.html](frontend/index.html), theme classes on `:root`
-persisted to localStorage (`seta-theme`), flat panels, system fonts.
+Sampling: `temperature 0.7`, `top_p 0.6`, `max_tokens 2048`, `stream true`.
 
-The component owns state only; [frontend/src/translate.ts](frontend/src/translate.ts)
-owns the request and the SSE consumption, with `fetch` injectable so the
-streaming path is testable. Input is debounced 350 ms, and each request owns
-its `AbortController`: a superseded request cannot clobber the fresh one's
-state, drop-in fragments included.
+## Pinyin and speech
 
-Accessibility: the output pane is `aria-live="off"` while streaming (a screen
-reader should not be handed a fragment at a time), completion is announced once
-through a visually hidden live region, the hanzi carry `lang="zh-Hans"`
-(`zh-Latn-pinyin` for the reading line), and errors are `role="alert"`.
+The model is translation-only, so pinyin is converted **client-side** from the
+accumulated translation with [pinyin-pro](https://github.com/pinyin-pro/pinyin-pro)
+([frontend/src/pinyin.ts](frontend/src/pinyin.ts)) — a dictionary lookup, so it
+is instant, offline and word-aware. Recomputing it from scratch on every delta
+costs ~0.06 ms for a paragraph, i.e. nothing.
+
+Speech reads Chinese with the browser's own voices
+([frontend/src/speak.ts](frontend/src/speak.ts)) at rate 0.85. Availability is
+an OS fact, not a browser fact: if no `zh*` voice is installed the speak buttons
+are not rendered at all. Nothing is stored and the Go service is not involved.
+
+## Not built yet, on purpose
+
+Deferred until the library has ~50–100 items and the shape of how you learn is
+visible: spaced repetition, pronunciation practice (start with the browser's
+`SpeechRecognition` and character-level diff; a local ONNX tone-scoring model is
+the real long-term answer), YouTube/reader ingestion, source types or URL
+parsing, accounts and sync, and any curriculum.
+
+If a feature tempts you, ask first — the app should not presume.
 
 ## Project layout
 
-| File                          | Purpose                                          |
-|-------------------------------|--------------------------------------------------|
-| `backend/main.go`             | Config, routes, server lifecycle, JSON helpers   |
-| `backend/translate.go`        | Prompt, upstream request, SSE proxy + watchdog   |
-| `backend/health.go`           | Liveness/readiness probes, `/v1/models` derivation |
-| `backend/static.go`           | Embedded app, caching, security headers          |
-| `backend/*_test.go`           | Handler, stream, health and static tests         |
-| `backend/Dockerfile`          | Multi-stage: node build → go embed → alpine + user + healthcheck |
-| `frontend/index.html`         | Markup + Alpine bindings                         |
-| `frontend/src/component.ts`   | The Alpine component: state, streaming, theme    |
-| `frontend/src/translate.ts`   | Request + SSE consumption (testable, DI'd fetch) |
-| `frontend/src/pinyin.ts`      | Hanzi → tone-marked pinyin (pinyin-pro)          |
-| `frontend/src/sse.ts`         | Pure SSE buffer parsing                          |
-| `frontend/src/style.css`      | Theming and layout                               |
-| `frontend/vite.config.ts`     | Dev `/api` proxy, build target, test include     |
-| `frontend/tests/*.test.ts`    | Vitest: SSE, client, component, pinyin           |
-| `docker-compose.yml`          | `hy-mt` (internal, healthchecked) + `app` (public) |
-| `.dockerignore`               | Keeps node_modules and builds out of the context |
-| `Makefile`                    | install / build / run / dev / test / lint / clean |
-
-## Roadmap
-
-v0 is translation only, on purpose. Next miles on the road: a vocabulary of
-words I know and want to repeat, idioms, and review tooling — the app is
-named for the journey, not the translator.
+| File | Purpose |
+|------|---------|
+| `backend/main.go` | Config, routes, server lifecycle, JSON helpers |
+| `backend/translate.go` | Prompts, direction inference, SSE proxy + stall watchdog |
+| `backend/store.go` | The library: items, validation, atomic JSON file |
+| `backend/items.go` | Item + HSK HTTP handlers |
+| `backend/hsk.go` | Embedded vocabulary, max-match, coverage and gaps |
+| `backend/health.go` | Liveness/readiness, `/v1/models` derivation |
+| `backend/static.go` | Embedded app, caching, security headers |
+| `backend/data/` | `hsk.json` + `PROVENANCE.md` (generated by `make hsk`) |
+| `backend/tools/hskgen/` | The generator behind `make hsk` |
+| `backend/*_test.go` | Proxy, store, HSK, items, health, static tests |
+| `backend/Dockerfile` | Multi-stage: node build → go embed → alpine, non-root, `/data` |
+| `frontend/index.html` | The three tabs, the save sheet, all bindings |
+| `frontend/src/component.ts` | The Alpine component: state, tabs, sheet |
+| `frontend/src/translate.ts` | Streaming client (injectable fetch) |
+| `frontend/src/api.ts`, `http.ts` | Item/HSK calls and error plumbing |
+| `frontend/src/library.ts` | Search, sheet pre-fills, tag parsing (pure) |
+| `frontend/src/speak.ts` | TTS and voice availability |
+| `frontend/src/pinyin.ts`, `sse.ts` | Hanzi → pinyin; SSE buffer parsing |
+| `frontend/vite.config.ts` | Dev `/api` proxy, build target, test include |
+| `docker-compose.yml` | `hy-mt` (internal, healthchecked) + `app` (public, `seta-data`) |
+| `Makefile` | install / build / run / dev / test / lint / hsk / clean |
