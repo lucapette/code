@@ -113,15 +113,25 @@ func TestExtractDelta(t *testing.T) {
 // OpenAI-compatible SSE shape.
 func newTestApp(t *testing.T, upstream http.HandlerFunc) *httptest.Server {
 	t.Helper()
+	return newTestAppWith(t, func(*app) {}, upstream)
+}
+
+// newTestAppWith is newTestApp with a chance to adjust the app first, for tests
+// that need a different stall timeout.
+func newTestAppWith(t *testing.T, configure func(*app), upstream http.HandlerFunc) *httptest.Server {
+	t.Helper()
 
 	stub := httptest.NewServer(upstream)
 	t.Cleanup(stub.Close)
 
-	handler := http.NewServeMux()
-	handler.HandleFunc("POST /api/translate", (&app{
+	application := &app{
 		upstreamURL: stub.URL + "/v1/chat/completions",
 		client:      &http.Client{},
-	}).translateHandler)
+	}
+	configure(application)
+
+	handler := http.NewServeMux()
+	handler.HandleFunc("POST /api/translate", application.translateHandler)
 
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
@@ -323,6 +333,8 @@ func TestTranslateHandlerSendsPromptAndSampling(t *testing.T) {
 		assert.Contains(t, string(body), `"stream":true`)
 
 		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"你好\"}}]}\n\n")
+		w.(http.Flusher).Flush()
 		fmt.Fprint(w, "data: [DONE]\n\n")
 		w.(http.Flusher).Flush()
 	})
@@ -332,12 +344,14 @@ func TestTranslateHandlerSendsPromptAndSampling(t *testing.T) {
 }
 
 func TestAbortPropagatesToUpstream(t *testing.T) {
+	upstreamStarted := make(chan struct{})
 	upstreamCancelled := make(chan struct{})
 
 	server := newTestApp(t, func(w http.ResponseWriter, r *http.Request) {
 		// Drain the body first: the server only arms close-detection (and
 		// thus context cancellation) once the request body is consumed.
 		io.Copy(io.Discard, r.Body)
+		close(upstreamStarted)
 		<-r.Context().Done() // hold the stream open until someone cancels
 		close(upstreamCancelled)
 	})
@@ -357,7 +371,13 @@ func TestAbortPropagatesToUpstream(t *testing.T) {
 		respCh <- err
 	}()
 
-	time.Sleep(100 * time.Millisecond) // let the request reach the upstream stub
+	// Wait for the stub to be holding the stream, rather than sleeping: the
+	// abort must land while the upstream request is genuinely in flight.
+	select {
+	case <-upstreamStarted:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the request never reached the upstream stub")
+	}
 	cancel()
 
 	select {
