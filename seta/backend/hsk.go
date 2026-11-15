@@ -23,6 +23,20 @@ const gapTarget = 0.8
 // for more instead of receiving a five-hundred-row wall.
 const gapPage = 50
 
+// knownPage is how many known-word rows a response carries by default. Same
+// bargain as gapPage: a page, not everything the user has ever met.
+const knownPage = 50
+
+// maxRefs caps how many library items one word points back at. A word like 的
+// turns up in nearly every item; the row carries a few references and the count
+// behind them, and the rest is a library search away.
+const maxRefs = 3
+
+// defaultKnownLevels is what the known-word list covers until the client asks
+// for other bands. The first three levels are where a learner actually lives;
+// dumping all seven turns the list into a wall nobody reads.
+var defaultKnownLevels = []int{1, 2, 3}
+
 // hskWord is one vocabulary row in the embedded file.
 type hskWord struct {
 	Simplified string `json:"s"`
@@ -97,20 +111,61 @@ type levelCoverage struct {
 	Total int `json:"total"`
 }
 
-// coverageReport is the whole HSK tab payload.
+// wordRef points back at one library item a vocabulary word came from. The
+// text is the item's Chinese, so a row can say "you met this in 我去银行取钱"
+// without the client having to join anything.
+type wordRef struct {
+	ID   string `json:"id"`
+	Text string `json:"text"`
+}
+
+// wordRefs is one word's references: the few that travel with the row and the
+// total behind them. Identical texts count once — saving the same sentence
+// twice should not produce two identical chips.
+type wordRefs struct {
+	Items []wordRef
+	Total int
+	seen  map[string]struct{}
+}
+
+// knownWord is a vocabulary row plus the library items it was found in.
+type knownWord struct {
+	hskWord
+	Refs     []wordRef `json:"refs,omitempty"`
+	RefTotal int       `json:"ref_total,omitempty"`
+}
+
+// wordPage is one page of rows plus enough metadata to offer "load more".
+type wordPage struct {
+	Words []knownWord `json:"words"`
+	Total int         `json:"total"`
+	More  bool        `json:"more"`
+}
+
+// coverageReport is the whole HSK tab payload: the per-level bars, the map's
+// current level, the words the user has actually met, and what that level is
+// still missing.
 type coverageReport struct {
-	Levels   []levelCoverage `json:"levels"`
-	Current  int             `json:"current"`
-	Gaps     []hskWord       `json:"gaps"`
-	GapTotal int             `json:"gap_total"`
-	More     bool            `json:"more"`
+	Levels  []levelCoverage `json:"levels"`
+	Current int             `json:"current"`
+	Known   wordPage        `json:"known"`
+	Gaps    wordPage        `json:"gaps"`
+}
+
+// coverageQuery is what the tab asked for. Zero values mean "the app's
+// default": the first three bands, the map's current level, one page each.
+type coverageQuery struct {
+	KnownLevels []int // bands the known-word list covers
+	KnownPage   int   // how many known rows to return
+	GapLevel    int   // band to list gaps for; 0 means the current level
+	GapPage     int   // how many gap rows to return
 }
 
 // coverage maps the user's saved Chinese onto the HSK levels: how much of each
-// level they have actually met, which level to work from, and what that level
-// is still missing.
-func (h *hskIndex) coverage(chineseTexts []string, page int) coverageReport {
-	seen := h.seenWords(chineseTexts)
+// level they have met, which level to work from, the words they met (with the
+// items that taught them), and what the chosen level is still missing.
+func (h *hskIndex) coverage(items []Item, query coverageQuery) coverageReport {
+	seen, refs := h.harvest(items)
 
 	report := coverageReport{Levels: make([]levelCoverage, 0, len(h.levels))}
 	for _, level := range h.levels {
@@ -137,22 +192,74 @@ func (h *hskIndex) coverage(chineseTexts []string, page int) coverageReport {
 		}
 	}
 
+	knownLevels := query.KnownLevels
+	if len(knownLevels) == 0 {
+		knownLevels = defaultKnownLevels
+	}
+	report.Known = h.knownPage(seen, refs, knownLevels, query.KnownPage)
+
+	gapLevel := query.GapLevel
+	if gapLevel == 0 {
+		gapLevel = report.Current
+	}
+	report.Gaps = h.gapPage(seen, gapLevel, query.GapPage)
+
+	return report
+}
+
+// knownPage collects the words the user has met inside the given bands, each
+// with the items it came from, most common first.
+func (h *hskIndex) knownPage(seen map[string]struct{}, refs map[string]*wordRefs, levels []int, page int) wordPage {
+	if page <= 0 {
+		page = knownPage
+	}
+	out := wordPage{Words: make([]knownWord, 0, min(page, knownPage))}
+
+	for _, level := range levels {
+		for _, word := range h.byLevel[level] {
+			if _, ok := seen[word.Simplified]; !ok {
+				continue
+			}
+			out.Total++
+			if len(out.Words) < page {
+				row := knownWord{hskWord: word}
+				if found := refs[word.Simplified]; found != nil {
+					row.Refs, row.RefTotal = found.Items, found.Total
+				}
+				out.Words = append(out.Words, row)
+			}
+		}
+	}
+	out.More = out.Total > len(out.Words)
+
+	return out
+}
+
+// gapPage collects one band's unseen words, most common first.
+func (h *hskIndex) gapPage(seen map[string]struct{}, level, page int) wordPage {
 	if page <= 0 {
 		page = gapPage
 	}
-	report.Gaps = make([]hskWord, 0, min(page, gapPage))
-	for _, word := range h.byLevel[report.Current] {
+	out := wordPage{Words: make([]knownWord, 0, min(page, gapPage))}
+
+	for _, word := range h.byLevel[level] {
 		if _, ok := seen[word.Simplified]; ok {
 			continue
 		}
-		report.GapTotal++
-		if len(report.Gaps) < page {
-			report.Gaps = append(report.Gaps, word)
+		out.Total++
+		if len(out.Words) < page {
+			out.Words = append(out.Words, knownWord{hskWord: word})
 		}
 	}
-	report.More = report.GapTotal > len(report.Gaps)
+	out.More = out.Total > len(out.Words)
 
-	return report
+	return out
+}
+
+// hasLevel reports whether the vocabulary knows this band.
+func (h *hskIndex) hasLevel(level int) bool {
+	_, ok := h.byLevel[level]
+	return ok
 }
 
 // seenWords returns every vocabulary word that appears in the saved text.
@@ -163,15 +270,55 @@ func (h *hskIndex) coverage(chineseTexts []string, page int) coverageReport {
 // it keeps a single character like 的 from being counted out of the middle of
 // an unrelated word. It needs no segmenter and no extra data — the dictionary
 // is the segmenter.
-func (h *hskIndex) seenWords(chineseTexts []string) map[string]struct{} {
-	seen := make(map[string]struct{}, len(chineseTexts)*4)
-	for _, text := range chineseTexts {
-		h.matchInto(text, seen)
+func (h *hskIndex) seenWords(texts []string) map[string]struct{} {
+	items := make([]Item, len(texts))
+	for i, text := range texts {
+		items[i] = Item{Chinese: text}
 	}
+	seen, _ := h.harvest(items)
 	return seen
 }
 
-func (h *hskIndex) matchInto(text string, into map[string]struct{}) {
+// harvest matches every saved item against the vocabulary once, returning both
+// the set of met words and, per word, the items it was found in.
+func (h *hskIndex) harvest(items []Item) (map[string]struct{}, map[string]*wordRefs) {
+	seen := make(map[string]struct{}, len(items)*4)
+	refs := make(map[string]*wordRefs)
+
+	for _, item := range items {
+		// One item is one sighting: a word saved twice in the same sentence
+		// should point back at that sentence once.
+		counted := make(map[string]struct{})
+		h.matchInto(item.Chinese, func(word string) {
+			if _, done := counted[word]; done {
+				return
+			}
+			counted[word] = struct{}{}
+			seen[word] = struct{}{}
+
+			found := refs[word]
+			if found == nil {
+				found = &wordRefs{seen: make(map[string]struct{})}
+				refs[word] = found
+			}
+			if _, dup := found.seen[item.Chinese]; dup {
+				return
+			}
+			found.seen[item.Chinese] = struct{}{}
+
+			found.Total++
+			if len(found.Items) < maxRefs {
+				found.Items = append(found.Items, wordRef{ID: item.ID, Text: item.Chinese})
+			}
+		})
+	}
+
+	return seen, refs
+}
+
+// matchInto walks one text and reports each vocabulary word it contains, in
+// order of appearance.
+func (h *hskIndex) matchInto(text string, visit func(string)) {
 	runes := []rune(text)
 	for i := 0; i < len(runes); {
 		matched := 0
@@ -185,7 +332,7 @@ func (h *hskIndex) matchInto(text string, into map[string]struct{}) {
 			i++ // not the start of any known word: skip one character
 			continue
 		}
-		into[string(runes[i:i+matched])] = struct{}{}
+		visit(string(runes[i : i+matched]))
 		i += matched
 	}
 }

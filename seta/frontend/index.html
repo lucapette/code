@@ -185,7 +185,7 @@
 
       <ul class="items" x-show="!loadingItems">
         <template x-for="item in visibleItems" :key="item.id">
-          <li class="item">
+          <li class="item" :id="'item-' + item.id">
             <div class="item-head">
               <button class="item-row" type="button" @click="toggleItem(item.id)"
                       :aria-expanded="expandedId === item.id">
@@ -274,60 +274,156 @@
     </main>
 
     <!-- ================= HSK ================= -->
-    <main class="pane-wrap" x-show="tab === 'hsk'" role="tabpanel" aria-label="HSK coverage">
-      <h2 class="section-title">What you have met</h2>
-      <div class="coverage">
-        <template x-for="row in visibleLevels" :key="row.level">
-          <div class="level">
-            <span class="level-name" x-text="'HSK ' + row.level"></span>
-            <span class="bar" role="img" :aria-label="row.seen + ' of ' + row.total + ' words seen'">
-              <span class="bar-fill" :style="'width:' + percent(row) + '%'"></span>
-            </span>
-            <span class="level-count" x-text="row.seen + ' / ' + row.total"></span>
-          </div>
-        </template>
+    <main class="pane-wrap" x-show="tab === 'hsk'" role="tabpanel" aria-label="HSK vocabulary">
+
+      <!-- Two views, one tab: the words you have met (default), and the map
+           behind them. The list is the thing you come back to; the map is the
+           thing you consult. -->
+      <div class="subtabs" role="tablist" aria-label="HSK views">
+        <button class="subtab" type="button" role="tab" :aria-selected="hskView === 'known'"
+                @click="hskView = 'known'">
+          Words you know<span class="tab-count" x-show="coverage.known.total"
+                                x-text="coverage.known.total"></span>
+        </button>
+        <button class="subtab" type="button" role="tab" :aria-selected="hskView === 'explore'"
+                @click="hskView = 'explore'">Explore</button>
       </div>
-      <button class="act act-quiet" type="button" x-show="hiddenLevelCount && !showAllLevels"
-              @click="showAllLevels = true"
-              x-text="'show HSK 4–7 (' + hiddenLevelCount + ')'"></button>
-      <button class="act act-quiet" type="button" x-show="showAllLevels && hiddenLevelCount"
-              @click="showAllLevels = false">hide HSK 4–7</button>
 
-      <h2 class="section-title" x-show="coverage.current">
-        Missing from HSK <span x-text="coverage.current"></span>
-        <span class="section-meta" x-text="coverage.gap_total + ' words'"></span>
-      </h2>
       <p class="error" role="alert" x-show="hskError" x-cloak x-text="hskError"></p>
+      <p class="hint" x-show="loadingCoverage && !coverage.levels.length" x-cloak>loading…</p>
 
-      <ul class="gaps">
-        <template x-for="word in coverage.gaps" :key="word.s">
-          <li class="gap">
-            <span class="gap-chinese" lang="zh-Hans" x-text="word.s"></span>
-            <span class="gap-pinyin" lang="zh-Latn-pinyin" x-text="word.py"></span>
-            <span class="gap-gloss" x-text="word.m"></span>
-            <span class="actions">
-              <button class="act act-icon" type="button" @click="copyText(word.s)"
-                      title="Copy" :aria-label="'Copy ' + word.s">
-                <svg class="act-ico" aria-hidden="true"><use href="#i-copy"/></svg>
-              </button>
-              <button class="act act-icon" type="button" x-show="ttsAvailable" @click="speak(word.s)"
-                      title="Speak" :aria-label="'Speak ' + word.s">
-                <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
-              </button>
-              <button class="act act-icon" type="button" @click="openSaveFromWord(word)"
-                      title="Save to the library" :aria-label="'Save ' + word.s + ' to the library'">
-                <svg class="act-ico" aria-hidden="true"><use href="#i-save"/></svg>
-              </button>
-            </span>
-          </li>
+      <!-- ---------- What you have met ---------- -->
+      <section class="view" x-show="hskView === 'known'" role="tabpanel" aria-label="Words you know">
+        <div class="picks" role="group" aria-label="Which HSK bands to show">
+          <template x-for="row in coverage.levels" :key="row.level">
+            <button class="pick" type="button"
+                    :class="{ 'pick-on': knownLevels.includes(row.level) }"
+                    :aria-pressed="knownLevels.includes(row.level)"
+                    :title="row.seen + ' of ' + row.total + ' met'"
+                    @click="toggleKnownLevel(row.level)">
+              <span x-text="'HSK ' + levelLabel(row.level)"></span>
+              <!-- How many words you have there, so a band outside the
+                   selection still says what it holds. -->
+              <span class="pick-count" x-show="row.seen" x-text="row.seen"></span>
+            </button>
+          </template>
+        </div>
+
+        <template x-for="group in knownGroups" :key="group.level">
+          <section class="band">
+            <h2 class="band-head">
+              <span class="band-name" x-text="'HSK ' + group.label"></span>
+              <span class="bar" role="img" :aria-label="group.seen + ' of ' + group.total + ' words met'">
+                <span class="bar-fill" :style="'width:' + group.percent + '%'"></span>
+              </span>
+              <span class="section-meta" x-text="group.seen + ' / ' + group.total"></span>
+            </h2>
+
+            <ul class="gaps" x-show="group.words.length">
+              <template x-for="word in group.words" :key="word.s">
+                <li class="gap">
+                  <span class="gap-chinese" lang="zh-Hans" x-text="word.s"></span>
+                  <span class="gap-text">
+                    <span class="gap-pinyin" lang="zh-Latn-pinyin" x-text="word.py"></span>
+                    <span class="gap-gloss" x-text="word.m"></span>
+                  </span>
+                  <span class="actions">
+                    <button class="act act-icon" type="button" @click="copyText(word.s)"
+                            title="Copy" :aria-label="'Copy ' + word.s">
+                      <svg class="act-ico" aria-hidden="true"><use href="#i-copy"/></svg>
+                    </button>
+                    <button class="act act-icon" type="button" x-show="ttsAvailable" @click="speak(word.s)"
+                            title="Speak" :aria-label="'Speak ' + word.s">
+                      <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
+                    </button>
+                  </span>
+                  <!-- Where in the library you met it. One chip per item. -->
+                  <span class="refs" x-show="word.refs && word.refs.length">
+                    <template x-for="ref in word.refs ?? []" :key="ref.id">
+                      <button class="ref" type="button" @click="openItem(ref.id)"
+                              :title="'Open in the library: ' + ref.text"
+                              :lang="ref.text === word.s ? 'en' : 'zh-Hans'"
+                              x-text="ref.text === word.s ? 'saved' : ref.text"></button>
+                    </template>
+                    <!-- Past three items the row points at the library's search
+                         instead of turning into a wall of chips. -->
+                    <button class="ref ref-more" type="button" x-show="extraRefs(word)" x-cloak
+                            @click="searchLibrary(word.s)"
+                            :title="'Find every item with ' + word.s"
+                            x-text="'+' + extraRefs(word) + ' more'"></button>
+                  </span>
+                </li>
+              </template>
+            </ul>
+          </section>
         </template>
-      </ul>
 
-      <button class="act act-quiet" type="button" x-show="coverage.more" @click="loadMoreGaps()"
-              x-text="loadingCoverage ? 'loading…' : 'load more'"></button>
-      <p class="hint" x-show="!loadingCoverage && coverage.current && !coverage.gaps.length" x-cloak>
-        Nothing missing at this level. Good place to be.
-      </p>
+        <p class="hint" x-show="!loadingCoverage && coverage.levels.length && !coverage.known.total" x-cloak>
+          <span x-show="itemCount === 0">Nothing met yet. Save something you read and every word in it turns up here.</span>
+          <span x-show="itemCount > 0">Nothing met in these bands yet — pick another one above.</span>
+        </p>
+        <button class="act act-quiet" type="button" x-show="coverage.known.more" @click="loadMoreKnown()"
+                x-text="loadingCoverage ? 'loading…' : 'load more words'"></button>
+      </section>
+
+      <!-- ---------- Explore the map ---------- -->
+      <section class="view" x-show="hskView === 'explore'" role="tabpanel" aria-label="Explore the HSK map">
+        <p class="hint">
+          How much of each band you have met. Pick one to see the words it is still missing.
+        </p>
+        <div class="coverage">
+          <template x-for="row in coverage.levels" :key="row.level">
+            <button class="level" type="button"
+                    :class="{ 'level-on': gapLevelShown === row.level }"
+                    :aria-pressed="gapLevelShown === row.level"
+                    :title="row.seen + ' of ' + row.total + ' words met'"
+                    @click="showLevel(row.level)">
+              <span class="level-name" x-text="'HSK ' + levelLabel(row.level)"></span>
+              <span class="bar" role="img" :aria-label="row.seen + ' of ' + row.total + ' words met'">
+                <span class="bar-fill" :style="'width:' + percent(row) + '%'"></span>
+              </span>
+              <span class="level-count" x-text="row.seen + ' / ' + row.total"></span>
+            </button>
+          </template>
+        </div>
+
+        <h2 class="section-title" x-show="coverage.levels.length">
+          Missing from HSK <span x-text="levelLabel(gapLevelShown)"></span>
+          <span class="section-meta" x-text="coverage.gaps.total + ' words'"></span>
+        </h2>
+
+        <ul class="gaps">
+          <template x-for="word in coverage.gaps.words" :key="word.s">
+            <li class="gap">
+              <span class="gap-chinese" lang="zh-Hans" x-text="word.s"></span>
+              <span class="gap-text">
+                <span class="gap-pinyin" lang="zh-Latn-pinyin" x-text="word.py"></span>
+                <span class="gap-gloss" x-text="word.m"></span>
+              </span>
+              <span class="actions">
+                <button class="act act-icon" type="button" @click="copyText(word.s)"
+                        title="Copy" :aria-label="'Copy ' + word.s">
+                  <svg class="act-ico" aria-hidden="true"><use href="#i-copy"/></svg>
+                </button>
+                <button class="act act-icon" type="button" x-show="ttsAvailable" @click="speak(word.s)"
+                        title="Speak" :aria-label="'Speak ' + word.s">
+                  <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
+                </button>
+                <button class="act act-icon" type="button" @click="openSaveFromWord(word)"
+                        title="Save to the library" :aria-label="'Save ' + word.s + ' to the library'">
+                  <svg class="act-ico" aria-hidden="true"><use href="#i-save"/></svg>
+                </button>
+              </span>
+            </li>
+          </template>
+        </ul>
+
+        <p class="hint" x-show="coverage.levels.length && !coverage.gaps.total">
+          Nothing missing at this level. Good place to be.
+        </p>
+        <button class="act act-quiet" type="button" x-show="coverage.gaps.more" @click="loadMoreGaps()"
+                x-text="loadingCoverage ? 'loading…' : 'load more words'"></button>
+      </section>
     </main>
 
     <!-- ================= Save sheet (shared) ================= -->

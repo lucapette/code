@@ -18,6 +18,17 @@ import {
 } from './api';
 import { isAbortError } from './http';
 import {
+  DEFAULT_LEVELS,
+  WORD_PAGE,
+  extraRefs,
+  groupKnown,
+  levelLabel as hskLevelLabel,
+  levelPercent,
+  showingLevel,
+  toggleLevel,
+  type KnownGroup,
+} from './hsk';
+import {
   addTags,
   emptySheet,
   filterItems,
@@ -37,8 +48,10 @@ import type {
   CoverageReport,
   Direction,
   EngineStatus,
+  HskView,
   HskWord,
   Item,
+  KnownWord,
   LevelCoverage,
   SheetState,
   Tab,
@@ -52,7 +65,7 @@ const CJK = /[\u4e00-\u9fff]/;
 const COPIED_MS = 1500;
 const TOAST_MS = 1800;
 const READY_POLL_MS = 10_000;
-const GAP_PAGE = 50;
+const GAP_PAGE = WORD_PAGE;
 
 /* The assessment engine drags in onnxruntime (~2 MB of JS plus the wasm) for a
    feature most sessions never touch, so it is loaded on first use rather than
@@ -66,9 +79,8 @@ function practiceEngine() {
 const EMPTY_COVERAGE: CoverageReport = {
   levels: [],
   current: 0,
-  gaps: [],
-  gap_total: 0,
-  more: false,
+  known: { words: [], total: 0, more: false },
+  gaps: { words: [], total: 0, more: false },
 };
 
 export function setaApp(): SetaApp {
@@ -102,10 +114,13 @@ export function setaApp(): SetaApp {
     practice: {} as Record<string, PracticeState>,
 
     coverage: EMPTY_COVERAGE as CoverageReport,
+    hskView: 'known' as HskView,
+    knownLevels: [...DEFAULT_LEVELS],
+    knownPage: WORD_PAGE,
+    gapLevel: 0,
     gapPage: GAP_PAGE,
     loadingCoverage: false,
     hskError: null as string | null,
-    showAllLevels: false,
 
     /* --- Save sheet ------------------------------------------------ */
     sheet: emptySheet({ open: false }) as SheetState,
@@ -201,14 +216,14 @@ export function setaApp(): SetaApp {
       return this.translatedText.trim() !== '' && !this.isTranslating;
     },
 
-    get visibleLevels(): LevelCoverage[] {
-      return this.showAllLevels
-        ? this.coverage.levels
-        : this.coverage.levels.filter((row) => row.level <= 3);
+    /** The met words, bucketed by band, one group per selected band. */
+    get knownGroups(): KnownGroup[] {
+      return groupKnown(this.coverage, this.knownLevels);
     },
 
-    get hiddenLevelCount(): number {
-      return this.coverage.levels.filter((row) => row.level > 3).length;
+    /** The band whose unseen words the explore view is listing. */
+    get gapLevelShown(): number {
+      return showingLevel(this.coverage, this.gapLevel);
     },
 
     /* --- Tabs ------------------------------------------------------ */
@@ -483,12 +498,41 @@ export function setaApp(): SetaApp {
       this.loadingCoverage = true;
       this.hskError = null;
       try {
-        this.coverage = await apiLoadCoverage(this.gapPage);
+        this.coverage = await apiLoadCoverage({
+          levels: this.knownLevels,
+          known: this.knownPage,
+          level: this.gapLevel,
+          gaps: this.gapPage,
+        });
       } catch (e) {
         this.hskError = e instanceof Error ? e.message : 'could not load HSK coverage';
       } finally {
         this.loadingCoverage = false;
       }
+    },
+
+    /** Add or remove one band from the known list. The last band stays. */
+    async toggleKnownLevel(level: number) {
+      const next = toggleLevel(this.knownLevels, level);
+      if (next === this.knownLevels) return;
+      this.knownLevels = next;
+      this.knownPage = WORD_PAGE;
+      await this.refreshCoverage();
+    },
+
+    /** Point the gap list at one band instead of the map's current level. */
+    async showLevel(level: number) {
+      const target = level === this.coverage.current ? 0 : level;
+      if (target === this.gapLevel) return;
+      this.gapLevel = target;
+      this.gapPage = GAP_PAGE;
+      await this.refreshCoverage();
+    },
+
+    async loadMoreKnown() {
+      if (this.loadingCoverage) return;
+      this.knownPage += WORD_PAGE;
+      await this.refreshCoverage();
     },
 
     async loadMoreGaps() {
@@ -498,8 +542,34 @@ export function setaApp(): SetaApp {
     },
 
     percent(row: LevelCoverage): number {
-      if (!row.total) return 0;
-      return Math.round((row.seen / row.total) * 100);
+      return levelPercent(row);
+    },
+
+    levelLabel(level: number): string {
+      return hskLevelLabel(level);
+    },
+
+    /** How many of a word's references the row had to leave out. */
+    extraRefs(word: KnownWord): number {
+      return extraRefs(word);
+    },
+
+    /** Where a truncated reference list goes: the library, searching the word. */
+    searchLibrary(text: string) {
+      this.setTab('library');
+      this.libraryQuery = text;
+    },
+
+    /** Follow a word's reference into the library and open that item. */
+    openItem(id: string) {
+      this.setTab('library');
+      this.expandedId = id;
+      this.scrollToItem(id);
+    },
+
+    scrollToItem(id: string) {
+      const el = document.getElementById(`item-${id}`);
+      el?.scrollIntoView({ block: 'center' });
     },
 
     /* --- Save sheet (shared by all three tabs) --------------------- */
@@ -628,10 +698,13 @@ interface SetaAppState {
   practice: Record<string, PracticeState>;
 
   coverage: CoverageReport;
+  hskView: HskView;
+  knownLevels: number[];
+  knownPage: number;
+  gapLevel: number;
   gapPage: number;
   loadingCoverage: boolean;
   hskError: string | null;
-  showAllLevels: boolean;
 
   sheet: SheetState;
   tagDraft: string;
@@ -655,8 +728,8 @@ interface SetaAppState {
   readonly outputIsChinese: boolean;
   readonly spokenText: string;
   readonly canSaveTranslation: boolean;
-  readonly visibleLevels: LevelCoverage[];
-  readonly hiddenLevelCount: number;
+  readonly knownGroups: KnownGroup[];
+  readonly gapLevelShown: number;
 
   init(): void;
   setTab(tab: Tab): void;
@@ -683,8 +756,16 @@ interface SetaAppState {
   exportLibrary(): void;
 
   refreshCoverage(): Promise<void>;
+  toggleKnownLevel(level: number): Promise<void>;
+  showLevel(level: number): Promise<void>;
+  loadMoreKnown(): Promise<void>;
   loadMoreGaps(): Promise<void>;
   percent(row: LevelCoverage): number;
+  levelLabel(level: number): string;
+  extraRefs(word: KnownWord): number;
+  searchLibrary(text: string): void;
+  openItem(id: string): void;
+  scrollToItem(id: string): void;
 
   openSaveSheet(draft?: Partial<SheetState>): void;
   openSaveFromTranslation(): void;

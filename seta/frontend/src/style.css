@@ -651,6 +651,107 @@ textarea:focus-visible {
 }
 
 /* --- HSK -------------------------------------------------------------------- */
+.subtabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px 0 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.subtab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 8px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.subtab:hover {
+  color: var(--text-primary);
+}
+
+.subtab[aria-selected='true'] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Which bands the known list covers. */
+.picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.pick {
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.pick:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.pick-count {
+  padding-left: 4px;
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  opacity: 0.9;
+}
+
+.pick-on .pick-count {
+  color: var(--text-primary);
+}
+
+.pick-on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text-primary);
+}
+
+/* One band's slice of the known list: a header with its bar, then its words. */
+.band {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.band-head {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding-top: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.band-head .bar {
+  height: 6px;
+}
+
 .section-title {
   display: flex;
   align-items: baseline;
@@ -673,16 +774,31 @@ textarea:focus-visible {
 .coverage {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
 }
 
+/* A level row in the explore view doubles as the gap list's level picker. */
 .level {
   display: grid;
   grid-template-columns: 4.5rem 1fr auto;
   align-items: center;
   gap: 10px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
   font-size: 0.82rem;
   font-variant-numeric: tabular-nums;
+  text-align: left;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.level:hover {
+  background: color-mix(in srgb, var(--panel-2) 60%, transparent);
+}
+
+.level-on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .level-name {
@@ -710,25 +826,36 @@ textarea:focus-visible {
   color: var(--text-secondary);
 }
 
+/* One vocabulary row: the characters, the reading and gloss, the actions on
+   the right, and any library references across a second line. */
 .gap {
   display: grid;
-  grid-template-columns: auto auto 1fr auto;
-  align-items: center;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
   gap: 10px;
-  padding: 6px 8px 6px 14px;
+  padding: 7px 8px 7px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--panel);
 }
 
 .gap-chinese {
+  display: block;
+  min-width: 2.6rem;
   font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.gap-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .gap-pinyin {
   font-size: 0.78rem;
   color: var(--text-secondary);
-  white-space: nowrap;
 }
 
 .gap-gloss {
@@ -740,6 +867,40 @@ textarea:focus-visible {
   line-height: 1.45;
   color: var(--text-secondary);
   min-width: 0;
+}
+
+/* References back into the library: the item you met the word in. */
+.refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  grid-column: 2 / -1;
+  padding-top: 1px;
+}
+
+.ref {
+  display: inline-block;
+  max-width: 16rem;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.ref:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.ref-more {
+  border-style: dashed;
+  background: none;
 }
 
 /* --- Practice verdicts -------------------------------------------------------- */
@@ -976,13 +1137,8 @@ textarea:focus-visible {
   }
 
   .gap {
-    grid-template-columns: auto 1fr;
-    row-gap: 4px;
-  }
-
-  .gap-actions,
-  .gap .actions {
-    grid-column: 1 / -1;
+    gap: 8px;
+    padding-right: 4px;
   }
 }
 

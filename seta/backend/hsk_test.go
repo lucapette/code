@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -75,9 +76,19 @@ func TestMaxMatchIgnoresTextOutsideTheVocabulary(t *testing.T) {
 	assert.Empty(t, seen, "no vocabulary word appears")
 }
 
+// book is the library the map runs over: one item per text, in the order the
+// user saved them.
+func book(texts ...string) []Item {
+	items := make([]Item, len(texts))
+	for i, text := range texts {
+		items[i] = Item{ID: fmt.Sprintf("id-%d", i+1), Chinese: text}
+	}
+	return items
+}
+
 func TestCoverageCountsPerLevel(t *testing.T) {
 	index := mustIndex(t)
-	report := index.coverage([]string{"我去银行"}, gapPage)
+	report := index.coverage(book("我去银行"), coverageQuery{})
 
 	byLevel := map[int]levelCoverage{}
 	for _, row := range report.Levels {
@@ -92,11 +103,11 @@ func TestCoverageCountsPerLevel(t *testing.T) {
 func TestCoverageCurrentLevelIsLowestBelowTarget(t *testing.T) {
 	index := mustIndex(t)
 
-	empty := index.coverage(nil, gapPage)
+	empty := index.coverage(nil, coverageQuery{})
 	assert.Equal(t, 1, empty.Current, "nothing saved yet: level 1 is the map's edge")
 
 	// Level 3 is complete but level 1 is barely started, so level 1 stays current.
-	partial := index.coverage([]string{"我去银行"}, gapPage)
+	partial := index.coverage(book("我去银行"), coverageQuery{})
 	assert.Equal(t, 1, partial.Current)
 }
 
@@ -104,54 +115,169 @@ func TestCoverageAdvanceWhenLevelIsMet(t *testing.T) {
 	index := mustIndex(t)
 
 	// Every level-1 word is present (的 我 爱), level 2 is untouched.
-	report := index.coverage([]string{"我的爱"}, gapPage)
+	report := index.coverage(book("我的爱"), coverageQuery{})
 	assert.Equal(t, 2, report.Current)
-	assert.Equal(t, 1, report.GapTotal, "行 is the only level-2 word missing")
-	require.Len(t, report.Gaps, 1)
-	assert.Equal(t, "行", report.Gaps[0].Simplified)
-	assert.False(t, report.More)
+	assert.Equal(t, 1, report.Gaps.Total, "行 is the only level-2 word missing")
+	require.Len(t, report.Gaps.Words, 1)
+	assert.Equal(t, "行", report.Gaps.Words[0].Simplified)
+	assert.False(t, report.Gaps.More)
 }
 
 func TestCoverageCurrentIsHighestWhenEverythingIsMet(t *testing.T) {
 	index := mustIndex(t)
 
 	// Max matching means 行 needs a standalone sighting and 银 its own too.
-	report := index.coverage([]string{"我的爱", "银行行", "银"}, gapPage)
+	report := index.coverage(book("我的爱", "银行行", "银"), coverageQuery{})
 
 	assert.Equal(t, 5, report.Current, "the map's edge is the highest level")
-	assert.Equal(t, 0, report.GapTotal)
-	assert.Empty(t, report.Gaps)
+	assert.Equal(t, 0, report.Gaps.Total)
+	assert.Empty(t, report.Gaps.Words)
 }
 
 func TestCoverageGapOrderIsByFrequency(t *testing.T) {
 	index := mustIndex(t)
 
 	// Level 1 has 的(1) 我(2) 爱(3); gap list keeps frequency order.
-	report := index.coverage(nil, gapPage)
-	require.Len(t, report.Gaps, 3)
+	report := index.coverage(nil, coverageQuery{})
+	require.Len(t, report.Gaps.Words, 3)
 	assert.Equal(t, []string{"的", "我", "爱"}, []string{
-		report.Gaps[0].Simplified, report.Gaps[1].Simplified, report.Gaps[2].Simplified,
+		report.Gaps.Words[0].Simplified, report.Gaps.Words[1].Simplified, report.Gaps.Words[2].Simplified,
 	})
 }
 
 func TestCoverageGapPaging(t *testing.T) {
 	index := mustIndex(t)
 
-	page := index.coverage(nil, 2)
-	require.Len(t, page.Gaps, 2)
-	assert.Equal(t, 3, page.GapTotal, "the total is the whole level, not the page")
-	assert.True(t, page.More)
+	page := index.coverage(nil, coverageQuery{GapPage: 2})
+	require.Len(t, page.Gaps.Words, 2)
+	assert.Equal(t, 3, page.Gaps.Total, "the total is the whole level, not the page")
+	assert.True(t, page.Gaps.More)
 
-	whole := index.coverage(nil, 50)
-	require.Len(t, whole.Gaps, 3)
-	assert.False(t, whole.More)
+	whole := index.coverage(nil, coverageQuery{GapPage: 50})
+	require.Len(t, whole.Gaps.Words, 3)
+	assert.False(t, whole.Gaps.More)
 }
 
 func TestCoverageIgnoresDuplicatesAcrossItems(t *testing.T) {
 	index := mustIndex(t)
-	report := index.coverage([]string{"我", "我", "我的"}, gapPage)
+	report := index.coverage(book("我", "我", "我的"), coverageQuery{})
 
 	assert.Equal(t, 2, report.Levels[0].Seen, "我 and 的 count once each")
+}
+
+func TestKnownWordsCarryTheirLibraryItems(t *testing.T) {
+	index := mustIndex(t)
+	report := index.coverage(book("我去银行", "我的爱"), coverageQuery{})
+
+	require.Len(t, report.Known.Words, 4, "的 我 爱 at level 1, 银行 at level 3")
+	assert.Equal(t, 4, report.Known.Total)
+	assert.False(t, report.Known.More)
+
+	// Level first, then frequency: the list reads as a path through the bands.
+	assert.Equal(t, []string{"的", "我", "爱", "银行"}, []string{
+		report.Known.Words[0].Simplified,
+		report.Known.Words[1].Simplified,
+		report.Known.Words[2].Simplified,
+		report.Known.Words[3].Simplified,
+	})
+
+	word := report.Known.Words[0]
+	assert.Equal(t, 1, word.Level, "every row says which band it belongs to")
+	assert.Equal(t, "de", word.Pinyin)
+	assert.NotEmpty(t, word.Gloss)
+	require.Len(t, word.Refs, 1)
+	assert.Equal(t, "id-2", word.Refs[0].ID)
+	assert.Equal(t, "我的爱", word.Refs[0].Text)
+}
+
+func TestKnownWordPointBackAtEveryItemThatTaughtIt(t *testing.T) {
+	index := mustIndex(t)
+	report := index.coverage(book("我去银行", "我的朋友"), coverageQuery{})
+
+	var refs []wordRef
+	for _, word := range report.Known.Words {
+		if word.Simplified == "我" {
+			refs = word.Refs
+		}
+	}
+	require.Len(t, refs, 2, "我 appears in two saved items")
+	assert.Equal(t, []string{"id-1", "id-2"}, []string{refs[0].ID, refs[1].ID})
+	assert.Equal(t, []string{"我去银行", "我的朋友"}, []string{refs[0].Text, refs[1].Text})
+}
+
+func TestKnownWordCapsItsReferences(t *testing.T) {
+	index := mustIndex(t)
+	report := index.coverage(book("我", "我的爱", "我去银行", "我的朋友"), coverageQuery{})
+
+	var word knownWord
+	for _, entry := range report.Known.Words {
+		if entry.Simplified == "我" {
+			word = entry
+		}
+	}
+	require.NotEmpty(t, word.Refs)
+	assert.Len(t, word.Refs, maxRefs, "four items, capped references")
+	assert.Equal(t, 4, word.RefTotal, "...and the count behind them")
+	assert.Equal(t, "id-1", word.Refs[0].ID, "the newest first")
+}
+
+func TestKnownWordCountsOneItemOnce(t *testing.T) {
+	index := mustIndex(t)
+	report := index.coverage(book("我的我的", "我的爱", "我的爱"), coverageQuery{})
+
+	// 我的爱 was saved twice: one sighting, not two.
+	seen := map[string]knownWord{}
+	for _, word := range report.Known.Words {
+		seen[word.Simplified] = word
+	}
+	require.Contains(t, seen, "我")
+	assert.Len(t, seen["我"].Refs, 2, "each distinct item once")
+	assert.Equal(t, 2, seen["我"].RefTotal)
+	assert.Equal(t, 1, seen["爱"].RefTotal, "the repeated sentence counts once")
+}
+
+func TestKnownListDefaultsToTheFirstThreeBands(t *testing.T) {
+	index := mustIndex(t)
+
+	// 银 is level 5 and must stay out of the default view even though it is saved.
+	report := index.coverage(book("银", "我去银行"), coverageQuery{})
+	for _, word := range report.Known.Words {
+		assert.LessOrEqual(t, word.Level, 3, "%s is above the default bands", word.Simplified)
+	}
+	assert.Equal(t, 2, report.Known.Total, "我 and 银行")
+}
+
+func TestKnownListRespectsTheChosenBands(t *testing.T) {
+	index := mustIndex(t)
+	report := index.coverage(book("银", "我去银行"), coverageQuery{KnownLevels: []int{5}})
+
+	require.Len(t, report.Known.Words, 1)
+	assert.Equal(t, "银", report.Known.Words[0].Simplified)
+	assert.Equal(t, 5, report.Known.Words[0].Level)
+	assert.Equal(t, 1, report.Known.Total)
+
+	assert.Equal(t, levelCoverage{Level: 5, Seen: 1, Total: 1}, report.Levels[3],
+		"the bars still describe the whole map, not the filtered list")
+}
+
+func TestKnownListPaging(t *testing.T) {
+	index := mustIndex(t)
+	report := index.coverage(book("我的爱银行"), coverageQuery{KnownPage: 2})
+
+	require.Len(t, report.Known.Words, 2)
+	assert.Equal(t, 4, report.Known.Total, "the total is the whole selection, not the page")
+	assert.True(t, report.Known.More)
+	assert.Equal(t, "的", report.Known.Words[0].Simplified, "the most common first")
+}
+
+func TestGapsCanTargetAnotherBand(t *testing.T) {
+	index := mustIndex(t)
+	report := index.coverage(book("我的爱"), coverageQuery{GapLevel: 5})
+
+	require.Len(t, report.Gaps.Words, 1)
+	assert.Equal(t, "银", report.Gaps.Words[0].Simplified)
+	assert.Equal(t, 2, report.Current, "asking for a band does not move the map")
+	assert.Nil(t, report.Gaps.Words[0].Refs, "an unseen word points nowhere")
 }
 
 func TestEmbeddedVocabularyLoads(t *testing.T) {

@@ -36,9 +36,27 @@ export function deleteItem(id: string): Promise<void> {
   return fetchJSON<void>(`/api/items/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
-/** The HSK tab: coverage per level plus `gaps` rows of the current level. */
-export function loadCoverage(gaps: number): Promise<CoverageReport> {
-  return fetchJSON<CoverageReport>(`/api/hsk?gaps=${gaps}`, { cache: 'no-store' });
+/** What the HSK tab asks for: bands, gap level, and the two page sizes. */
+export interface CoverageQuery {
+  levels?: readonly number[];
+  known?: number;
+  level?: number;
+  gaps?: number;
+}
+
+/** The HSK tab: coverage per level, the words met, and one page of gaps.
+    Built by hand so ?levels=1,2,3 stays readable in the network panel. */
+export function loadCoverage(query: CoverageQuery = {}): Promise<CoverageReport> {
+  const search = [
+    query.levels?.length ? `levels=${query.levels.join(',')}` : '',
+    query.known ? `known=${query.known}` : '',
+    query.level ? `level=${query.level}` : '',
+    query.gaps ? `gaps=${query.gaps}` : '',
+  ]
+    .filter(Boolean)
+    .join('&');
+
+  return fetchJSON<CoverageReport>(`/api/hsk${search ? `?${search}` : ''}`, { cache: 'no-store' });
 }
 
 /** Where the export button points: a download, not an API call. */

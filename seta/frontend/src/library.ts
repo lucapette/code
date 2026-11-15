@@ -6,6 +6,7 @@
    testable on their own.
    ========================================================================== */
 
+import { levelLabel } from './hsk';
 import type { Direction, HskWord, Item, ItemInput, SheetState } from './types';
 
 const MAX_TAGS = 20;
@@ -62,7 +63,7 @@ export function sheetFromWord(word: HskWord): Partial<SheetState> {
   return {
     chinese: word.s,
     meaning: word.m,
-    where: `HSK ${word.lv}`,
+    where: `HSK ${levelLabel(word.lv)}`,
   };
 }
 

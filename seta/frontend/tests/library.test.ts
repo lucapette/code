@@ -76,6 +76,10 @@ describe('sheet pre-fills', () => {
     });
   });
 
+  it('names the 7–9 bucket when the word sits in it', () => {
+    expect(sheetFromWord({ s: '银行', lv: 7, q: 300, py: 'yín háng', m: 'bank' }).where).toBe('HSK 7–9');
+  });
+
   it('pre-fills every field when editing an existing item', () => {
     const existing = item({ id: 'abc', meaning: 'hello', where: 'tutor', note: 'said fast', tags: ['hi'] });
     expect(sheetFromItem(existing)).toEqual({

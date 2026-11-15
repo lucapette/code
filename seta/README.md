@@ -58,8 +58,10 @@ Alpine.js ──POST /api/translate──▶ Go ──OpenAI-compatible──▶
   your *tones*, graded on-device by a 9M-parameter model (see below)
 - **Save sheet** shared by all three tabs: Chinese (required), meaning, where
   you found it, note, free-form tags as chips
-- **HSK coverage** per level, current level detected from your own coverage, and
-  a frequency-sorted gap list you can page through and save from
+- **HSK tab in two views**: *Words you know* — every word you have met, newest
+  library items that taught it right there under it, band labels and per-band
+  bars — and *Explore* — coverage per band, the band the map puts you on, and
+  its frequency-sorted unseen words, pageable and saveable
 - **Export** the library as JSON at any time
 - Dark and light themes, keyboard shortcuts (`⌘/Ctrl+Enter`, `Esc`)
 - One self-contained binary; no accounts, no telemetry, no external APIs
@@ -103,7 +105,9 @@ Working, verified against the real models:
 - translation both ways with streaming, abort, pinyin and a clean error surface;
   direction inferred from the text
 - library: save/edit/delete, one search box, tag chips, JSON export
-- HSK: per-level coverage, current level, frequency-sorted gaps, load more
+- HSK: words met grouped by band with a reference back to every library item
+  that taught them; per-band coverage; the current band's gaps; load more on
+  both lists
 - practice: record a saved item and get per-syllable tone feedback from the
   local model (needs a microphone and `make model`)
 - TTS with a real Chinese voice when the OS has one
@@ -184,7 +188,8 @@ runtime; regenerate with `make hsk` (source pinned to a commit).
 
 **Counts**: HSK 1 506 · 2 750 · 3 953 · 4 972 · 5 1059 · 6 1123 · 7–9 5606. A
 word listed in several bands keeps the lowest one, so per-level numbers do not
-double count.
+double count. The data carries bands 7, 8 and 9 as one bucket; the app calls it
+7–9.
 
 **"Seen"** means the word appears in your saved Chinese. Matching is forward
 maximum matching against the vocabulary itself: at each position the longest
@@ -192,13 +197,27 @@ word that fits wins, so 银行 inside a saved sentence counts as 银行 and not 
 银 + 行, and a lone 的 is not counted from the middle of an unrelated word. No
 segmenter, no extra data — the dictionary is the segmenter.
 
-**Current level** is the lowest level still under 80% coverage; once everything
-clears it, the map's edge is the highest level. The gap list is that level's
-unseen words, most frequent first, 50 at a time.
+### The two views
+
+*Words you know* answers "what do I have?", which is the question you come back
+with. It lists every word you have met, band by band, most frequent first inside
+each band, and under each word the library items that taught it — tap one and
+the library opens on that item. A word met in many items shows its three newest
+references and a `+N more` chip, which hands the rest to the library's search
+rather than turning the row into a wall of chips. Band chips pick which bands to
+show; they start on HSK 1–3, because a list of every band at once is a wall, not
+an answer.
+
+*Explore* answers "what is next?". It shows the coverage bar per band, marks the
+band the map puts you on, and lists that band's unseen words. Pick another band
+to look further out.
+
+**Current band** is the lowest level still under 80% coverage; once everything
+clears it, the map's edge is the highest level.
 
 Two things the data cannot do, both fine at this stage: a word with several
-readings gets one pinyin (行 → háng, so 行动 will read as háng dòng in the gap
-list), and glosses are trimmed to the first sense or two.
+readings gets one pinyin (行 → háng, so 行动 will read as háng dòng), and glosses
+are trimmed to the first sense or two.
 
 ## Practice: grading your own tones
 
@@ -288,7 +307,7 @@ is caught.
 | `PATCH /api/items/{id}` | partial update |
 | `DELETE /api/items/{id}` | remove |
 | `GET /api/items/export` | the library as a JSON download |
-| `GET /api/hsk?gaps=50` | coverage per level, current level, gap page |
+| `GET /api/hsk?levels=1,2,3&known=50&gaps=50` | coverage per band, the words met (each with the library items that taught it), one page of gaps; `?level=4` lists another band's gaps |
 | `GET /api/health` | liveness; never touches the model |
 | `GET /api/ready` | readiness; probes the model's `/v1/models`, 503 while warming |
 

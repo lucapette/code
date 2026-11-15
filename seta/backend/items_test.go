@@ -204,10 +204,11 @@ func TestHSKHandlerCoverage(t *testing.T) {
 	require.NoError(t, json.NewDecoder(empty.Body).Decode(&report))
 	assert.Equal(t, 1, report.Current)
 	assert.Len(t, report.Levels, 4)
-	assert.Equal(t, 3, report.GapTotal)
-	assert.Equal(t, "的", report.Gaps[0].Simplified, "most frequent first")
-	assert.NotEmpty(t, report.Gaps[0].Pinyin)
-	assert.NotEmpty(t, report.Gaps[0].Gloss)
+	assert.Equal(t, 3, report.Gaps.Total)
+	assert.Equal(t, "的", report.Gaps.Words[0].Simplified, "most frequent first")
+	assert.NotEmpty(t, report.Gaps.Words[0].Pinyin)
+	assert.NotEmpty(t, report.Gaps.Words[0].Gloss)
+	assert.Empty(t, report.Known.Words, "nothing saved yet: nothing met")
 
 	// Saving a sentence moves the map.
 	readItem(t, send(t, server, http.MethodPost, "/api/items", `{"chinese":"我去银行"}`))
@@ -224,20 +225,79 @@ func TestHSKHandlerCoverage(t *testing.T) {
 	assert.Equal(t, 0, seen[2], "...and not as the standalone 行 at level 2")
 }
 
+func TestHSKHandlerKnownWordsPointAtTheLibrary(t *testing.T) {
+	server := newLibraryServer(t)
+
+	saved := readItem(t, send(t, server, http.MethodPost, "/api/items", `{"chinese":"我去银行"}`))
+	readItem(t, send(t, server, http.MethodPost, "/api/items", `{"chinese":"我的爱"}`))
+
+	resp := send(t, server, http.MethodGet, "/api/hsk", "")
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var report coverageReport
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&report))
+
+	require.Len(t, report.Known.Words, 4)
+	assert.Equal(t, 4, report.Known.Total)
+	assert.Equal(t, []string{"的", "我", "爱", "银行"}, []string{
+		report.Known.Words[0].Simplified,
+		report.Known.Words[1].Simplified,
+		report.Known.Words[2].Simplified,
+		report.Known.Words[3].Simplified,
+	})
+
+	// 我 was met in both items; refs follow the library order, newest first.
+	var refs []wordRef
+	for _, word := range report.Known.Words {
+		if word.Simplified == "我" {
+			refs = word.Refs
+		}
+	}
+	require.Len(t, refs, 2)
+	assert.Contains(t, []string{refs[0].ID, refs[1].ID}, saved.ID)
+	assert.Equal(t, []string{"我的爱", "我去银行"}, []string{refs[0].Text, refs[1].Text})
+}
+
+func TestHSKHandlerBandAndPageQuery(t *testing.T) {
+	server := newLibraryServer(t)
+	readItem(t, send(t, server, http.MethodPost, "/api/items", `{"chinese":"银"}`))
+
+	wide := send(t, server, http.MethodGet, "/api/hsk?levels=5", "")
+	require.Equal(t, http.StatusOK, wide.StatusCode)
+	var report coverageReport
+	require.NoError(t, json.NewDecoder(wide.Body).Decode(&report))
+	require.Len(t, report.Known.Words, 1)
+	assert.Equal(t, "银", report.Known.Words[0].Simplified)
+
+	paged := send(t, server, http.MethodGet, "/api/hsk?levels=1,2,3&known=1", "")
+	require.NoError(t, json.NewDecoder(paged.Body).Decode(&report))
+	assert.Empty(t, report.Known.Words, "银 is level 5, outside the default bands")
+	assert.Equal(t, 0, report.Known.Total)
+
+	gapped := send(t, server, http.MethodGet, "/api/hsk?level=3", "")
+	require.NoError(t, json.NewDecoder(gapped.Body).Decode(&report))
+	require.Len(t, report.Gaps.Words, 1)
+	assert.Equal(t, "银行", report.Gaps.Words[0].Simplified, "the band asked for, not the current one")
+
+	for _, bad := range []string{"/api/hsk?levels=9", "/api/hsk?levels=one", "/api/hsk?level=0", "/api/hsk?known=-1"} {
+		assert.Equal(t, http.StatusBadRequest, send(t, server, http.MethodGet, bad, "").StatusCode, bad)
+	}
+}
+
 func TestHSKHandlerGapPaging(t *testing.T) {
 	server := newLibraryServer(t)
 
 	one := send(t, server, http.MethodGet, "/api/hsk?gaps=1", "")
 	var report coverageReport
 	require.NoError(t, json.NewDecoder(one.Body).Decode(&report))
-	assert.Len(t, report.Gaps, 1)
-	assert.Equal(t, 3, report.GapTotal)
-	assert.True(t, report.More, "there is more to load")
+	require.Len(t, report.Gaps.Words, 1)
+	assert.Equal(t, 3, report.Gaps.Total)
+	assert.True(t, report.Gaps.More, "there is more to load")
 
 	all := send(t, server, http.MethodGet, "/api/hsk?gaps=50", "")
 	require.NoError(t, json.NewDecoder(all.Body).Decode(&report))
-	assert.Len(t, report.Gaps, 3)
-	assert.False(t, report.More)
+	assert.Len(t, report.Gaps.Words, 3)
+	assert.False(t, report.Gaps.More)
 
 	bad := send(t, server, http.MethodGet, "/api/hsk?gaps=abc", "")
 	assert.Equal(t, http.StatusBadRequest, bad.StatusCode)

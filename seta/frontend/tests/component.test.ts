@@ -13,13 +13,9 @@ const mocks = vi.hoisted(() => ({
     unclear: 0,
     heardText: 'xie4 shi4',
   })),
-  startRecording: vi.fn(async () => ({
-    stop: vi.fn(async () => ({
-      audio: new Float32Array(16000),
-      seconds: 1,
-      peak: 0.4,
-    })),
-    cancel: vi.fn(),
+  startRecording: vi.fn<() => Promise<Recorder>>(async () => ({
+    stop: async () => ({ audio: new Float32Array(16000), seconds: 1, peak: 0.4 }),
+    cancel: () => {},
   })),
 }));
 
@@ -29,6 +25,7 @@ vi.mock('../src/practice/engine', () => ({
 }));
 
 vi.mock('../src/practice/recorder', () => ({ startRecording: mocks.startRecording }));
+import type { Recorder } from '../src/practice/recorder';
 import { MAX_TEXT_BYTES } from '../src/translate';
 import type { CoverageReport, Item } from '../src/types';
 
@@ -36,7 +33,12 @@ const encoder = new TextEncoder();
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 const delta = (text: string) => `data: {"delta":"${text}"}\n\n`;
 
-const EMPTY_COVERAGE: CoverageReport = { levels: [], current: 0, gaps: [], gap_total: 0, more: false };
+const EMPTY_COVERAGE: CoverageReport = {
+  levels: [],
+  current: 0,
+  known: { words: [], total: 0, more: false },
+  gaps: { words: [], total: 0, more: false },
+};
 
 const makeItem = (overrides: Partial<Item> = {}): Item => ({
   id: 'item-1',
@@ -90,6 +92,8 @@ function stubBrowser({ prefersLight = false, chineseVoice = true } = {}) {
 
   vi.stubGlobal('navigator', { clipboard });
 
+  const scrolled: string[] = [];
+
   vi.stubGlobal('document', {
     documentElement: {
       classList: {
@@ -97,9 +101,10 @@ function stubBrowser({ prefersLight = false, chineseVoice = true } = {}) {
       },
     },
     querySelector: () => ({ setAttribute: () => {} }),
+    getElementById: (id: string) => ({ id, scrollIntoView: () => scrolled.push(id) }),
   });
 
-  return { store, classes, spoken, location, clipboard };
+  return { store, classes, spoken, location, clipboard, scrolled };
 }
 
 /** An in-memory stand-in for the Go service's item and HSK routes. */
@@ -197,8 +202,10 @@ describe('setaApp', () => {
     return setaApp();
   }
 
+  let browser: ReturnType<typeof stubBrowser>;
+
   beforeEach(() => {
-    stubBrowser();
+    browser = stubBrowser();
   });
 
   /* --- translate ------------------------------------------------- */
@@ -584,45 +591,171 @@ describe('setaApp', () => {
 
   /* --- HSK --------------------------------------------------------- */
 
-  it('shows the first three levels by default and the rest on demand', async () => {
-    const coverage: CoverageReport = {
-      levels: [
-        { level: 1, seen: 10, total: 20 },
-        { level: 2, seen: 0, total: 20 },
-        { level: 3, seen: 0, total: 20 },
-        { level: 4, seen: 0, total: 20 },
+  /** A report shaped like the service's: two bands met, one with refs, one gap
+      page with more behind it. */
+  const coverageReport = (overrides: Partial<CoverageReport> = {}): CoverageReport => ({
+    levels: [
+      { level: 1, seen: 2, total: 4 },
+      { level: 2, seen: 1, total: 4 },
+      { level: 3, seen: 0, total: 4 },
+      { level: 4, seen: 0, total: 4 },
+    ],
+    current: 2,
+    known: {
+      words: [
+        { s: '的', lv: 1, q: 1, py: 'de', m: 'of' },
+        { s: '我', lv: 1, q: 2, py: 'wǒ', m: 'I', refs: [{ id: 'i1', text: '我去银行' }] },
+        { s: '行', lv: 2, q: 100, py: 'háng', m: 'row' },
       ],
-      current: 2,
-      gaps: [{ s: '银行', lv: 2, q: 300, py: 'yín háng', m: 'bank' }],
-      gap_total: 20,
+      total: 3,
+      more: false,
+    },
+    gaps: {
+      words: [{ s: '银行', lv: 3, q: 300, py: 'yín háng', m: 'bank' }],
+      total: 20,
       more: true,
-    };
-    const app = mount({ coverage });
+    },
+    ...overrides,
+  });
+
+  it('opens on the words you know, over the first three bands', async () => {
+    const app = mount({ coverage: coverageReport() });
     app.init();
     await tick();
 
-    expect(app.visibleLevels.map((row) => row.level)).toEqual([1, 2, 3]);
-    expect(app.hiddenLevelCount).toBe(1);
-
-    app.showAllLevels = true;
-    expect(app.visibleLevels).toHaveLength(4);
+    expect(app.hskView).toBe('known');
+    expect(app.knownLevels).toEqual([1, 2, 3]);
+    expect(server.callsTo('/api/hsk').at(-1)?.url).toBe('/api/hsk?levels=1,2,3&known=50&gaps=50');
   });
 
-  it('formats coverage as a percentage and survives an empty level', () => {
+  it('groups the met words by band and keeps their library references', async () => {
+    const app = mount({ coverage: coverageReport() });
+    app.init();
+    await tick();
+
+    const groups = app.knownGroups;
+    expect(groups.map((group) => group.label)).toEqual(['1', '2', '3']);
+    expect(groups[0].words.map((word) => word.s)).toEqual(['的', '我']);
+    expect(groups[0].words[1].refs?.[0].id).toBe('i1');
+    expect(groups[1].words.map((word) => word.s)).toEqual(['行']);
+    expect(groups[2].words).toEqual([]);
+    expect(groups[2].seen).toBe(0);
+  });
+
+  it('asks for the bands the user picks, starting from the first page', async () => {
+    const app = mount({ coverage: coverageReport() });
+    app.init();
+    await tick();
+
+    app.knownPage = 100;
+    await app.toggleKnownLevel(2);
+
+    expect(app.knownLevels).toEqual([1, 3]);
+    expect(app.knownPage).toBe(50);
+    expect(server.callsTo('/api/hsk').at(-1)?.url).toBe('/api/hsk?levels=1,3&known=50&gaps=50');
+
+    await app.toggleKnownLevel(4);
+    expect(app.knownLevels).toEqual([1, 3, 4]);
+    expect(server.callsTo('/api/hsk').at(-1)?.url).toBe('/api/hsk?levels=1,3,4&known=50&gaps=50');
+  });
+
+  it('never lets the band selection go empty', async () => {
+    const app = mount({ coverage: coverageReport() });
+    app.knownLevels = [1];
+
+    await app.toggleKnownLevel(1);
+
+    expect(app.knownLevels).toEqual([1]);
+    expect(server.callsTo('/api/hsk')).toHaveLength(0);
+  });
+
+  it('grows the known page and the gap page separately', async () => {
+    const app = mount({ coverage: coverageReport() });
+    app.init();
+    await tick();
+
+    await app.loadMoreKnown();
+    expect(server.callsTo('/api/hsk').at(-1)?.url).toBe('/api/hsk?levels=1,2,3&known=100&gaps=50');
+
+    await app.loadMoreGaps();
+    expect(server.callsTo('/api/hsk').at(-1)?.url).toBe('/api/hsk?levels=1,2,3&known=100&gaps=100');
+  });
+
+  it('points the gap list at a band, and back at the map', async () => {
+    const app = mount({ coverage: coverageReport() });
+    app.init();
+    await tick();
+
+    await app.showLevel(4);
+    expect(app.gapLevel).toBe(4);
+    expect(app.gapLevelShown).toBe(4);
+    expect(server.callsTo('/api/hsk').at(-1)?.url).toBe(
+      '/api/hsk?levels=1,2,3&known=50&level=4&gaps=50',
+    );
+
+    // The map's own level needs no explicit band.
+    await app.showLevel(2);
+    expect(app.gapLevel).toBe(0);
+    expect(app.gapLevelShown).toBe(2);
+    expect(server.callsTo('/api/hsk').at(-1)?.url).toBe('/api/hsk?levels=1,2,3&known=50&gaps=50');
+
+    const calls = server.callsTo('/api/hsk').length;
+    await app.showLevel(2);
+    expect(server.callsTo('/api/hsk')).toHaveLength(calls); // the band is already showing
+  });
+
+  it('hands a truncated reference list to the library search', async () => {
+    const app = mount({
+      items: [makeItem({ id: 'i1', chinese: '我去银行' }), makeItem({ id: 'i2', chinese: '我去学校' })],
+      coverage: coverageReport({
+        known: {
+          words: [
+            {
+              s: '我',
+              lv: 1,
+              q: 2,
+              py: 'wǒ',
+              m: 'I',
+              refs: [{ id: 'i1', text: '我去银行' }],
+              ref_total: 2,
+            },
+          ],
+          total: 1,
+          more: false,
+        },
+      }),
+    });
+    app.init();
+    await tick();
+
+    const word = app.coverage.known.words[0];
+    expect(app.extraRefs(word)).toBe(1);
+
+    app.searchLibrary(word.s);
+
+    expect(app.tab).toBe('library');
+    expect(app.libraryQuery).toBe('我');
+    expect(app.visibleItems.map((item) => item.id)).toEqual(['i1', 'i2']);
+  });
+
+  it('follows a reference into the library and opens that item', async () => {
+    const app = mount({ items: [makeItem({ id: 'i1', chinese: '我去银行' })] });
+    app.init();
+    await tick();
+
+    app.openItem('i1');
+
+    expect(app.tab).toBe('library');
+    expect(app.expandedId).toBe('i1');
+    expect(browser.scrolled).toEqual(['item-i1']);
+  });
+
+  it('formats a band as a percentage and survives an empty one', () => {
     const app = mount();
     expect(app.percent({ level: 1, seen: 1, total: 4 })).toBe(25);
     expect(app.percent({ level: 1, seen: 0, total: 0 })).toBe(0);
-  });
-
-  it('asks for more gap rows by growing the page', async () => {
-    const app = mount({ coverage: { ...EMPTY_COVERAGE, gap_total: 200, more: true } });
-    app.init();
-    await tick();
-
-    await app.loadMoreGaps();
-
-    const last = server.callsTo('/api/hsk').at(-1);
-    expect(last?.url).toBe('/api/hsk?gaps=100');
+    expect(app.levelLabel(2)).toBe('2');
+    expect(app.levelLabel(7)).toBe('7–9');
   });
 
   /* --- preferences and speech -------------------------------------- */

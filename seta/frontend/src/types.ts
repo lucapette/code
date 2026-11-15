@@ -43,6 +43,26 @@ export interface HskWord {
   m: string;
 }
 
+/** A library item a vocabulary word was met in. */
+export interface WordRef {
+  id: string;
+  text: string;
+}
+
+/** A word the user has met, with the items that taught it. `ref_total` counts
+    every item, while `refs` carries only the few the row shows. */
+export interface KnownWord extends HskWord {
+  refs?: WordRef[];
+  ref_total?: number;
+}
+
+/** One page of vocabulary rows, with the total behind it. */
+export interface WordPage {
+  words: KnownWord[];
+  total: number;
+  more: boolean;
+}
+
 export interface LevelCoverage {
   level: number;
   seen: number;
@@ -53,10 +73,12 @@ export interface LevelCoverage {
 export interface CoverageReport {
   levels: LevelCoverage[];
   current: number;
-  gaps: HskWord[];
-  gap_total: number;
-  more: boolean;
+  known: WordPage;
+  gaps: WordPage;
 }
+
+/** The HSK tab's two views: what you have met, and the map behind it. */
+export type HskView = 'known' | 'explore';
 
 /** The save sheet's working state, shared by all three tabs. */
 export interface SheetState {
