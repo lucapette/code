@@ -11,6 +11,7 @@ import {
   kindOf,
   kindSplit,
   minuteMark,
+  nextBoundary,
   nextLabel,
   progressCount,
   ringProgress,
@@ -90,6 +91,30 @@ describe('intervalState', () => {
 
   it('returns null for an empty chain', () => {
     expect(intervalState([], 10)).toBeNull();
+  });
+});
+
+describe('nextBoundary', () => {
+  it('lands on the next interval boundary from mid-interval', () => {
+    expect(nextBoundary(hiit, 0)).toBe(40);
+    expect(nextBoundary(hiit, 10.5)).toBe(40);
+    expect(nextBoundary(hiit, 45)).toBe(60);
+  });
+
+  it('skips the whole interval when called exactly on a boundary', () => {
+    expect(nextBoundary(hiit, 40)).toBe(60);
+    expect(nextBoundary(hiitx10, 60)).toBe(100);
+  });
+
+  it('returns the session end on the final interval', () => {
+    expect(nextBoundary(hiit, 55)).toBe(60);
+    expect(nextBoundary(hiit, 60)).toBe(60);
+    // clamped past the end, same as indexOfInterval
+    expect(nextBoundary(hiit, 400)).toBe(60);
+  });
+
+  it('is 0 for an empty chain', () => {
+    expect(nextBoundary([], 0)).toBe(0);
   });
 });
 

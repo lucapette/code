@@ -57,6 +57,20 @@ export function intervalState(intervals: Interval[], elapsed: number): IntervalS
   };
 }
 
+/* Elapsed time at which the interval after the one covering `elapsed`
+   begins — the skip control jumps the clock straight there, so the whole
+   state recomputes from the wall clock as if time had passed naturally.
+   On the final interval there is nothing left to skip to: the session's
+   full duration comes back, i.e. its end. */
+export function nextBoundary(intervals: Interval[], elapsed: number): number {
+  let acc = 0;
+  for (const iv of intervals) {
+    acc += iv.seconds;
+    if (elapsed < acc) return acc;
+  }
+  return acc;
+}
+
 /* Work-interval count inside the session, e.g. {current: 3, total: 10}.
    Counts only work intervals — rest gaps are recovery, not units of work.
    Null for a session with fewer than two work intervals — nothing

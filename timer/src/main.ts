@@ -538,6 +538,32 @@ function timerApp(): TimerApp {
       this.stopWakeLock();
     },
 
+    /* Jump to the next interval: the elapsed baseline moves to the next
+       boundary and everything — strip, bar, count, cues — recomputes from
+       the wall clock as if time had passed naturally. Works while running
+       and while paused (a paused session just freezes at the new boundary);
+       skipping the final interval ends the session. */
+    skip() {
+      if (this.status === 'IDLE') return;
+      const total = TimerEngine.totalDuration(this.session.intervals);
+      const elapsed = this.status === 'RUNNING'
+        ? this.baseElapsed + (Date.now() - (this.startTimestamp ?? Date.now())) / 1000
+        : this.baseElapsed;
+      const boundary = TimerEngine.nextBoundary(this.session.intervals, elapsed);
+      if (boundary >= total) {
+        this.complete();
+        return;
+      }
+      this.baseElapsed = boundary;
+      this.startTimestamp = Date.now();
+      this.sessionRemaining = total - boundary;
+      this.updateIntervalFromElapsed(boundary);
+      /* Announce the interval we land on at the tap: advance()'s guard
+         would otherwise wait for the next tick, and a paused session has
+         no tick at all — start()'s resume path would swallow the cue. */
+      this.onIntervalChange(this.intervalIndex);
+    },
+
     reset() {
       this.status = 'IDLE';
       cancelAnimationFrame(this.rafId ?? 0);
@@ -1126,6 +1152,7 @@ type TimerAppState = {
   togglePlay(): void;
   start(): void;
   pause(): void;
+  skip(): void;
   reset(): void;
   applyPreset(id: string): void;
   advance(): void;

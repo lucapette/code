@@ -41,6 +41,9 @@ TypeScript + Vite app.
   second an octave up, ending on the boundary) with a thin rule that sweeps
   out under the clock on each cue
 - "Next interval" teaser in the final seconds of the current one
+- A **Skip** control on the run screen: jump straight to the next interval,
+  mid-work or mid-rest, while running or paused (skipping the final
+  interval ends the session)
 - Preset import/export: the whole list copies as pretty JSON and pastes
   right back in, validated and re-id'd on arrival
 - Screen wake lock while running, plus a Web Worker heartbeat that keeps

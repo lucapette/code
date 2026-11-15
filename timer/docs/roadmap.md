@@ -39,6 +39,17 @@ Nothing right now — next up is URL share + host (see Suggested order).
 
 ## Done
 
+- **2026-11-15** — Skip control. A "Skip" button on the run screen jumps the
+  session to the next interval: the elapsed baseline moves to the next
+  boundary (`engine.nextBoundary`, pure and covered by four new tests) and
+  every derived piece — strip, bar, count, cues — recomputes from the wall
+  clock as if time had passed naturally. Works while running and while
+  paused; the interval landed on is announced at the tap (advance()'s guard
+  would wait for a tick a paused session doesn't have, and start()'s resume
+  path would swallow the cue). Skipping the final interval completes the
+  session. Type-check, 67 tests and the build green; browser-smoked skip
+  mid-work, during rest, while paused, and on the last interval.
+
 - **2026-11-11** — Workouts-only library. Dropped the bundled Pomodoro
   classic, Focus and White rice presets along with their Productivity /
   Cooking categories; the built-ins are now Mobility routine, Running
