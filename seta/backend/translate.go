@@ -14,11 +14,47 @@ import (
 	"time"
 )
 
-// promptTemplate is Tencent's Chinese prompt template for translating into
-// Simplified Chinese. HY-MT takes no system prompt: the instruction and the
-// text share the single user turn, and the Chinese template (not the English
-// one) is the official guidance for Chinese ⇔ other pairs.
-const promptTemplate = "将以下文本翻译为简体中文，注意只需要输出翻译后的结果，不要额外解释： %s"
+// Tencent's Chinese prompt templates, one per direction. HY-MT takes no system
+// prompt: the instruction and the text share the single user turn, and the
+// Chinese template (not the English one) is the official guidance for Chinese ⇔
+// other pairs — which is the only kind of pair this app has.
+const (
+	promptToChinese = "将以下文本翻译为简体中文，注意只需要输出翻译后的结果，不要额外解释： %s"
+	promptToEnglish = "将以下文本翻译为英文，注意只需要输出翻译后的结果，不要额外解释： %s"
+)
+
+// directionHeader names the response header that carries the inferred
+// direction back to the client.
+const directionHeader = "X-Seta-Direction"
+
+// Direction is which way a request translates. It is inferred from the text,
+// never chosen by the user, so it is not part of the wire request.
+type Direction string
+
+const (
+	// ToEnglish means the input was Chinese: the user is looking up something
+	// they met in the wild, so the Chinese they pasted is the item to keep.
+	ToEnglish Direction = "zh-en"
+	// ToChinese means the input was not Chinese: the user is producing Chinese,
+	// so the translation is the item to keep.
+	ToChinese Direction = "en-zh"
+)
+
+// detectDirection applies the app's single heuristic: any CJK ideograph means
+// the input is Chinese and the translation should go to English.
+func detectDirection(text string) Direction {
+	for _, r := range text {
+		if isCJK(r) {
+			return ToEnglish
+		}
+	}
+	return ToChinese
+}
+
+// isCJK reports whether r is a CJK Unified Ideograph (U+4E00–U+9FFF).
+func isCJK(r rune) bool {
+	return r >= '\u4e00' && r <= '\u9fff'
+}
 
 // maxTextBytes caps the source text before it reaches the model, so a pasted
 // document cannot silently consume the token budget and stall the stream.
@@ -34,9 +70,17 @@ type TranslateRequest struct {
 }
 
 // buildUserPrompt collapses instruction and source text into the one user
-// turn the model expects.
+// turn the model expects, in the direction the text implies.
 func buildUserPrompt(req TranslateRequest) string {
-	return fmt.Sprintf(promptTemplate, req.Text)
+	return buildPrompt(req.Text, detectDirection(req.Text))
+}
+
+// buildPrompt fills the template for a direction.
+func buildPrompt(text string, direction Direction) string {
+	if direction == ToEnglish {
+		return fmt.Sprintf(promptToEnglish, text)
+	}
+	return fmt.Sprintf(promptToChinese, text)
 }
 
 // upstreamMessage is one OpenAI-compatible chat message. Only "user" is ever
@@ -177,7 +221,13 @@ func (a *app) translateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	upstreamBody, err := json.Marshal(newUpstreamRequest(buildUserPrompt(req)))
+	// The client renders the result differently per direction (pinyin and a
+	// Chinese voice only make sense one way), so it gets told which way this
+	// went instead of guessing with its own copy of the heuristic.
+	direction := detectDirection(req.Text)
+	w.Header().Set(directionHeader, string(direction))
+
+	upstreamBody, err := json.Marshal(newUpstreamRequest(buildPrompt(req.Text, direction)))
 	if err != nil {
 		log.Printf("encode upstream request: %v", err)
 		writeError(w, http.StatusInternalServerError, "translation failed")
