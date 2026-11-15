@@ -192,12 +192,66 @@ textarea:focus-visible {
   min-width: 0;
 }
 
+.pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+}
+
 .pane-label {
   font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   color: var(--text-secondary);
+}
+
+.pane-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Small secondary controls living in a pane header: pinyin and copy. */
+.chip {
+  padding: 3px 9px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.chip:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--panel-2);
+}
+
+.chip[aria-pressed='true'] {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Byte counter: matches the server's cap, warns before the 413 does. */
+.count {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+}
+
+.count-over {
+  color: var(--warning);
+  font-weight: 600;
 }
 
 .source,
@@ -263,6 +317,23 @@ textarea:focus-visible {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--danger);
+}
+
+.source[aria-invalid='true'] {
+  border-color: var(--warning);
+}
+
+/* Completion announcement for screen readers: audible, never visible. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* --- Responsive ------------------------------------------------------------ */

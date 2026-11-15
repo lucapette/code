@@ -46,29 +46,72 @@
 
     <main class="panes">
       <section class="pane" aria-label="English source">
-        <label class="pane-label" for="source">English</label>
+        <div class="pane-head">
+          <label class="pane-label" for="source">English</label>
+          <span
+            id="source-count"
+            class="count"
+            :class="{ 'count-over': overLimit }"
+            x-text="sourceBytes + '/' + maxBytes"
+            title="UTF-8 bytes — ⌘↵ translates now, Esc clears"
+          ></span>
+        </div>
         <textarea
           id="source"
           class="source"
           x-model="sourceText"
           @input.debounce.350ms="translate()"
+          @keydown.escape="clear()"
+          @keydown.meta.enter.prevent="translate()"
+          @keydown.ctrl.enter.prevent="translate()"
+          aria-describedby="source-count"
+          :aria-invalid="overLimit"
           placeholder="Type or paste English…"
           spellcheck="false"
         ></textarea>
       </section>
 
       <section class="pane" aria-label="Simplified Chinese translation">
-        <span class="pane-label">简体中文</span>
-        <div class="output" aria-live="polite">
-          <span class="output-text" x-show="translatedText" x-text="translatedText"></span>
+        <div class="pane-head">
+          <span class="pane-label">简体中文</span>
+          <div class="pane-actions">
+            <button
+              class="chip"
+              type="button"
+              @click="togglePinyin()"
+              :aria-pressed="showPinyin"
+              :title="showPinyin ? 'Hide pinyin' : 'Show pinyin'"
+              x-text="showPinyin ? 'pinyin on' : 'pinyin off'"
+            ></button>
+            <button
+              class="chip"
+              type="button"
+              @click="copyTranslation()"
+              :disabled="!translatedText"
+              :title="copied ? 'Copied' : 'Copy the translation'"
+              x-text="copied ? 'copied' : 'copy'"
+            ></button>
+          </div>
+        </div>
+        <!-- aria-live stays off while streaming: announcing every fragment
+             would drown a screen reader. Completion is announced once, below. -->
+        <div class="output" aria-live="off">
+          <span class="output-text" lang="zh-Hans" x-show="translatedText" x-text="translatedText"></span>
           <span class="output-empty" x-show="!translatedText && isTranslating" x-cloak>…</span>
-          <span class="output-empty" x-show="!translatedText && !isTranslating">Translation appears here</span>
-          <div class="pinyin" x-show="pinyinText && translatedText" x-cloak x-text="pinyinText"></div>
+          <span class="output-empty" x-show="!translatedText && !isTranslating" x-text="placeholder"></span>
+          <div
+            class="pinyin"
+            lang="zh-Latn-pinyin"
+            x-show="showPinyin && pinyinText && translatedText"
+            x-cloak
+            x-text="pinyinText"
+          ></div>
         </div>
       </section>
     </main>
 
     <p class="error" role="alert" x-show="error" x-cloak x-text="error"></p>
+    <p class="sr-only" aria-live="polite" x-text="announcement"></p>
 
   </div>
 
