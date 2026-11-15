@@ -66,22 +66,57 @@ Alpine.js ──POST /api/translate──▶ Go ──OpenAI-compatible──▶
 
 ## Run it
 
-Three ways in. All need a model behind `UPSTREAM_URL` (default
-`http://localhost:8000/v1/chat/completions`) — see *Serving the model*.
+One command, no Docker:
 
 ```sh
-# 1. use it: build once, one binary, one port
-make run          # = make build, then serve → http://localhost:8080
-
-# 2. work on it: the same service + Vite with live reload
-make dev          # → edit the UI at http://localhost:5173
-
-# 3. whole stack in containers (model included; GPU if you have one)
-docker compose up # → http://localhost:8080
+make start
 ```
 
-Your library lives in `DATA_DIR` (default `./data`) as a single `items.json`.
-In Docker it is the `seta-data` volume. Nothing else is written.
+That is the whole thing: it starts a translation model with llama.cpp on `:8000`
+(downloading the ~1.1 GB model the first time, cached after), fetches the
+pronunciation model once (~14 MB), builds the binary and serves the app at
+**http://localhost:8080**. `Ctrl-C` stops the app — and the model, if this script
+started it.
+
+Needs Go, Node, `curl` and `llama-server` (`brew install llama.cpp`). If a model
+is already answering on `:8000`, the script leaves it alone and only runs the
+app.
+
+Ways in, if you want them:
+
+```sh
+make start             # one command: model + practice model + app
+make run               # app only, needs a model already running
+make dev               # app + Vite on :5173 with live reload, for frontend work
+docker compose up      # everything in containers, model included
+```
+
+`make start` is [scripts/start.sh](scripts/start.sh); it takes `UPSTREAM_URL`,
+`MODEL_PORT`, `LLAMA_SERVER_BIN`, `MODEL_WAIT_SECONDS` and `ADDR` when the
+defaults get in the way. Your library lives in `DATA_DIR` (default `./data`) as a
+single `items.json`; in Docker it is the `seta-data` volume.
+
+### Where things stand
+
+Working, verified against the real models:
+
+- translation both ways with streaming, abort, pinyin and a clean error surface;
+  direction inferred from the text
+- library: save/edit/delete, one search box, tag chips, JSON export
+- HSK: per-level coverage, current level, frequency-sorted gaps, load more
+- practice: record a saved item and get per-syllable tone feedback from the
+  local model (needs a microphone and `make model`)
+- TTS with a real Chinese voice when the OS has one
+
+Not done, roughly in order of how much it matters:
+
+- practice lives on library items only — no review screen yet, by design until
+  the library has ~50–100 items
+- no spaced repetition
+- copying has no fallback outside secure contexts, so `copy` needs `localhost`
+  or HTTPS
+- the grader was measured on synthesised clips: two-syllable items are flaky and
+  it was trained on read speech
 
 ### What `make dev` actually runs
 

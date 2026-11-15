@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install frontend build run dev test test-go test-frontend type-check lint hsk model practice-fixtures clean
+.PHONY: help install frontend build start run dev test test-go test-frontend type-check lint hsk model practice-fixtures clean
 
 # Pronunciation-assessment model (a 9M Conformer-CTC grader, INT8). The weights
 # are third-party and carry no stated licence, so they are downloaded rather than
@@ -17,6 +17,7 @@ help:
 	@echo "install     frontend dependencies"
 	@echo "frontend    build the Alpine app into frontend/dist"
 	@echo "build       embed the frontend and build bin/seta"
+	@echo "start       one command: model (llama.cpp) + practice model + app on :8080"
 	@echo "run         build, then serve on :8080 (UPSTREAM_URL to override)"
 	@echo "dev         Go service on :8080 + Vite on :5173 proxying /api"
 	@echo "test        Go tests (-race) + frontend tests + type check"
@@ -39,6 +40,11 @@ build: frontend
 	@rm -rf backend/dist && mkdir -p backend/dist && touch backend/dist/.gitkeep
 	cp -R frontend/dist/. backend/dist/
 	cd backend && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o ../bin/seta .
+
+# The one command: starts llama.cpp natively if nothing is serving the model,
+# fetches the practice model once, then serves the app. No Docker.
+start:
+	@./scripts/start.sh
 
 run: build
 	./bin/seta
