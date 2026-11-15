@@ -28,8 +28,11 @@ import {
   sheetToInput,
 } from './library';
 import { pinyinFor } from './pinyin';
+import type { Assessment } from './practice/grade';
+import { startRecording, type Recorder } from './practice/recorder';
 import { onAvailability, prime, speakChinese } from './speak';
 import { MAX_TEXT_BYTES, countBytes, translateStream } from './translate';
+import type { Verdict } from './practice/grade';
 import type {
   CoverageReport,
   Direction,
@@ -49,6 +52,15 @@ const COPIED_MS = 1500;
 const TOAST_MS = 1800;
 const READY_POLL_MS = 10_000;
 const GAP_PAGE = 50;
+
+/* The assessment engine drags in onnxruntime (~2 MB of JS plus the wasm) for a
+   feature most sessions never touch, so it is loaded on first use rather than
+   with the app. */
+let engine: Promise<typeof import('./practice/engine')> | null = null;
+function practiceEngine() {
+  engine ??= import('./practice/engine');
+  return engine;
+}
 
 const EMPTY_COVERAGE: CoverageReport = {
   levels: [],
@@ -85,6 +97,9 @@ export function setaApp(): SetaApp {
     libraryError: null as string | null,
 
     /* --- HSK ------------------------------------------------------- */
+    practiceAvailable: false,
+    practice: {} as Record<string, PracticeState>,
+
     coverage: EMPTY_COVERAGE as CoverageReport,
     gapPage: GAP_PAGE,
     loadingCoverage: false,
@@ -100,6 +115,7 @@ export function setaApp(): SetaApp {
     _toastTimer: null as number | null,
     _copiedTimer: null as number | null,
     _unsubscribeVoices: null as (() => void) | null,
+    _recorders: {} as Record<string, Recorder>,
 
     init() {
       const stored = window.localStorage.getItem(THEME_KEY);
@@ -122,6 +138,7 @@ export function setaApp(): SetaApp {
 
       void this.checkEngine();
       void this.refreshLibrary();
+      void this.checkPractice();
     },
 
     /* --- Derived state --------------------------------------------- */
@@ -179,6 +196,7 @@ export function setaApp(): SetaApp {
     /* --- Tabs ------------------------------------------------------ */
 
     setTab(tab: Tab) {
+      if (tab !== 'library') this.cancelPractices();
       this.tab = tab;
       if (tab === 'hsk') void this.refreshCoverage();
     },
@@ -331,6 +349,73 @@ export function setaApp(): SetaApp {
       this.expandedId = this.expandedId === id ? null : id;
     },
 
+    /* --- Practice ---------------------------------------------------- */
+
+    /** Practice needs the assessment model *and* a microphone: without either,
+        the button is not rendered at all. */
+    async checkPractice() {
+      const canRecord = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+      this.practiceAvailable = canRecord && (await (await practiceEngine()).modelAvailable());
+    },
+
+    async togglePractice(item: Item) {
+      const state = this.practice[item.id] ?? { recording: false, busy: false, assessment: null, error: null };
+      this.practice[item.id] = { ...state, error: null };
+
+      if (state.recording) {
+        await this.stopPractice(item);
+        return;
+      }
+
+      try {
+        this._recorders[item.id] = await startRecording();
+        this.practice[item.id] = { recording: true, busy: false, assessment: null, error: null };
+      } catch (error) {
+        this.practice[item.id] = {
+          recording: false,
+          busy: false,
+          assessment: null,
+          error: error instanceof Error ? error.message : 'could not start recording',
+        };
+      }
+    },
+
+    async stopPractice(item: Item) {
+      const recorder = this._recorders[item.id];
+      delete this._recorders[item.id];
+      if (!recorder) return;
+
+      this.practice[item.id] = { recording: false, busy: true, assessment: null, error: null };
+      try {
+        const audio = await recorder.stop();
+        const assessment = await (await practiceEngine()).assessRecording(audio, item.chinese);
+        this.practice[item.id] = { recording: false, busy: false, assessment, error: null };
+      } catch (error) {
+        this.practice[item.id] = {
+          recording: false,
+          busy: false,
+          assessment: null,
+          error: error instanceof Error ? error.message : 'could not check that recording',
+        };
+      }
+    },
+
+    /** Stops anything listening — used when leaving the tab. */
+    cancelPractices() {
+      for (const [id, recorder] of Object.entries(this._recorders)) {
+        recorder.cancel();
+        delete this._recorders[id];
+        this.practice[id] = { recording: false, busy: false, assessment: null, error: null };
+      }
+    },
+
+    verdictLabel(verdict: Verdict): string {
+      if (verdict === 'ok') return 'heard correctly';
+      if (verdict === 'tone') return 'wrong tone';
+      if (verdict === 'syllable') return 'different syllable';
+      return 'not clear enough to judge';
+    },
+
     async removeItem(item: Item) {
       try {
         await apiDeleteItem(item.id);
@@ -459,6 +544,14 @@ export function setaApp(): SetaApp {
   };
 }
 
+/** One recording's state, keyed by item id. */
+export interface PracticeState {
+  recording: boolean;
+  busy: boolean;
+  assessment: Assessment | null;
+  error: string | null;
+}
+
 /** The Alpine component's full reactive surface. */
 export type SetaApp = AlpineComponent<SetaAppState>;
 
@@ -485,6 +578,9 @@ interface SetaAppState {
   loadingItems: boolean;
   libraryError: string | null;
 
+  practiceAvailable: boolean;
+  practice: Record<string, PracticeState>;
+
   coverage: CoverageReport;
   gapPage: number;
   loadingCoverage: boolean;
@@ -499,6 +595,7 @@ interface SetaAppState {
   _toastTimer: number | null;
   _copiedTimer: number | null;
   _unsubscribeVoices: (() => void) | null;
+  _recorders: Record<string, Recorder>;
 
   readonly sourceBytes: number;
   readonly maxBytes: number;
@@ -524,6 +621,12 @@ interface SetaAppState {
   toggleTheme(): void;
   applyTheme(): void;
   checkEngine(): Promise<void>;
+
+  checkPractice(): Promise<void>;
+  togglePractice(item: Item): Promise<void>;
+  stopPractice(item: Item): Promise<void>;
+  cancelPractices(): void;
+  verdictLabel(verdict: Verdict): string;
 
   refreshLibrary(): Promise<void>;
   toggleItem(id: string): void;

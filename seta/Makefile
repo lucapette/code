@@ -1,5 +1,13 @@
 .DEFAULT_GOAL := help
-.PHONY: help install frontend build run dev test test-go test-frontend type-check lint hsk clean
+.PHONY: help install frontend build run dev test test-go test-frontend type-check lint hsk model practice-fixtures clean
+
+# Pronunciation-assessment model (a 9M Conformer-CTC grader, INT8). The weights
+# are third-party and carry no stated licence, so they are downloaded rather than
+# committed: `make model` puts them in a gitignored directory and the build
+# embeds whatever is there. Without them the practice buttons hide themselves.
+PRACTICE_MODEL_URL := https://simedw.com/projects/ear/tiny_int8.onnx
+PRACTICE_VOCAB_URL := https://simedw.com/projects/ear/vocab.json
+PRACTICE_DIR := frontend/public/models
 
 # HSK 3.0 vocabulary source, pinned to the commit the embedded file was made from.
 HSK_SOURCE_URL := https://raw.githubusercontent.com/TheOpenDictionary/complete-hsk-vocabulary/d247b61ddd803a974cb12799e9b6a168c48ef093/complete.min.json
@@ -14,6 +22,8 @@ help:
 	@echo "test        Go tests (-race) + frontend tests + type check"
 	@echo "lint        go vet + gofmt"
 	@echo "hsk         regenerate the embedded HSK word list"
+	@echo "model       fetch the pronunciation-assessment model (not committed)"
+	@echo "practice-fixtures  make the macOS sample clips the practice test uses"
 	@echo "clean       remove build output"
 
 install:
@@ -61,6 +71,27 @@ hsk:
 		curl -fsSL "$(HSK_SOURCE_URL)" -o "$$tmp/complete.min.json"; \
 		cd backend && go run ./tools/hskgen -in "$$tmp/complete.min.json" -out data/hsk.json \
 			-source-url "$(HSK_SOURCE_URL)" -source-commit "$(HSK_SOURCE_COMMIT)"
+
+# Pronunciation practice: fetch the assessment model (kept out of git).
+model:
+	@mkdir -p $(PRACTICE_DIR)
+	@echo "fetching $(PRACTICE_MODEL_URL)"
+	@curl -fsSL "$(PRACTICE_MODEL_URL)" -o "$(PRACTICE_DIR)/tiny_int8.onnx"
+	@echo "fetching $(PRACTICE_VOCAB_URL)"
+	@curl -fsSL "$(PRACTICE_VOCAB_URL)" -o "$(PRACTICE_DIR)/vocab.json"
+	@echo "practice model ready: $$(du -h "$(PRACTICE_DIR)/tiny_int8.onnx" | cut -f1)"
+
+# Sample clips for the gated practice test: macOS voice → 16 kHz mono WAV.
+# Generated locally and gitignored; without them that test skips.
+practice-fixtures:
+	@mkdir -p frontend/tests/fixtures
+	@set -e; for spec in "nihao:你好" "thx:谢谢" "wrongtone:你号" "wohenhao:我很好，谢谢" "long:这个东西太贵了"; do \
+		name=$${spec%%:*}; text=$${spec#*:}; \
+		say -v Tingting -o /tmp/$$name.aiff "$$text"; \
+		afconvert -f WAVE -d LEI16@16000 -c 1 /tmp/$$name.aiff frontend/tests/fixtures/$$name.wav; \
+		rm -f /tmp/$$name.aiff; \
+		echo "frontend/tests/fixtures/$$name.wav"; \
+	done
 
 lint:
 	cd backend && go vet ./...

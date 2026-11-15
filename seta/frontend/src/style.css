@@ -214,31 +214,97 @@ textarea:focus-visible {
   gap: 6px;
 }
 
-/* Small secondary controls living in a pane header: pinyin and copy. */
-.chip {
-  padding: 3px 9px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  color: var(--text-secondary);
-  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+/* --- Action buttons ---------------------------------------------------------
+   One pattern for every action next to content: a small icon, a quiet label,
+   and a hairline border that only shows on hover. Same shape as the copy/listen
+   controls in Kagi Translate or Google Translate. */
+.sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
 }
 
-.chip:hover:not(:disabled) {
+.act {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: var(--text-secondary);
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.act:hover:not(:disabled) {
   color: var(--text-primary);
   background: var(--panel-2);
+  border-color: var(--border);
 }
 
-.chip[aria-pressed='true'] {
+.act:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+
+.act[aria-pressed='true'] {
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
-.chip:disabled {
+.act:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+.act:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.act-ico {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Icon-only variant: square, used where a label would crowd a row. */
+.act-icon {
+  padding: 6px;
+  border-radius: var(--radius-sm);
+}
+
+.act-primary {
+  color: var(--accent-fg);
+  background: var(--accent);
+  border-color: transparent;
+}
+
+.act-primary:hover:not(:disabled) {
+  color: var(--accent-fg);
+  background: var(--accent);
+  border-color: transparent;
+  filter: brightness(1.08);
+}
+
+.act-danger:hover:not(:disabled) {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.act-quiet {
+  justify-content: center;
+  align-self: center;
+  border-color: var(--border);
 }
 
 /* Byte counter: matches the server's cap, warns before the 413 does. */
@@ -284,10 +350,24 @@ textarea:focus-visible {
 /* Chinese reads best with air under each line, and wraps per character
    anyway — so: taller lines, breaks anywhere long tokens appear. */
 .output {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   overflow-y: auto;
-  font-size: 1.1rem;
+  font-size: 1.12rem;
   line-height: 1.9;
   overflow-wrap: anywhere;
+}
+
+/* The action row sits inside the card, hard against the text it acts on. */
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
 }
 
 .output-text {
@@ -390,24 +470,7 @@ textarea:focus-visible {
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-}
-
-.chip-primary {
-  color: var(--accent-fg);
-  background: var(--accent);
-  border-color: transparent;
-}
-
-.chip-primary:hover:not(:disabled) {
-  color: var(--accent-fg);
-  background: var(--accent);
-  filter: brightness(1.08);
-}
-
-.chip-danger {
-  color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  gap: 4px;
 }
 
 /* --- Library ---------------------------------------------------------------- */
@@ -450,18 +513,35 @@ textarea:focus-visible {
   overflow: hidden;
 }
 
+.item-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.item-head:hover {
+  background: color-mix(in srgb, var(--panel-2) 60%, transparent);
+}
+
 .item-row {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 3px;
-  width: 100%;
-  padding: 12px 14px;
+  min-width: 0;
+  padding: 12px 4px 12px 14px;
   text-align: left;
 }
 
+.item-quick {
+  display: flex;
+  gap: 2px;
+  padding: 8px 8px 0 0;
+}
+
 .item-chinese {
-  font-size: 1.15rem;
-  line-height: 1.6;
+  font-size: 1.2rem;
+  line-height: 1.55;
   overflow-wrap: anywhere;
 }
 
@@ -480,7 +560,7 @@ textarea:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 0 14px 14px;
+  padding: 0 14px 12px;
 }
 
 .item-note {
@@ -592,7 +672,7 @@ textarea:focus-visible {
   grid-template-columns: auto auto 1fr auto;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 6px 8px 6px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--panel);
@@ -617,6 +697,96 @@ textarea:focus-visible {
   line-height: 1.45;
   color: var(--text-secondary);
   min-width: 0;
+}
+
+/* --- Practice verdicts -------------------------------------------------------- */
+.verdicts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.verdict-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.verdict-summary strong {
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.verdict-heard {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.verdict-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+}
+
+.verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 3.1rem;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  line-height: 1.25;
+}
+
+.verdict-char {
+  font-size: 1.05rem;
+  color: var(--text-primary);
+}
+
+.verdict-pinyin {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* what was expected, only worth showing when it differs */
+.verdict-expected {
+  display: none;
+  font-size: 0.66rem;
+  color: var(--text-secondary);
+}
+
+.verdict-ok {
+  border-color: color-mix(in srgb, #2ecc71 55%, transparent);
+  background: color-mix(in srgb, #2ecc71 12%, transparent);
+}
+
+.verdict-tone {
+  border-color: color-mix(in srgb, var(--warning) 60%, transparent);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+}
+
+.verdict-syllable {
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.verdict-unclear {
+  opacity: 0.65;
+}
+
+.verdict-tone .verdict-expected,
+.verdict-syllable .verdict-expected {
+  display: block;
 }
 
 /* --- Save sheet -------------------------------------------------------------- */
@@ -758,6 +928,10 @@ textarea:focus-visible {
 }
 
 @media (max-width: 560px) {
+  .act-label {
+    display: none;
+  }
+
   .gap {
     grid-template-columns: auto 1fr;
     row-gap: 4px;

@@ -12,6 +12,23 @@
 </head>
 <body x-data="setaApp()">
 
+  <!-- Icon sprite: one definition, used everywhere with <use href="#i-…">. -->
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 5.5A1.5 1.5 0 0 0 13.5 4H5.5A1.5 1.5 0 0 0 4 5.5v8A1.5 1.5 0 0 0 5.5 15"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></symbol>
+    <symbol id="i-speak" viewBox="0 0 24 24"><path d="M11 5.5 6.5 9H3.5v6h3L11 18.5z"/><path d="M15.5 9.5a3.5 3.5 0 0 1 0 5"/><path d="M18.5 6.5a8 8 0 0 1 0 11"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M6.5 4h11v16l-5.5-3.8L6.5 20z"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14.5 6.5 17.5 9.5"/></symbol>
+    <symbol id="i-delete" viewBox="0 0 24 24"><path d="M4.5 7h15"/><path d="M9.5 7V4.8h5V7"/><path d="M6.8 7l1 12.2h8.4L17.2 7"/><path d="M10.5 10.5v5M13.5 10.5v5"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v10.5"/><path d="M8 11l4 4 4-4"/><path d="M4.5 19.5h15"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-clear" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3.5 3.5l17 17"/><path d="M9.9 6.2A9.7 9.7 0 0 1 12 6c6 0 9.5 6 9.5 6a17 17 0 0 1-3.2 3.9"/><path d="M6.2 8.1A17 17 0 0 0 2.5 12S6 18 12 18a9.9 9.9 0 0 0 3.5-.6"/></symbol>
+  </svg>
+
   <div class="app">
 
     <header class="topbar">
@@ -61,13 +78,19 @@
         <section class="pane" aria-label="Source text">
           <div class="pane-head">
             <label class="pane-label" for="source">Type or paste</label>
-            <span
-              id="source-count"
-              class="count"
-              :class="{ 'count-over': overLimit }"
-              x-text="sourceBytes + '/' + maxBytes"
-              title="UTF-8 bytes — ⌘↵ translates now, Esc clears"
-            ></span>
+            <div class="pane-actions">
+              <span
+                id="source-count"
+                class="count"
+                :class="{ 'count-over': overLimit }"
+                x-text="sourceBytes + '/' + maxBytes"
+                title="UTF-8 bytes — ⌘↵ translates now, Esc clears"
+              ></span>
+              <button class="act act-icon" type="button" x-show="sourceText" x-cloak
+                      @click="clear()" title="Clear" aria-label="Clear the source text">
+                <svg class="act-ico" aria-hidden="true"><use href="#i-clear"/></svg>
+              </button>
+            </div>
           </div>
           <textarea
             id="source"
@@ -89,14 +112,16 @@
             <span class="pane-label" x-text="outputIsChinese ? '简体中文' : 'English'"></span>
             <div class="pane-actions">
               <button
-                class="chip"
+                class="act"
                 type="button"
                 x-show="outputIsChinese"
                 @click="togglePinyin()"
                 :aria-pressed="showPinyin"
                 :title="showPinyin ? 'Hide pinyin' : 'Show pinyin'"
-                x-text="showPinyin ? 'pinyin on' : 'pinyin off'"
-              ></button>
+              >
+                <svg class="act-ico" aria-hidden="true"><use :href="showPinyin ? '#i-eye' : '#i-eye-off'"/></svg>
+                <span class="act-label" x-text="showPinyin ? 'pinyin' : 'pinyin off'"></span>
+              </button>
             </div>
           </div>
           <!-- aria-live stays off while streaming: announcing every fragment
@@ -112,14 +137,26 @@
               x-cloak
               x-text="pinyinText"
             ></div>
-          </div>
-          <div class="actions" x-show="canSaveTranslation" x-cloak>
-            <button class="chip" type="button" :title="copied ? 'Copied' : 'Copy the translation'"
-                    @click="copyTranslation()" x-text="copied ? 'copied' : 'copy'"></button>
-            <button class="chip" type="button" x-show="ttsAvailable && spokenText" title="Speak aloud"
-                    @click="speak(spokenText)">speak</button>
-            <button class="chip chip-primary" type="button" title="Save to the library"
-                    @click="openSaveFromTranslation()">save</button>
+
+            <!-- The actions live on the card they act on, next to the text. -->
+            <div class="card-foot" x-show="canSaveTranslation" x-cloak>
+              <button class="act" type="button" @click="copyTranslation()"
+                      :title="copied ? 'Copied' : 'Copy the translation'"
+                      :aria-label="copied ? 'Copied' : 'Copy the translation'">
+                <svg class="act-ico" aria-hidden="true"><use :href="copied ? '#i-check' : '#i-copy'"/></svg>
+                <span class="act-label" x-text="copied ? 'copied' : 'copy'"></span>
+              </button>
+              <button class="act" type="button" x-show="ttsAvailable" @click="speak(spokenText)"
+                      title="Read it aloud" aria-label="Read it aloud">
+                <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
+                <span class="act-label">speak</span>
+              </button>
+              <button class="act act-primary" type="button" @click="openSaveFromTranslation()"
+                      title="Save to the library" aria-label="Save to the library">
+                <svg class="act-ico" aria-hidden="true"><use href="#i-save"/></svg>
+                <span class="act-label">save</span>
+              </button>
+            </div>
           </div>
         </section>
       </div>
@@ -129,9 +166,16 @@
     <!-- ================= Library ================= -->
     <main class="pane-wrap" x-show="tab === 'library'" role="tabpanel" aria-label="Library">
       <div class="toolbar">
-        <input class="search" type="search" x-model="libraryQuery" placeholder="Search Chinese, meaning, note, tags…" aria-label="Search the library" />
-        <button class="chip" type="button" @click="exportLibrary()" title="Download the library as JSON">export</button>
-        <button class="chip chip-primary" type="button" @click="openSaveSheet()">+ add</button>
+        <input class="search" type="search" x-model="libraryQuery"
+               placeholder="Search Chinese, meaning, note, tags…" aria-label="Search the library" />
+        <button class="act" type="button" @click="exportLibrary()" title="Download the library as JSON">
+          <svg class="act-ico" aria-hidden="true"><use href="#i-download"/></svg>
+          <span class="act-label">export</span>
+        </button>
+        <button class="act act-primary" type="button" @click="openSaveSheet()" title="Add an item by hand">
+          <svg class="act-ico" aria-hidden="true"><use href="#i-plus"/></svg>
+          <span class="act-label">add</span>
+        </button>
       </div>
 
       <p class="hint" x-show="loadingItems" x-cloak>loading…</p>
@@ -140,25 +184,77 @@
       <ul class="items" x-show="!loadingItems">
         <template x-for="item in visibleItems" :key="item.id">
           <li class="item">
-            <button class="item-row" type="button" @click="toggleItem(item.id)"
-                    :aria-expanded="expandedId === item.id">
-              <span class="item-chinese" lang="zh-Hans" x-text="item.chinese"></span>
-              <span class="item-meaning" x-show="item.meaning" x-text="item.meaning"></span>
-              <span class="item-where" x-show="item.where" x-text="item.where"></span>
-              <span class="tags" x-show="item.tags && item.tags.length">
-                <template x-for="tag in item.tags ?? []" :key="tag">
-                  <span class="tag" x-text="tag"></span>
-                </template>
-              </span>
-            </button>
+            <div class="item-head">
+              <button class="item-row" type="button" @click="toggleItem(item.id)"
+                      :aria-expanded="expandedId === item.id">
+                <span class="item-chinese" lang="zh-Hans" x-text="item.chinese"></span>
+                <span class="item-meaning" x-show="item.meaning" x-text="item.meaning"></span>
+                <span class="item-where" x-show="item.where" x-text="item.where"></span>
+                <span class="tags" x-show="item.tags && item.tags.length">
+                  <template x-for="tag in item.tags ?? []" :key="tag">
+                    <span class="tag" x-text="tag"></span>
+                  </template>
+                </span>
+              </button>
+              <div class="item-quick">
+                <button class="act act-icon" type="button" @click="copyText(item.chinese)"
+                        title="Copy" :aria-label="'Copy ' + item.chinese">
+                  <svg class="act-ico" aria-hidden="true"><use href="#i-copy"/></svg>
+                </button>
+                <button class="act act-icon" type="button" x-show="ttsAvailable" @click="speak(item.chinese)"
+                        title="Speak" :aria-label="'Speak ' + item.chinese">
+                  <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
+                </button>
+              </div>
+            </div>
 
             <div class="item-body" x-show="expandedId === item.id" x-cloak>
               <p class="item-note" x-show="item.note" x-text="item.note"></p>
               <div class="actions">
-                <button class="chip" type="button" @click="copyText(item.chinese)">copy</button>
-                <button class="chip" type="button" x-show="ttsAvailable" @click="speak(item.chinese)">speak</button>
-                <button class="chip" type="button" @click="openEditItem(item)">edit</button>
-                <button class="chip chip-danger" type="button" @click="removeItem(item)">delete</button>
+                <button class="act" type="button" @click="openEditItem(item)">
+                  <svg class="act-ico" aria-hidden="true"><use href="#i-edit"/></svg>
+                  <span class="act-label">edit</span>
+                </button>
+                <button class="act act-danger" type="button" @click="removeItem(item)">
+                  <svg class="act-ico" aria-hidden="true"><use href="#i-delete"/></svg>
+                  <span class="act-label">delete</span>
+                </button>
+                <!-- Practice only appears when the assessment model and a
+                     microphone are both available. -->
+                <button class="act" type="button" x-show="practiceAvailable"
+                        @click="togglePractice(item)"
+                        :aria-pressed="practice[item.id]?.recording ?? false"
+                        :title="practice[item.id]?.recording ?? false ? 'Stop and check' : 'Say it and check my tones'">
+                  <svg class="act-ico" aria-hidden="true"><use :href="practice[item.id]?.recording ?? false ? '#i-stop' : '#i-mic'"/></svg>
+                  <span class="act-label" x-text="practice[item.id]?.recording ?? false ? 'stop' : 'practice'"></span>
+                </button>
+              </div>
+
+              <p class="hint" x-show="practice[item.id]?.recording ?? false" x-cloak>
+                listening — say it now, then press stop
+              </p>
+              <p class="hint" x-show="practice[item.id]?.busy ?? false" x-cloak>checking your tones…</p>
+              <p class="error" role="alert" x-show="practice[item.id]?.error ?? ''" x-cloak
+                 x-text="practice[item.id]?.error ?? ''"></p>
+
+              <div class="verdicts" x-show="practice[item.id]?.assessment ?? null" x-cloak>
+                <p class="verdict-summary">
+                  <strong x-text="practice[item.id]?.assessment ?? null?.score + '/100'"></strong>
+                  <span x-show="practice[item.id]?.assessment ?? null?.unclear"
+                        x-text="'· ' + practice[item.id]?.assessment ?? null?.unclear + ' not clear'"></span>
+                  <span class="verdict-heard" x-text="'heard: ' + (practice[item.id]?.assessment ?? null?.heardText || '—')"></span>
+                </p>
+                <ul class="verdict-list">
+                  <template x-for="syllable in practice[item.id]?.assessment ?? null?.syllables ?? []" :key="syllable.index">
+                    <li class="verdict" :class="'verdict-' + syllable.verdict"
+                        :title="verdictLabel(syllable.verdict)">
+                      <span class="verdict-char" lang="zh-Hans" x-text="syllable.text"></span>
+                      <span class="verdict-pinyin" lang="zh-Latn-pinyin" x-text="syllable.heard ?? '—'"></span>
+                      <span class="verdict-expected" x-text="syllable.expected"></span>
+                    </li>
+                  </template>
+                </ul>
+                <p class="hint">green = heard right · amber = wrong tone · red = different syllable · grey = too quiet to judge</p>
               </div>
             </div>
           </li>
@@ -185,10 +281,10 @@
           </div>
         </template>
       </div>
-      <button class="chip" type="button" x-show="hiddenLevelCount && !showAllLevels"
+      <button class="act act-quiet" type="button" x-show="hiddenLevelCount && !showAllLevels"
               @click="showAllLevels = true"
               x-text="'show HSK 4–7 (' + hiddenLevelCount + ')'"></button>
-      <button class="chip" type="button" x-show="showAllLevels && hiddenLevelCount"
+      <button class="act act-quiet" type="button" x-show="showAllLevels && hiddenLevelCount"
               @click="showAllLevels = false">hide HSK 4–7</button>
 
       <h2 class="section-title" x-show="coverage.current">
@@ -204,15 +300,24 @@
             <span class="gap-pinyin" lang="zh-Latn-pinyin" x-text="word.py"></span>
             <span class="gap-gloss" x-text="word.m"></span>
             <span class="actions">
-              <button class="chip" type="button" @click="copyText(word.s)">copy</button>
-              <button class="chip" type="button" x-show="ttsAvailable" @click="speak(word.s)">speak</button>
-              <button class="chip" type="button" @click="openSaveFromWord(word)">save</button>
+              <button class="act act-icon" type="button" @click="copyText(word.s)"
+                      title="Copy" :aria-label="'Copy ' + word.s">
+                <svg class="act-ico" aria-hidden="true"><use href="#i-copy"/></svg>
+              </button>
+              <button class="act act-icon" type="button" x-show="ttsAvailable" @click="speak(word.s)"
+                      title="Speak" :aria-label="'Speak ' + word.s">
+                <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
+              </button>
+              <button class="act act-icon" type="button" @click="openSaveFromWord(word)"
+                      title="Save to the library" :aria-label="'Save ' + word.s + ' to the library'">
+                <svg class="act-ico" aria-hidden="true"><use href="#i-save"/></svg>
+              </button>
             </span>
           </li>
         </template>
       </ul>
 
-      <button class="chip" type="button" x-show="coverage.more" @click="loadMoreGaps()"
+      <button class="act act-quiet" type="button" x-show="coverage.more" @click="loadMoreGaps()"
               x-text="loadingCoverage ? 'loading…' : 'load more'"></button>
       <p class="hint" x-show="!loadingCoverage && coverage.current && !coverage.gaps.length" x-cloak>
         Nothing missing at this level. Good place to be.
@@ -265,8 +370,8 @@
         <p class="error" role="alert" x-show="sheet.error" x-cloak x-text="sheet.error"></p>
 
         <div class="sheet-actions">
-          <button class="chip" type="button" @click="closeSheet()">cancel</button>
-          <button class="chip chip-primary" type="submit" :disabled="sheet.saving || !sheet.chinese.trim()"
+          <button class="act" type="button" @click="closeSheet()">cancel</button>
+          <button class="act act-primary" type="submit" :disabled="sheet.saving || !sheet.chinese.trim()"
                   x-text="sheet.saving ? 'saving…' : 'save'"></button>
         </div>
       </form>

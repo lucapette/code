@@ -52,6 +52,8 @@ Alpine.js ──POST /api/translate──▶ Go ──OpenAI-compatible──▶
 - **Copy** and **speak** everywhere a Chinese string is shown
 - **Speak** uses the browser's voices — and *hides itself* when the OS has no
   Chinese voice, instead of reading hanzi in English
+- **Practice**: say a saved item into the mic and get per-syllable feedback on
+  your *tones*, graded on-device by a 9M-parameter model (see below)
 - **Save sheet** shared by all three tabs: Chinese (required), meaning, where
   you found it, note, free-form tags as chips
 - **HSK coverage** per level, current level detected from your own coverage, and
@@ -161,6 +163,42 @@ Two things the data cannot do, both fine at this stage: a word with several
 readings gets one pinyin (行 → háng, so 行动 will read as háng dòng in the gap
 list), and glosses are trimmed to the first sense or two.
 
+## Practice: grading your own tones
+
+TTS reads; it cannot hear you. Mapping your own pronunciation onto HSK needs the
+other direction, and the browser's `SpeechRecognition` is the wrong tool — it
+transcribes what you *meant* and quietly corrects you, which is exactly what a
+learner does not want. So practice uses a local model instead:
+
+| Piece | What it is |
+|---|---|
+| Model | 9M-parameter Conformer-CTC, INT8, ~14 MB. Trained on ~300 h of Mandarin (AISHELL-1 + Primewords) to predict pinyin **syllable + tone** tokens, so a wrong tone is a different token, not a paraphrase |
+| Runtime | `onnxruntime-web` (wasm), in the browser, no server round-trip, no network |
+| Frontend | 16 kHz log-mel, 80 bins, 25 ms/10 ms frames, per-utterance CMVN — [practice/mel.ts](frontend/src/practice/mel.ts) |
+| Scoring | CTC forced alignment (Viterbi) per expected syllable, then a confidence over the frames that are actually speech, so a pause in front of a word cannot tank its score — [practice/ctc.ts](frontend/src/practice/ctc.ts) |
+
+`make model` fetches the weights (the author states no licence, so they are
+**not** committed — `frontend/public/models/` is gitignored) and the build embeds
+whatever is there. Without them the practice button never appears; with them the
+binary grows to ~36 MB. Recording needs `localhost` or HTTPS.
+
+What it gets right, measured on macOS-voice clips (see `make practice-fixtures`):
+a 7-syllable sentence and a 5-syllable phrase both score 100 with every syllable
+confirmed; 你好 and 谢谢 come back correct. What it does not: **two-syllable
+items are flaky** (the model needs context, and per-utterance normalisation over
+0.7 s is degenerate), the onset of an utterance is the weakest part, and the
+model is trained on *read* speech, so fast casual speech misaligns — its author
+says native speakers have to over-enunciate. Hence three ways to say "not sure"
+instead of two ways to say "wrong": a syllable the model was confident about is
+`ok`/`wrong tone`/`different syllable`, anything else is `unclear` and is never
+counted as correct (nor held against you).
+
+Two details that would otherwise produce false feedback: expectations are padded
+with half a second of silence before scoring ([practice/audio.ts](frontend/src/practice/audio.ts),
+because without it 你好 was heard as "mei3 hao3"), and both the dictionary tone
+and its sandhi form are accepted ([practice/tokens.ts](frontend/src/practice/tokens.ts)),
+so reading 你好 slowly as nǐ hǎo is not a mistake.
+
 ## Data and backups
 
 - `items.json`: `{"version": 1, "items": [...]}` in `DATA_DIR`, replaced
@@ -184,9 +222,16 @@ Go: prompt building for both directions, direction inference, the SSE proxy
 [backend](backend).
 
 Frontend: SSE parsing, the streaming client, library helpers (search, sheet
-pre-fills, tag parsing), speech availability, and the component's state machine
-(tabs, superseded requests, save/edit, chip editor, coverage paging) — 79 tests
-across [frontend/tests](frontend/tests).
+pre-fills, tag parsing), speech availability, the practice pipeline (tokens,
+sandhi, mel frontend, Viterbi alignment, verdicts) and the component's state
+machine (tabs, superseded requests, save/edit, chip editor, coverage paging,
+record → grade) — 118 tests across [frontend/tests](frontend/tests).
+
+One test file runs the **real model** on real recordings
+([tests/practice-model.test.ts](frontend/tests/practice-model.test.ts)): it skips
+unless both `make model` and `make practice-fixtures` have been run, and it
+asserts that a correct phrase is never accused of a mistake while a wrong tone
+is caught.
 
 ## Endpoints
 
@@ -273,10 +318,9 @@ are not rendered at all. Nothing is stored and the Go service is not involved.
 ## Not built yet, on purpose
 
 Deferred until the library has ~50–100 items and the shape of how you learn is
-visible: spaced repetition, pronunciation practice (start with the browser's
-`SpeechRecognition` and character-level diff; a local ONNX tone-scoring model is
-the real long-term answer), YouTube/reader ingestion, source types or URL
-parsing, accounts and sync, and any curriculum.
+visible: spaced repetition and review cards (practice lives on library items for
+now), YouTube/reader ingestion, source types or URL parsing, accounts and sync,
+and any curriculum.
 
 If a feature tempts you, ask first — the app should not presume.
 
@@ -301,6 +345,7 @@ If a feature tempts you, ask first — the app should not presume.
 | `frontend/src/api.ts`, `http.ts` | Item/HSK calls and error plumbing |
 | `frontend/src/library.ts` | Search, sheet pre-fills, tag parsing (pure) |
 | `frontend/src/speak.ts` | TTS and voice availability |
+| `frontend/src/practice/` | Recording, log-mel, CTC alignment, grading, verdicts |
 | `frontend/src/pinyin.ts`, `sse.ts` | Hanzi → pinyin; SSE buffer parsing |
 | `frontend/vite.config.ts` | Dev `/api` proxy, build target, test include |
 | `docker-compose.yml` | `hy-mt` (internal, healthchecked) + `app` (public, `seta-data`) |

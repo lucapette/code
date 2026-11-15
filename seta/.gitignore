@@ -8,3 +8,5 @@ backend/dist/*
 !backend/dist/.gitkeep
 bin/
 /data/
+frontend/public/models/
+frontend/tests/fixtures/

@@ -13,10 +13,12 @@
   },
   "dependencies": {
     "alpinejs": "3.16.3",
+    "onnxruntime-web": "1.31.1",
     "pinyin-pro": "3.29.5"
   },
   "devDependencies": {
     "@types/alpinejs": "3.13.11",
+    "@types/node": "26.6.6",
     "typescript": "7.0.2",
     "vite": "8.2.2",
     "vitest": "4.1.11"

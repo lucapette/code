@@ -1,6 +1,30 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PINYIN_KEY, THEME_KEY, setaApp } from '../src/component';
+
+const mocks = vi.hoisted(() => ({
+  modelAvailable: vi.fn(async () => true),
+  assessRecording: vi.fn(async () => ({
+    syllables: [
+      { expected: 'xie4', surface: 'xie4', heard: 'xie4', text: '谢', index: 0, confidence: 0.9, verdict: 'ok' },
+      { expected: 'xie4', surface: 'xie4', heard: 'shi4', text: '谢', index: 1, confidence: 0.8, verdict: 'syllable' },
+    ],
+    score: 50,
+    unclear: 0,
+    heardText: 'xie4 shi4',
+  })),
+  startRecording: vi.fn(async () => ({
+    stop: vi.fn(async () => new Float32Array(16000)),
+    cancel: vi.fn(),
+  })),
+}));
+
+vi.mock('../src/practice/engine', () => ({
+  modelAvailable: mocks.modelAvailable,
+  assessRecording: mocks.assessRecording,
+}));
+
+vi.mock('../src/practice/recorder', () => ({ startRecording: mocks.startRecording }));
 import { MAX_TEXT_BYTES } from '../src/translate';
 import type { CoverageReport, Item } from '../src/types';
 
@@ -448,6 +472,73 @@ describe('setaApp', () => {
     await app.copyText('银行');
 
     expect(app.toast).toContain('copy failed');
+  });
+
+  /* --- practice ---------------------------------------------------- */
+
+  it('offers practice only when the model and a microphone are both there', async () => {
+    const app = mount();
+    vi.stubGlobal('navigator', { clipboard: { writeText: vi.fn() } }); // no mediaDevices
+    await app.checkPractice();
+    expect(app.practiceAvailable).toBe(false);
+
+    vi.stubGlobal('navigator', { mediaDevices: { getUserMedia: vi.fn() } });
+    mocks.modelAvailable.mockResolvedValueOnce(false);
+    await app.checkPractice();
+    expect(app.practiceAvailable).toBe(false);
+
+    mocks.modelAvailable.mockResolvedValueOnce(true);
+    await app.checkPractice();
+    expect(app.practiceAvailable).toBe(true);
+  });
+
+  it('records, grades, and keeps the verdicts per item', async () => {
+    const app = mount({ items: [makeItem({ id: 'x1', chinese: '谢谢' })] });
+    app.init();
+    await tick();
+
+    await app.togglePractice(app.items[0]);
+    expect(app.practice.x1).toMatchObject({ recording: true, busy: false });
+
+    await app.stopPractice(app.items[0]);
+
+    expect(mocks.startRecording).toHaveBeenCalled();
+    expect(mocks.assessRecording).toHaveBeenCalledWith(expect.any(Float32Array), '谢谢');
+    expect(app.practice.x1.recording).toBe(false);
+    expect(app.practice.x1.assessment?.score).toBe(50);
+  });
+
+  it('surfaces a microphone that never grants permission', async () => {
+    mocks.startRecording.mockRejectedValueOnce(new Error('microphone permission was not granted'));
+    const app = mount({ items: [makeItem({ id: 'x2' })] });
+    app.init();
+    await tick();
+
+    await app.togglePractice(app.items[0]);
+
+    expect(app.practice.x2).toMatchObject({ recording: false, assessment: null });
+    expect(app.practice.x2.error).toContain('microphone');
+  });
+
+  it('stops listening when the user leaves the library', async () => {
+    const app = mount({ items: [makeItem({ id: 'x3' })] });
+    app.init();
+    await tick();
+
+    await app.togglePractice(app.items[0]);
+    expect(app.practice.x3.recording).toBe(true);
+
+    app.setTab('translate');
+
+    expect(app.practice.x3.recording).toBe(false);
+  });
+
+  it('names each verdict for tooltips', () => {
+    const app = mount();
+    expect(app.verdictLabel('ok')).toBe('heard correctly');
+    expect(app.verdictLabel('tone')).toBe('wrong tone');
+    expect(app.verdictLabel('syllable')).toBe('different syllable');
+    expect(app.verdictLabel('unclear')).toContain('not clear');
   });
 
   /* --- HSK --------------------------------------------------------- */
