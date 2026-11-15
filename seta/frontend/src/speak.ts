@@ -23,9 +23,33 @@ function synth(): SpeechSynthesis | null {
     : null;
 }
 
+/** Apple ships novelty voices (Eddy, Flo, Grandma, Rocko …) alongside the real
+    ones, and `getVoices()` hands them back alphabetically — so "first zh voice"
+    is exactly the wrong choice for a learner. */
+const NOVELTY = /^(eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|bells|boing|bubbles|jester|organ|superstar|trinoids|whisper|wobble|zarvox)\b/i;
+
+/** Voices a learner actually wants, best first: macOS Tingting (zh-CN), then
+    Meijia (zh-TW), then any local Mandarin, then any Chinese voice at all. */
 function chineseVoice(): SpeechSynthesisVoice | null {
-  const voices = synth()?.getVoices() ?? [];
-  return voices.find((voice) => (voice.lang ?? '').toLowerCase().startsWith('zh')) ?? null;
+  const voices = (synth()?.getVoices() ?? []).filter((voice) =>
+    (voice.lang ?? '').toLowerCase().startsWith('zh'),
+  );
+  if (voices.length === 0) return null;
+
+  const useful = voices.filter((voice) => !NOVELTY.test(voice.name));
+  const pool = useful.length > 0 ? useful : voices;
+
+  const ranked = [
+    (v: SpeechSynthesisVoice) => /^tingting/i.test(v.name),
+    (v: SpeechSynthesisVoice) => /^meijia/i.test(v.name),
+    (v: SpeechSynthesisVoice) => (v.lang ?? '').toLowerCase() === 'zh-cn',
+    (v: SpeechSynthesisVoice) => v.localService !== false,
+  ];
+  for (const matches of ranked) {
+    const pick = pool.find(matches);
+    if (pick) return pick;
+  }
+  return pool[0] ?? null;
 }
 
 /** Re-reads availability and tells subscribers, so the late-arriving voice list

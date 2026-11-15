@@ -104,3 +104,30 @@ describe('speak', () => {
     expect(fake.spoken).toHaveLength(0);
   });
 });
+
+describe('voice choice', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('prefers Tingting over the novelty voices that sort first', () => {
+    const fake = stubSpeech([
+      { lang: 'zh-CN', name: 'Eddy (Chinese (China mainland))' },
+      { lang: 'zh-CN', name: 'Flo (Chinese (China mainland))' },
+      { lang: 'zh-CN', name: 'Tingting' },
+    ]);
+
+    expect(prime()).toBe(true);
+    speakChinese('你好');
+
+    expect(fake.spoken[0].lang).toBe('zh-CN');
+  });
+
+  it('falls back to a novelty voice rather than nothing when it is all there is', () => {
+    const fake = stubSpeech([{ lang: 'zh-CN', name: 'Grandma (Chinese (China mainland))' }]);
+
+    expect(prime()).toBe(true);
+    expect(speakChinese('你好')).toBe(true);
+    expect(fake.spoken).toHaveLength(1);
+  });
+});
