@@ -25,33 +25,84 @@ Alpine.js ──POST /api/translate──▶ Go (thin proxy) ──OpenAI-compat
   it validates the request, builds the prompt, proxies the stream, and
   normalizes errors. The same binary embeds and serves the frontend, so
   there is exactly one public-facing service on one port.
-- **Frontend**: one Alpine.js component owning UI state and SSE consumption.
-  Nothing else. No language selectors — the direction is fixed.
+- **Frontend**: one Alpine.js component owning UI state, one module owning
+  the wire. Nothing else. No language selectors — the direction is fixed.
 
 ## Features
 
 - Streaming translation: every delta renders the moment it arrives
 - **Pinyin under the translation**: tone-marked, word-aware reading
-  (银行 → yín háng, 音乐 → yīn yuè), recomputed live as the hanzi streams
-- Debounced, abortable requests — typing a new sentence cancels the stale
-  generation all the way through to the model
+  (银行 → yín háng, 音乐 → yīn yuè), recomputed live as the hanzi streams —
+  and toggleable, with the choice remembered
+- **Copy** the translation in one click
+- **Keyboard**: `⌘/Ctrl+Enter` translates immediately, `Esc` clears both panes
+- Debounced, abortable requests — typing a new sentence *or clearing the box*
+  cancels the stale generation all the way through to the model
+- A byte counter against the server's cap, so a long paste warns before the
+  413 does
 - Clean errors for everything upstream: never a raw vLLM body
   (those can leak model paths, GPU diagnostics, internal hostnames)
+- **Engine readiness**: while the model is still loading, the output pane says
+  so ("Model is warming up…") instead of failing one translation at a time
 - Dark and light themes (follows `prefers-color-scheme` on first run)
+- Security headers (CSP, `nosniff`, `Referrer-Policy`, `frame-ancestors`) and
+  correct caching for everything the binary serves
 - One self-contained binary: `bin/seta` serves the app and the API
 
 ## Run it
 
-```sh
-make build        # frontend build → embed → bin/seta
-make run          # build, then serve on :8080
+Three ways in. All three need a model behind `UPSTREAM_URL` (default
+`http://localhost:8000/v1/chat/completions`) — see *Serving the model* below.
 
-# or the whole stack in Docker (vLLM needs an NVIDIA GPU):
-docker compose up
+```sh
+# 1. use it: build once, one binary, one port
+make run          # = make build, then serve → http://localhost:8080
+
+# 2. work on it: the same service + Vite with live reload
+make dev          # → build the UI at http://localhost:5173 (edit here)
+
+# 3. whole stack in containers (model included; GPU if you have one)
+docker compose up # → http://localhost:8080
 ```
 
-The app expects the model at `UPSTREAM_URL`
-(default `http://localhost:8000/v1/chat/completions`).
+### What `make dev` actually runs
+
+`make dev` starts **two** processes and leaves both in your terminal:
+
+| Port | Process | Serves |
+|------|---------|--------|
+| `:8080` | `./bin/seta` (the real service) | the embedded build — the same thing `make run` serves |
+| `:5173` | Vite (`npm run dev`) | the app from source, with HMR, proxying `/api` → `:8080` |
+
+So while you are editing `frontend/`:
+
+- **Open http://localhost:5173** — that is the live app. Change `style.css`,
+  `index.html`, or a `.ts` file and the page updates in place; no `make build`,
+  no restart.
+- Open http://localhost:8080 only when you want to see what the *embedded*
+  build does (that one needs a rebuild to change).
+- Both talk to the same Go service, so `/api/translate`, `/api/ready` and the
+  error mapping behave identically in either tab. Nothing in the frontend is
+  mocked.
+
+Use `localhost`, not `127.0.0.1`, for the Vite port: it binds IPv6 `[::1]`, so
+`http://127.0.0.1:5173` is refused. Point the proxy at a different backend with
+`BACKEND_URL=http://host:port make dev`.
+
+`Ctrl-C` stops both processes (the Go binary is killed by the same trap that
+started it).
+
+### If translation says "unreachable"
+
+The UI loads without a model — that is deliberate, so you can work on layout
+with nothing running. Translating then fails with `translation engine
+unavailable`, and the output pane says *Translation engine is unreachable* /
+*Model is warming up…* from `GET /api/ready`. Those are readiness states, not
+bugs; start one of the model options below and the pane recovers on its own
+(it re-probes every 10s).
+
+Other knobs: `ADDR` (default `:8080`) and `STREAM_IDLE_TIMEOUT` (default
+`30s`, see below).
 
 ### Serving the model
 
@@ -63,6 +114,13 @@ downloads the ~1.1 GB model into the `hy-mt-cache` volume; watch
 `docker compose logs -f hy-mt`. Tencent's recommended sampling
 (`top_k 20`, `repetition_penalty 1.05`) is set as server launch flags so
 the wire request stays minimal.
+
+The model container is internal (`expose`, not `ports`): the app is the only
+public door. It carries a `curl /health` healthcheck — llama-server answers 503
+while the weights load and 200 once slots are ready — and the app waits for
+`service_healthy`, so `docker compose up` returns with a stack that can
+actually translate. Uncomment the `ports` line in `docker-compose.yml` when you
+want to poke the model directly while debugging.
 
 NVIDIA GPU box, best quality — swap the `hy-mt` service for the vLLM
 variant commented at the bottom of `docker-compose.yml`:
@@ -88,17 +146,24 @@ degrades gently, but it still degrades.
 ## Test it
 
 ```sh
-make test         # Go tests + frontend tests + type check
+make test         # go test -race + frontend tests + type check
+make lint         # go vet + gofmt
 cd backend && go test ./...
 cd frontend && npm test && npm run type-check
 ```
 
-The prompt builder, upstream request shape, delta extraction, error
-mapping, and abort propagation are covered in
-[backend/translate_test.go](backend/translate_test.go) against a stub
-upstream. The SSE line protocol the frontend consumes is pure string
-parsing in [frontend/src/sse.ts](frontend/src/sse.ts), covered by
-[frontend/tests/sse.test.ts](frontend/tests/sse.test.ts).
+Go: prompt building, upstream request shape, delta extraction, every error
+mapping, the byte-cap boundary, the stall watchdog, abort propagation, the
+health/readiness probes and the static handler (against an in-memory fs) —
+[backend/translate_test.go](backend/translate_test.go),
+[backend/stream_test.go](backend/stream_test.go),
+[backend/health_test.go](backend/health_test.go),
+[backend/static_test.go](backend/static_test.go).
+
+Frontend: SSE line parsing, the streaming client (split events, mid-stream
+errors, abort, `[DONE]`), and the component's state machine — superseded
+requests, clearing mid-stream, the byte cap, pinyin and theme persistence —
+[frontend/tests](frontend/tests).
 
 ## How it works
 
@@ -129,10 +194,35 @@ The Go handler commits SSE headers lazily: until the first event is known
 good, a failure can still surface as a clean status instead of a broken 200
 stream. Every event is flushed immediately — no buffering.
 
+A 200 upstream that yields **no deltas** (an empty completion, or a bare
+`[DONE]`) is a 502 here: there is no translation to show, and an empty stream
+would read in the UI as "you typed nothing".
+
 **Abort propagation**: the frontend aborts in-flight fetches on every
-keystroke burst. The handler passes `r.Context()` into the upstream
-request, so an abandoned textarea actually cancels the model's generation
-instead of burning GPU cycles on it (verified by test).
+keystroke burst — and when the textarea is cleared. The handler passes
+`r.Context()` into the upstream request, so an abandoned textarea actually
+cancels the model's generation instead of burning GPU cycles on it (verified by
+test).
+
+**Stall watchdog**: there is no overall request timeout — a long translation is
+legitimate — but no upstream chunk for `STREAM_IDLE_TIMEOUT` (default 30s, set
+per deployment) ends the stream with `{"error":"translation timed out"}` and
+`[DONE]`, or with a 504 if nothing had been sent yet. Without it a wedged model
+leaves the browser spinning forever.
+
+### Endpoints
+
+| Route              | What it is                                                   |
+|--------------------|--------------------------------------------------------------|
+| `GET /`            | the embedded app                                             |
+| `POST /api/translate` | validate → prompt → proxy the model stream (SSE)          |
+| `GET /api/health`  | liveness: the process is up. Never touches the model          |
+| `GET /api/ready`   | readiness: does the model answer `GET /v1/models` yet? 503 while warming |
+
+The UI polls `/api/ready` (every 10s until it answers) so a cold start reads as
+"warming up" rather than as a translator that silently does nothing. The app
+container's `HEALTHCHECK` uses `/api/health` instead, deliberately: a model that
+is still loading must not mark the app itself unhealthy.
 
 ### Errors
 
@@ -142,9 +232,12 @@ instead of burning GPU cycles on it (verified by test).
 | Text over 5,000 bytes            | 413    | `{"error":"text exceeds limit"}`  |
 | Upstream unreachable             | 503    | `{"error":"translation engine unavailable"}` |
 | Empty or malformed upstream      | 502    | `{"error":"invalid upstream response"}` |
+| Upstream stalled (before output) | 504    | `{"error":"translation timed out"}` |
 
 The byte cap exists so a pasted document can't silently eat the whole
-`max_tokens` budget and stall the stream.
+`max_tokens` budget and stall the stream; the raw request body is capped
+separately (64 KiB) so an oversized POST is refused before it is decoded. The
+client counts the same cap in the source pane, and refuses to send text over it.
 
 ### Pinyin
 
@@ -158,31 +251,48 @@ polyphones wrong (行 is xíng in 行动 but háng in 银行). The wire contract
 stays translation-only; rare polyphone words outside the dictionary can
 still come out with the first reading.
 
+Cheap enough to recompute from scratch on every delta: a full conversion of a
+paragraph is ~0.06 ms, well under a frame.
+
 ### Frontend
 
 Same approach as timer: a single Alpine component
-([frontend/src/main.ts](frontend/src/main.ts)) bound to
-[frontend/index.html](frontend/index.html), theme classes on
-`:root` persisted to localStorage (`seta-theme`), flat panels, system
-fonts. Input is debounced 350 ms; each request owns its `AbortController`,
-so a superseded request can never clobber the fresh one's state.
+([frontend/src/component.ts](frontend/src/component.ts)) bound to
+[frontend/index.html](frontend/index.html), theme classes on `:root`
+persisted to localStorage (`seta-theme`), flat panels, system fonts.
+
+The component owns state only; [frontend/src/translate.ts](frontend/src/translate.ts)
+owns the request and the SSE consumption, with `fetch` injectable so the
+streaming path is testable. Input is debounced 350 ms, and each request owns
+its `AbortController`: a superseded request cannot clobber the fresh one's
+state, drop-in fragments included.
+
+Accessibility: the output pane is `aria-live="off"` while streaming (a screen
+reader should not be handed a fragment at a time), completion is announced once
+through a visually hidden live region, the hanzi carry `lang="zh-Hans"`
+(`zh-Latn-pinyin` for the reading line), and errors are `role="alert"`.
 
 ## Project layout
 
 | File                          | Purpose                                          |
 |-------------------------------|--------------------------------------------------|
-| `backend/main.go`             | HTTP server, SSE proxy, error mapping, static    |
-| `backend/translate.go`        | Prompt template, upstream request, delta parsing |
-| `backend/translate_test.go`   | Handler + prompt + abort propagation tests       |
-| `backend/Dockerfile`          | Multi-stage: node build → go embed → alpine      |
+| `backend/main.go`             | Config, routes, server lifecycle, JSON helpers   |
+| `backend/translate.go`        | Prompt, upstream request, SSE proxy + watchdog   |
+| `backend/health.go`           | Liveness/readiness probes, `/v1/models` derivation |
+| `backend/static.go`           | Embedded app, caching, security headers          |
+| `backend/*_test.go`           | Handler, stream, health and static tests         |
+| `backend/Dockerfile`          | Multi-stage: node build → go embed → alpine + user + healthcheck |
 | `frontend/index.html`         | Markup + Alpine bindings                         |
-| `frontend/src/main.ts`        | Alpine component: state, streaming, theme        |
+| `frontend/src/component.ts`   | The Alpine component: state, streaming, theme    |
+| `frontend/src/translate.ts`   | Request + SSE consumption (testable, DI'd fetch) |
 | `frontend/src/pinyin.ts`      | Hanzi → tone-marked pinyin (pinyin-pro)          |
 | `frontend/src/sse.ts`         | Pure SSE buffer parsing                          |
 | `frontend/src/style.css`      | Theming and layout                               |
-| `frontend/tests/*.test.ts`    | Vitest coverage: stream parsing, pinyin edge cases |
-| `docker-compose.yml`          | `hy-mt` (model, internal) + `app` (public)       |
-| `Makefile`                    | build / run / test                               |
+| `frontend/vite.config.ts`     | Dev `/api` proxy, build target, test include     |
+| `frontend/tests/*.test.ts`    | Vitest: SSE, client, component, pinyin           |
+| `docker-compose.yml`          | `hy-mt` (internal, healthchecked) + `app` (public) |
+| `.dockerignore`               | Keeps node_modules and builds out of the context |
+| `Makefile`                    | install / build / run / dev / test / lint / clean |
 
 ## Roadmap
 

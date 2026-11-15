@@ -1,0 +1,10 @@
+# Build context is the seta project root. Only sources are needed: the image
+# builds its own frontend, and the Go binary is compiled inside it.
+frontend/node_modules
+frontend/dist
+backend/dist
+bin
+.git
+.gitignore
+**/node_modules
+**/.DS_Store

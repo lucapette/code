@@ -19,6 +19,14 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /seta .
 
 # --- runtime --------------------------------------------------------------
 FROM alpine:3
+RUN adduser -D -u 10001 seta
 COPY --from=backend /seta /usr/local/bin/seta
+USER seta
 EXPOSE 8080
+
+# Liveness only: a warming model must not mark the app unhealthy (that is what
+# /api/ready is for, and the compose healthcheck on the model covers it).
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:8080/api/health || exit 1
+
 ENTRYPOINT ["seta"]
