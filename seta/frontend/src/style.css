@@ -1,0 +1,290 @@
+/* ==========================================================================
+   seta — English → Simplified Chinese translator
+   Minimal, functional. Flat panels, a couple of radius steps, no glass,
+   no glows. System fonts only (PingFang SC comes along for the ride on
+   Apple platforms). Same theme system as the timer app.
+   ========================================================================== */
+
+:root {
+  --radius-sm: 10px;   /* controls: buttons, inputs, chips */
+  --radius-lg: 14px;   /* cards: rows, panels */
+}
+
+/* --- Dark theme (default) ---------------------------------------------- */
+:root.dark {
+  --bg: #0B0C10;
+  --panel: #14151A;
+  --panel-2: #1C1D24;
+  --border: rgba(255, 255, 255, 0.08);
+  --text-primary: #FFFFFF;
+  --text-secondary: #8E8E93;
+  --accent: #00E5FF;
+  --accent-fg: #06121A;
+  --warning: #FFAB00;
+  --danger: #FF3D00;
+  --track: rgba(255, 255, 255, 0.08);
+  color-scheme: dark;
+}
+
+/* --- Light theme -------------------------------------------------------- */
+:root.light {
+  --bg: #F9F9FB;
+  --panel: #FFFFFF;
+  --panel-2: #F0F1F5;
+  --border: rgba(18, 18, 18, 0.10);
+  --text-primary: #121212;
+  --text-secondary: #6A6A7A;
+  --accent: #0091C4;
+  --accent-fg: #FFFFFF;
+  --warning: #D98A00;
+  --danger: #E53400;
+  --track: rgba(18, 18, 18, 0.08);
+  color-scheme: light;
+}
+
+/* --- Reset -------------------------------------------------------------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+button:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+[x-cloak] {
+  display: none !important;
+}
+
+/* --- App layout ---------------------------------------------------------- */
+.app {
+  max-width: 600px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 20px
+    calc(env(safe-area-inset-bottom, 0px) + 24px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Top bar -------------------------------------------------------------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.brand-mark {
+  width: 24px;
+  height: 24px;
+  color: var(--accent);
+}
+
+.run-ind {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.run-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: dotPulse 1s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.icon-btn:hover {
+  color: var(--text-primary);
+  background: var(--panel-2);
+}
+
+.ico {
+  width: 20px;
+  height: 20px;
+}
+
+/* --- Panes ----------------------------------------------------------------- */
+/* One pane in, one pane out: stacked on phones, side by side on wider
+   screens. The source textarea and the translation output share the same
+   panel treatment so neither reads as the "real" one. */
+.panes {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding-top: 16px;
+  align-content: start;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pane-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-secondary);
+}
+
+.source,
+.output {
+  width: 100%;
+  min-height: 200px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text-primary);
+  font: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.source {
+  resize: vertical;
+}
+
+.source:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.source::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Chinese reads best with air under each line, and wraps per character
+   anyway — so: taller lines, breaks anywhere long tokens appear. */
+.output {
+  overflow-y: auto;
+  font-size: 1.1rem;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
+
+.output-text {
+  white-space: pre-wrap;
+}
+
+.output-empty {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* The reading aid under the translation: quieter than the hanzi, separated
+   by a hairline so it reads as annotation, not more output. */
+.pinyin {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  font-size: 0.82rem;
+  line-height: 1.9;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* --- Error ------------------------------------------------------------------- */
+.error {
+  padding-top: 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+/* --- Responsive ------------------------------------------------------------ */
+@media (min-width: 720px) {
+  .app {
+    max-width: 880px;
+  }
+
+  .panes {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .source,
+  .output {
+    min-height: 320px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

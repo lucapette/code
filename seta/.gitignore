@@ -1,0 +1,9 @@
+frontend/node_modules/
+frontend/dist/
+# The global gitignore's bare `dist` rule excludes the directory itself,
+# which would make the tracked placeholder (and go:embed) unreachable —
+# so re-include the directory first, then ignore its contents.
+!backend/dist/
+backend/dist/*
+!backend/dist/.gitkeep
+bin/

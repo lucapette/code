@@ -1,0 +1,54 @@
+# Two services: the model (internal) and the app (the only one the browser
+# talks to). The model is served through llama.cpp so the stack runs on any
+# Docker host, GPU or not — Docker on Apple Silicon has no NVIDIA runtime.
+# On an NVIDIA GPU box, swap in the vLLM service at the bottom for
+# full-precision serving. The app only knows UPSTREAM_URL, so nothing else
+# changes either way.
+
+services:
+  hy-mt:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    command: >
+      --host 0.0.0.0
+      --port 8000
+      -hf tencent/HY-MT1.5-1.8B-GGUF:Q4_K_M
+      --alias hy-mt-1.8b
+      --ctx-size 8192
+      --temp 0.7 --top-p 0.6 --top-k 20 --repeat-penalty 1.05
+    ports:
+      - "8000:8000"
+    volumes:
+      - hy-mt-cache:/root/.cache # keep the model download across restarts
+    # First boot downloads the ~1.1 GB GGUF; watch: docker compose logs -f hy-mt
+
+  app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - hy-mt
+    environment:
+      - UPSTREAM_URL=http://hy-mt:8000/v1/chat/completions
+
+# --- GPU variant (vLLM, full precision) ------------------------------------
+# Requires the NVIDIA container toolkit on the host. Replace the hy-mt
+# service above with:
+#
+#   hy-mt:
+#     image: vllm/vllm-openai:latest
+#     command: >
+#       --model tencent/HY-MT1.5-1.8B
+#       --served-model-name hy-mt-1.8b
+#     ports: ["8000:8000"]
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               count: all
+#               capabilities: [gpu]
+
+volumes:
+  hy-mt-cache:

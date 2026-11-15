@@ -23,6 +23,7 @@ My personal monorepo. A collection of projects, experiments, and tools I've buil
 
 | Project             | Stack                                                                                          | Description                                          |
 |---------------------|------------------------------------------------------------------------------------------------|------------------------------------------------------|
+| [seta](/seta)       | ![Go](https://img.shields.io/badge/-Go-00ADD8?logo=go&logoColor=white)                         | Local English → Chinese translator with streaming    |
 | [timer](/timer)     | ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript&logoColor=white) | Interval timer with plan strip, presets, and alerts  |
 
 ## Applications (on hold)
