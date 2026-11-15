@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { errorMessage, isAbortError } from '../src/http';
 import {
+  DIRECTION_HEADER,
   MAX_TEXT_BYTES,
   TranslateError,
   countBytes,
-  errorMessage,
-  isAbortError,
+  readDirection,
   translateStream,
 } from '../src/translate';
 
@@ -105,6 +106,29 @@ describe('translateStream', () => {
     expect(deltas).toEqual(['丝']);
   });
 
+  it('reports the direction the service chose, as soon as headers land', async () => {
+    const directions: string[] = [];
+    const fetchImpl: typeof fetch = async () =>
+      sseResponse(['data: {"delta":"hello"}\n\n', 'data: [DONE]\n\n'], {
+        headers: { [DIRECTION_HEADER]: 'zh-en' },
+      });
+
+    const result = await translateStream(
+      opts({ fetchImpl, onDirection: (direction) => directions.push(direction) }),
+    );
+
+    expect(directions, 'the UI learns the direction before the first fragment').toEqual(['zh-en']);
+    expect(result.direction).toBe('zh-en');
+  });
+
+  it('defaults to en→zh when the header is missing', async () => {
+    const fetchImpl: typeof fetch = async () => sseResponse(['data: [DONE]\n\n']);
+
+    const result = await translateStream(opts({ fetchImpl }));
+
+    expect(result.direction).toBe('en-zh');
+  });
+
   it('posts the source text and forwards the abort signal', async () => {
     const controller = new AbortController();
     let captured: RequestInit | undefined;
@@ -139,6 +163,14 @@ describe('translateStream', () => {
   });
 });
 
+describe('readDirection', () => {
+  it('only trusts an explicit zh-en', async () => {
+    expect(readDirection(new Response(null, { headers: { [DIRECTION_HEADER]: 'zh-en' } }))).toBe('zh-en');
+    expect(readDirection(new Response(null, { headers: { [DIRECTION_HEADER]: 'en-zh' } }))).toBe('en-zh');
+    expect(readDirection(new Response(null))).toBe('en-zh');
+  });
+});
+
 describe('countBytes', () => {
   it('counts UTF-8 bytes, which is what the server cap measures', () => {
     expect(countBytes('hello')).toBe(5);
@@ -162,7 +194,8 @@ describe('errorMessage', () => {
 
   it('ignores a JSON body without an error string', async () => {
     const res = new Response(JSON.stringify({ status: 'ok' }), { status: 500 });
-    await expect(errorMessage(res)).resolves.toBe('translation failed');
+    await expect(errorMessage(res)).resolves.toBe('request failed');
+    await expect(errorMessage(res, 'translation failed')).resolves.toBe('translation failed');
   });
 });
 

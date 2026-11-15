@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0B0C10" />
-  <meta name="description" content="seta — a local English to Simplified Chinese translator with streaming output." />
+  <meta name="description" content="seta — a local Chinese translator and HSK study notebook." />
   <title>seta</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%E4%B8%9D%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/src/style.css" />
   <script type="module" src="/src/main.ts"></script>
 </head>
-<body x-data="translatorApp()">
+<body x-data="setaApp()">
 
   <div class="app">
 
@@ -44,73 +44,235 @@
       </div>
     </header>
 
-    <main class="panes">
-      <section class="pane" aria-label="English source">
-        <div class="pane-head">
-          <label class="pane-label" for="source">English</label>
-          <span
-            id="source-count"
-            class="count"
-            :class="{ 'count-over': overLimit }"
-            x-text="sourceBytes + '/' + maxBytes"
-            title="UTF-8 bytes — ⌘↵ translates now, Esc clears"
-          ></span>
-        </div>
-        <textarea
-          id="source"
-          class="source"
-          x-model="sourceText"
-          @input.debounce.350ms="translate()"
-          @keydown.escape="clear()"
-          @keydown.meta.enter.prevent="translate()"
-          @keydown.ctrl.enter.prevent="translate()"
-          aria-describedby="source-count"
-          :aria-invalid="overLimit"
-          placeholder="Type or paste English…"
-          spellcheck="false"
-        ></textarea>
-      </section>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" type="button" role="tab" :aria-selected="tab === 'translate'"
+              @click="setTab('translate')">Translate</button>
+      <button class="tab" type="button" role="tab" :aria-selected="tab === 'library'"
+              @click="setTab('library')">
+        Library<span class="tab-count" x-show="itemCount" x-text="itemCount"></span>
+      </button>
+      <button class="tab" type="button" role="tab" :aria-selected="tab === 'hsk'"
+              @click="setTab('hsk')">HSK</button>
+    </nav>
 
-      <section class="pane" aria-label="Simplified Chinese translation">
-        <div class="pane-head">
-          <span class="pane-label">简体中文</span>
-          <div class="pane-actions">
-            <button
-              class="chip"
-              type="button"
-              @click="togglePinyin()"
-              :aria-pressed="showPinyin"
-              :title="showPinyin ? 'Hide pinyin' : 'Show pinyin'"
-              x-text="showPinyin ? 'pinyin on' : 'pinyin off'"
-            ></button>
-            <button
-              class="chip"
-              type="button"
-              @click="copyTranslation()"
-              :disabled="!translatedText"
-              :title="copied ? 'Copied' : 'Copy the translation'"
-              x-text="copied ? 'copied' : 'copy'"
-            ></button>
+    <!-- ================= Translate ================= -->
+    <main class="pane-wrap" x-show="tab === 'translate'" role="tabpanel" aria-label="Translate">
+      <div class="panes">
+        <section class="pane" aria-label="Source text">
+          <div class="pane-head">
+            <label class="pane-label" for="source">Type or paste</label>
+            <span
+              id="source-count"
+              class="count"
+              :class="{ 'count-over': overLimit }"
+              x-text="sourceBytes + '/' + maxBytes"
+              title="UTF-8 bytes — ⌘↵ translates now, Esc clears"
+            ></span>
           </div>
-        </div>
-        <!-- aria-live stays off while streaming: announcing every fragment
-             would drown a screen reader. Completion is announced once, below. -->
-        <div class="output" aria-live="off">
-          <span class="output-text" lang="zh-Hans" x-show="translatedText" x-text="translatedText"></span>
-          <span class="output-empty" x-show="!translatedText && isTranslating" x-cloak>…</span>
-          <span class="output-empty" x-show="!translatedText && !isTranslating" x-text="placeholder"></span>
-          <div
-            class="pinyin"
-            lang="zh-Latn-pinyin"
-            x-show="showPinyin && pinyinText && translatedText"
-            x-cloak
-            x-text="pinyinText"
-          ></div>
-        </div>
-      </section>
+          <textarea
+            id="source"
+            class="source"
+            x-model="sourceText"
+            @input.debounce.350ms="translate()"
+            @keydown.escape="clear()"
+            @keydown.meta.enter.prevent="translate()"
+            @keydown.ctrl.enter.prevent="translate()"
+            aria-describedby="source-count"
+            :aria-invalid="overLimit"
+            placeholder="English to translate, or Chinese to look up…"
+            spellcheck="false"
+          ></textarea>
+        </section>
+
+        <section class="pane" aria-label="Translation">
+          <div class="pane-head">
+            <span class="pane-label" x-text="outputIsChinese ? '简体中文' : 'English'"></span>
+            <div class="pane-actions">
+              <button
+                class="chip"
+                type="button"
+                x-show="outputIsChinese"
+                @click="togglePinyin()"
+                :aria-pressed="showPinyin"
+                :title="showPinyin ? 'Hide pinyin' : 'Show pinyin'"
+                x-text="showPinyin ? 'pinyin on' : 'pinyin off'"
+              ></button>
+            </div>
+          </div>
+          <!-- aria-live stays off while streaming: announcing every fragment
+               would drown a screen reader. Completion is announced once. -->
+          <div class="output" aria-live="off">
+            <span class="output-text" :lang="outputIsChinese ? 'zh-Hans' : 'en'" x-show="translatedText" x-text="translatedText"></span>
+            <span class="output-empty" x-show="!translatedText && isTranslating" x-cloak>…</span>
+            <span class="output-empty" x-show="!translatedText && !isTranslating" x-text="placeholder"></span>
+            <div
+              class="pinyin"
+              lang="zh-Latn-pinyin"
+              x-show="outputIsChinese && showPinyin && pinyinText && translatedText"
+              x-cloak
+              x-text="pinyinText"
+            ></div>
+          </div>
+          <div class="actions" x-show="canSaveTranslation" x-cloak>
+            <button class="chip" type="button" :title="copied ? 'Copied' : 'Copy the translation'"
+                    @click="copyTranslation()" x-text="copied ? 'copied' : 'copy'"></button>
+            <button class="chip" type="button" x-show="ttsAvailable && spokenText" title="Speak aloud"
+                    @click="speak(spokenText)">speak</button>
+            <button class="chip chip-primary" type="button" title="Save to the library"
+                    @click="openSaveFromTranslation()">save</button>
+          </div>
+        </section>
+      </div>
+      <p class="error" role="alert" x-show="error" x-cloak x-text="error"></p>
     </main>
 
-    <p class="error" role="alert" x-show="error" x-cloak x-text="error"></p>
+    <!-- ================= Library ================= -->
+    <main class="pane-wrap" x-show="tab === 'library'" role="tabpanel" aria-label="Library">
+      <div class="toolbar">
+        <input class="search" type="search" x-model="libraryQuery" placeholder="Search Chinese, meaning, note, tags…" aria-label="Search the library" />
+        <button class="chip" type="button" @click="exportLibrary()" title="Download the library as JSON">export</button>
+        <button class="chip chip-primary" type="button" @click="openSaveSheet()">+ add</button>
+      </div>
+
+      <p class="hint" x-show="loadingItems" x-cloak>loading…</p>
+      <p class="error" role="alert" x-show="libraryError" x-cloak x-text="libraryError"></p>
+
+      <ul class="items" x-show="!loadingItems">
+        <template x-for="item in visibleItems" :key="item.id">
+          <li class="item">
+            <button class="item-row" type="button" @click="toggleItem(item.id)"
+                    :aria-expanded="expandedId === item.id">
+              <span class="item-chinese" lang="zh-Hans" x-text="item.chinese"></span>
+              <span class="item-meaning" x-show="item.meaning" x-text="item.meaning"></span>
+              <span class="item-where" x-show="item.where" x-text="item.where"></span>
+              <span class="tags" x-show="item.tags && item.tags.length">
+                <template x-for="tag in item.tags ?? []" :key="tag">
+                  <span class="tag" x-text="tag"></span>
+                </template>
+              </span>
+            </button>
+
+            <div class="item-body" x-show="expandedId === item.id" x-cloak>
+              <p class="item-note" x-show="item.note" x-text="item.note"></p>
+              <div class="actions">
+                <button class="chip" type="button" @click="copyText(item.chinese)">copy</button>
+                <button class="chip" type="button" x-show="ttsAvailable" @click="speak(item.chinese)">speak</button>
+                <button class="chip" type="button" @click="openEditItem(item)">edit</button>
+                <button class="chip chip-danger" type="button" @click="removeItem(item)">delete</button>
+              </div>
+            </div>
+          </li>
+        </template>
+      </ul>
+
+      <p class="hint" x-show="!loadingItems && !visibleItems.length" x-cloak>
+        <span x-show="itemCount === 0">Nothing saved yet. Translate something and press save, or add one by hand.</span>
+        <span x-show="itemCount > 0">Nothing matches that search.</span>
+      </p>
+    </main>
+
+    <!-- ================= HSK ================= -->
+    <main class="pane-wrap" x-show="tab === 'hsk'" role="tabpanel" aria-label="HSK coverage">
+      <h2 class="section-title">What you have met</h2>
+      <div class="coverage">
+        <template x-for="row in visibleLevels" :key="row.level">
+          <div class="level">
+            <span class="level-name" x-text="'HSK ' + row.level"></span>
+            <span class="bar" role="img" :aria-label="row.seen + ' of ' + row.total + ' words seen'">
+              <span class="bar-fill" :style="'width:' + percent(row) + '%'"></span>
+            </span>
+            <span class="level-count" x-text="row.seen + ' / ' + row.total"></span>
+          </div>
+        </template>
+      </div>
+      <button class="chip" type="button" x-show="hiddenLevelCount && !showAllLevels"
+              @click="showAllLevels = true"
+              x-text="'show HSK 4–7 (' + hiddenLevelCount + ')'"></button>
+      <button class="chip" type="button" x-show="showAllLevels && hiddenLevelCount"
+              @click="showAllLevels = false">hide HSK 4–7</button>
+
+      <h2 class="section-title" x-show="coverage.current">
+        Missing from HSK <span x-text="coverage.current"></span>
+        <span class="section-meta" x-text="coverage.gap_total + ' words'"></span>
+      </h2>
+      <p class="error" role="alert" x-show="hskError" x-cloak x-text="hskError"></p>
+
+      <ul class="gaps">
+        <template x-for="word in coverage.gaps" :key="word.s">
+          <li class="gap">
+            <span class="gap-chinese" lang="zh-Hans" x-text="word.s"></span>
+            <span class="gap-pinyin" lang="zh-Latn-pinyin" x-text="word.py"></span>
+            <span class="gap-gloss" x-text="word.m"></span>
+            <span class="actions">
+              <button class="chip" type="button" @click="copyText(word.s)">copy</button>
+              <button class="chip" type="button" x-show="ttsAvailable" @click="speak(word.s)">speak</button>
+              <button class="chip" type="button" @click="openSaveFromWord(word)">save</button>
+            </span>
+          </li>
+        </template>
+      </ul>
+
+      <button class="chip" type="button" x-show="coverage.more" @click="loadMoreGaps()"
+              x-text="loadingCoverage ? 'loading…' : 'load more'"></button>
+      <p class="hint" x-show="!loadingCoverage && coverage.current && !coverage.gaps.length" x-cloak>
+        Nothing missing at this level. Good place to be.
+      </p>
+    </main>
+
+    <!-- ================= Save sheet (shared) ================= -->
+    <div class="backdrop" x-show="sheet.open" x-cloak @click.self="closeSheet()" @keydown.escape.window="closeSheet()">
+      <form class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" @submit.prevent="saveSheet()">
+        <h2 class="sheet-title" id="sheet-title" x-text="sheet.id ? 'Edit item' : 'Save to library'"></h2>
+
+        <label class="field">
+          <span class="field-label">Chinese <span class="required" aria-hidden="true">*</span></span>
+          <textarea class="field-input field-chinese" rows="2" x-model="sheet.chinese" lang="zh-Hans"
+                    placeholder="汉字" autocomplete="off"></textarea>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Meaning</span>
+          <textarea class="field-input" rows="2" x-model="sheet.meaning" placeholder="your words, or the translation you kept"></textarea>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Where I found it</span>
+          <input class="field-input" type="text" x-model="sheet.where" placeholder="a sign at the mall, my tutor, HSK 1…" />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Note</span>
+          <textarea class="field-input" rows="2" x-model="sheet.note" placeholder="anything worth remembering"></textarea>
+        </label>
+
+        <div class="field">
+          <span class="field-label">Tags</span>
+          <div class="chips">
+            <template x-for="tag in sheet.tags" :key="tag">
+              <button type="button" class="tag tag-removable" @click="removeTag(tag)"
+                      :aria-label="'Remove tag ' + tag">
+                <span x-text="tag"></span><span class="tag-x" aria-hidden="true">×</span>
+              </button>
+            </template>
+            <input class="chip-input" type="text" x-model="tagDraft" aria-label="Add a tag"
+                   placeholder="add a tag…"
+                   @keydown.enter.prevent="addTag()"
+                   @keydown.backspace="tagsBackspace()"
+                   @input="tagsChanged()" />
+          </div>
+        </div>
+
+        <p class="error" role="alert" x-show="sheet.error" x-cloak x-text="sheet.error"></p>
+
+        <div class="sheet-actions">
+          <button class="chip" type="button" @click="closeSheet()">cancel</button>
+          <button class="chip chip-primary" type="submit" :disabled="sheet.saving || !sheet.chinese.trim()"
+                  x-text="sheet.saving ? 'saving…' : 'save'"></button>
+        </div>
+      </form>
+    </div>
+
+    <div class="toast" x-show="toast" x-cloak role="status" x-text="toast"></div>
     <p class="sr-only" aria-live="polite" x-text="announcement"></p>
 
   </div>

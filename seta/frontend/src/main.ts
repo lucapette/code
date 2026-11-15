@@ -7,10 +7,10 @@
 
 import Alpine from 'alpinejs';
 
-import { translatorApp } from './component';
+import { setaApp } from './component';
 
 document.addEventListener('alpine:init', () => {
-  Alpine.data('translatorApp', translatorApp);
+  Alpine.data('setaApp', setaApp);
 });
 
 Alpine.start();
