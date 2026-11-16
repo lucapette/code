@@ -1,13 +1,15 @@
 /* ==========================================================================
-   seta — English → Simplified Chinese translator
-   Minimal, functional. Flat panels, a couple of radius steps, no glass,
-   no glows. System fonts only (PingFang SC comes along for the ride on
-   Apple platforms). Same theme system as the timer app.
+   seta — a local Chinese notebook
+   Desktop first: a fixed rail on the left, one wide working surface on the
+   right. Flat panels, a couple of radius steps, no glass, no glows. System
+   fonts only (PingFang SC comes along for the ride on Apple platforms).
    ========================================================================== */
 
 :root {
+  --rail: 236px;       /* the navigation strip on the left */
+  --content: 1240px;   /* how wide a list may get before it is centred */
   --radius-sm: 10px;   /* controls: buttons, inputs, chips */
-  --radius-lg: 14px;   /* cards: rows, panels */
+  --radius-lg: 14px;   /* cards: panes, the save sheet */
 }
 
 /* --- Dark theme (default) ---------------------------------------------- */
@@ -20,6 +22,7 @@
   --text-secondary: #8E8E93;
   --accent: #00E5FF;
   --accent-fg: #06121A;
+  --ok: #2ECC71;
   --warning: #FFAB00;
   --danger: #FF3D00;
   --track: rgba(255, 255, 255, 0.08);
@@ -36,6 +39,7 @@
   --text-secondary: #6A6A7A;
   --accent: #0091C4;
   --accent-fg: #FFFFFF;
+  --ok: #14A05A;
   --warning: #D98A00;
   --danger: #E53400;
   --track: rgba(18, 18, 18, 0.08);
@@ -74,7 +78,8 @@ button {
 }
 
 button:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -83,39 +88,40 @@ textarea:focus-visible {
   display: none !important;
 }
 
-/* --- App layout ---------------------------------------------------------- */
+/* --- App shell -----------------------------------------------------------
+   The rail is navigation, the workspace is the app. On a desktop the page
+   does not scroll: each section scrolls its own list, so the tabs, the search
+   field and the model's status stay put while you read. */
 .app {
-  max-width: 600px;
-  min-height: 100dvh;
-  margin: 0 auto;
-  padding: calc(env(safe-area-inset-top, 0px) + 16px) 20px
-    calc(env(safe-area-inset-bottom, 0px) + 24px);
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.rail {
   display: flex;
   flex-direction: column;
+  gap: 28px;
+  padding: 26px 16px 18px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
 }
 
-/* --- Top bar -------------------------------------------------------------- */
-.topbar {
+.workspace {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
-}
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
+/* --- Brand -------------------------------------------------------------- */
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 1rem;
+  padding-left: 11px;
+  font-size: 1.02rem;
   font-weight: 700;
   letter-spacing: 0.2px;
 }
@@ -126,63 +132,240 @@ textarea:focus-visible {
   color: var(--accent);
 }
 
-.run-ind {
-  display: inline-flex;
+/* --- Navigation --------------------------------------------------------- */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nav-item {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 10px;
+  gap: 11px;
+  width: 100%;
+  padding: 9px 11px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  font-size: 0.8rem;
+  font-size: 0.94rem;
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
+  text-align: left;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
-.run-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: dotPulse 1s ease-in-out infinite;
-}
-
-@keyframes dotPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-.icon-btn {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  transition: color 0.2s ease, background 0.2s ease;
-}
-
-.icon-btn:hover {
+.nav-item:hover {
   color: var(--text-primary);
   background: var(--panel-2);
 }
 
-.ico {
-  width: 20px;
-  height: 20px;
+.nav-item[aria-selected='true'] {
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
 }
 
-/* --- Panes ----------------------------------------------------------------- */
-/* One pane in, one pane out: stacked on phones, side by side on wider
-   screens. The source textarea and the translation output share the same
-   panel treatment so neither reads as the "real" one. */
-.panes {
+.nav-ico {
+  width: 19px;
+  height: 19px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--text-secondary);
+  transition: color 0.15s ease;
+}
+
+.nav-item:hover .nav-ico,
+.nav-item[aria-selected='true'] .nav-ico {
+  color: var(--accent);
+}
+
+.nav-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-count {
+  margin-left: auto;
+  min-width: 1.7rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.nav-item[aria-selected='true'] .nav-count {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+
+/* --- Rail foot: model status and the two switches ----------------------- */
+.rail-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.engine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.engine-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--text-secondary);
+}
+
+.engine-ready .engine-dot {
+  background: var(--ok);
+}
+
+.engine-warming .engine-dot {
+  background: var(--warning);
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+
+.engine-unavailable .engine-dot {
+  background: var(--danger);
+}
+
+.engine-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tools {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tool {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 11px;
+  border-radius: var(--radius-sm);
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: left;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.tool:hover {
+  color: var(--text-primary);
+  background: var(--panel-2);
+}
+
+.tool-ico {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tool-label {
   flex: 1;
+}
+
+.tool-state {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+/* --- The page surface ---------------------------------------------------- */
+.page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 26px clamp(20px, 4vw, 48px) 40px;
+  overflow-y: auto;
+}
+
+/* Every section is one centred column, so a 4K monitor does not turn a list
+   into a horizon. */
+.page > * {
+  width: 100%;
+  max-width: var(--content);
+  margin-inline: auto;
+  flex: none;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+.page-sub {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding-top: 2px;
+}
+
+.page-foot {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* --- Panes (translate) --------------------------------------------------- */
+.page-translate {
+  overflow: hidden;
+}
+
+.page-translate > .panes {
+  flex: 1;
+  min-height: 0;
+}
+
+.panes {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  padding-top: 16px;
-  align-content: start;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+  align-content: stretch;
 }
 
 .pane {
@@ -190,6 +373,7 @@ textarea:focus-visible {
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  min-height: 0;
 }
 
 .pane-head {
@@ -214,10 +398,90 @@ textarea:focus-visible {
   gap: 6px;
 }
 
-/* --- Action buttons ---------------------------------------------------------
+.source,
+.output {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text-primary);
+  font: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.source {
+  resize: none;
+  line-height: 1.7;
+}
+
+.source:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.source::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Chinese reads best with air under each line, and wraps per character
+   anyway — so: taller lines, breaks anywhere long tokens appear. */
+.output {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  font-size: 1.18rem;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
+
+.output-text {
+  white-space: pre-wrap;
+}
+
+.output-empty {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* The action row sits inside the card, hard against the text it acts on. */
+.card-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+/* The reading aid under the translation: quieter than the hanzi, separated
+   by a hairline so it reads as annotation, not more output. */
+.pinyin {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  font-size: 0.82rem;
+  line-height: 1.9;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* Tone-marked reading, wherever Chinese is shown. */
+.reading {
+  display: block;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* --- Action buttons ------------------------------------------------------
    One pattern for every action next to content: a small icon, a quiet label,
-   and a hairline border that only shows on hover. Same shape as the copy/listen
-   controls in Kagi Translate or Google Translate. */
+   and a hairline border. */
 .sprite {
   position: absolute;
   width: 0;
@@ -321,97 +585,580 @@ textarea:focus-visible {
   font-weight: 600;
 }
 
-.source,
-.output {
+/* --- Text bits ----------------------------------------------------------- */
+.error {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.hint {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+}
+
+.empty {
+  padding: 6px 2px;
+}
+
+.source[aria-invalid='true'] {
+  border-color: var(--warning);
+}
+
+/* Completion announcement for screen readers: audible, never visible. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Feedback ------------------------------------------------------------ */
+.run-ind {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.run-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: dotPulse 1s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* --- Library -------------------------------------------------------------
+   One word per line: the characters, their reading, the meaning, and where it
+   came from. A list you can scan, not a card per word. */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search {
   width: 100%;
-  min-height: 200px;
-  padding: 14px;
-  border-radius: var(--radius-lg);
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--text-primary);
   font: inherit;
-  transition: border-color 0.2s ease;
+  font-size: 0.92rem;
 }
 
-.source {
-  resize: vertical;
+.search::placeholder {
+  color: var(--text-secondary);
 }
 
-.source:focus-visible {
+.search:focus-visible {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
-.source::placeholder {
-  color: var(--text-secondary);
+.rows {
+  list-style: none;
+  border-top: 1px solid var(--border);
 }
 
-/* Chinese reads best with air under each line, and wraps per character
-   anyway — so: taller lines, breaks anywhere long tokens appear. */
-.output {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  overflow-y: auto;
-  font-size: 1.12rem;
-  line-height: 1.9;
-  overflow-wrap: anywhere;
+.row {
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.12s ease;
 }
 
-/* The action row sits inside the card, hard against the text it acts on. */
-.card-foot {
+.row:hover,
+.row-open {
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+
+.row-line {
   display: flex;
   align-items: center;
-  gap: 6px;
-  /* right under the text it acts on: no auto margin, no stretching to the
-     bottom of a tall card */
-  margin-top: 2px;
-  padding-top: 10px;
-  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  gap: 4px;
 }
 
-.output-text {
+.row-main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr) 10rem;
+  align-items: baseline;
+  gap: 18px;
+  padding: 6px 4px 6px 12px;
+  text-align: left;
+}
+
+.row-word-cell {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.row-word {
+  font-size: 1.06rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.row-pinyin {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-meaning {
+  min-width: 0;
+  font-size: 0.94rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-where {
+  min-width: 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 6px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.row:hover .row-actions,
+.row:focus-within .row-actions,
+.row-open .row-actions {
+  opacity: 1;
+}
+
+.row-actions .act-icon {
+  padding: 5px;
+}
+
+.row-chevron {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  padding-right: 6px;
+  color: var(--text-secondary);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.row-chevron .act-ico {
+  width: 15px;
+  height: 15px;
+}
+
+.row-open .row-chevron {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+.row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 56rem;
+  padding: 4px 16px 18px;
+}
+
+.row-note {
+  font-size: 0.9rem;
+  line-height: 1.6;
   white-space: pre-wrap;
 }
 
-.output-empty {
+.row-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.84rem;
   color: var(--text-secondary);
-  font-size: 0.9rem;
 }
 
-/* The reading aid under the translation: quieter than the hanzi, separated
-   by a hairline so it reads as annotation, not more output. */
-.pinyin {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+.row-meta-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.tag-removable {
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+}
+
+.tag-x {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+/* --- HSK ------------------------------------------------------------------
+   Two views under one title: the words you have met, and the map. Words are
+   cells in a responsive grid, so a wide window shows more words per screen
+   instead of one very long column. */
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 13px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.segment:hover {
+  color: var(--text-primary);
+}
+
+.segment[aria-selected='true'] {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+}
+
+.segment-count {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.segment[aria-selected='true'] .segment-count {
+  color: var(--accent);
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Which bands the known list covers. */
+.picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
   font-size: 0.82rem;
-  line-height: 1.9;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
-  overflow-wrap: anywhere;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
 
-/* Tone-marked reading, wherever Chinese is shown. */
-.reading,
-.item-pinyin {
+.pick:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.pick-on {
+  color: var(--text-primary);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.pick-count {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.pick-on .pick-count {
+  color: var(--accent);
+}
+
+.band {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.band-head {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.band-meta {
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  text-transform: none;
+}
+
+.bar {
   display: block;
-  font-size: 0.78rem;
-  line-height: 1.6;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+
+.words {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 6px;
+}
+
+.word {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 9px 12px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  transition: border-color 0.15s ease;
+}
+
+.word:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+}
+
+.word-head {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 0;
+  padding-right: 3.4rem;
+}
+
+.word-chinese {
+  font-size: 1.08rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.word-pinyin {
+  font-size: 0.76rem;
   color: var(--text-secondary);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.reading {
-  margin-top: 2px;
+.word-gloss {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.item-pinyin {
-  padding-top: 1px;
+.word-actions {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: flex;
+  gap: 1px;
+  opacity: 0.45;
+  transition: opacity 0.12s ease;
 }
 
-/* Visible recording state: this is the only feedback that the mic is live. */
+.word:hover .word-actions,
+.word:focus-within .word-actions {
+  opacity: 1;
+}
+
+.word-actions .act-icon {
+  padding: 4px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.word-actions .act-ico {
+  width: 15px;
+  height: 15px;
+}
+
+/* References back into the library: the item you met the word in. */
+.refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.ref {
+  display: inline-block;
+  max-width: 11rem;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  font-size: 0.7rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.ref:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.ref-more {
+  border-style: dashed;
+  background: none;
+}
+
+/* --- Explore the map ----------------------------------------------------- */
+.levels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 4px 28px;
+}
+
+.level {
+  display: grid;
+  grid-template-columns: 3.9rem minmax(0, 1fr) 5.6rem;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.level:hover {
+  background: var(--panel-2);
+}
+
+.level-on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.level-name {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.level-count {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-top: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.section-meta {
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  text-transform: none;
+}
+
+/* --- Practice verdicts --------------------------------------------------- */
 .recording {
   display: flex;
   align-items: center;
@@ -434,476 +1181,6 @@ textarea:focus-visible {
   50% { opacity: 0.35; transform: scale(0.85); }
 }
 
-/* --- Error ------------------------------------------------------------------- */
-.error {
-  padding-top: 14px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--danger);
-}
-
-.source[aria-invalid='true'] {
-  border-color: var(--warning);
-}
-
-/* Completion announcement for screen readers: audible, never visible. */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-
-/* --- Tabs ------------------------------------------------------------------ */
-.tabs {
-  display: flex;
-  gap: 2px;
-  padding: 4px 0 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px 10px;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color 0.2s ease, border-color 0.2s ease;
-}
-
-.tab:hover {
-  color: var(--text-primary);
-}
-
-.tab[aria-selected='true'] {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.tab-count {
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: var(--panel-2);
-  font-size: 0.7rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-secondary);
-}
-
-.pane-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-top: 12px;
-  min-height: 0;
-}
-
-/* --- Action rows ------------------------------------------------------------ */
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-/* --- Library ---------------------------------------------------------------- */
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.search {
-  flex: 1;
-  min-width: 0;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: 0.9rem;
-}
-
-.search:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
-}
-
-.items,
-.gaps {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.item {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--panel);
-  overflow: hidden;
-}
-
-.item-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.item-head:hover {
-  background: color-mix(in srgb, var(--panel-2) 60%, transparent);
-}
-
-.item-row {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  padding: 12px 4px 12px 14px;
-  text-align: left;
-}
-
-.item-quick {
-  display: flex;
-  gap: 2px;
-  padding: 8px 8px 0 0;
-}
-
-.item-chinese {
-  font-size: 1.2rem;
-  line-height: 1.55;
-  overflow-wrap: anywhere;
-}
-
-.item-meaning {
-  font-size: 0.9rem;
-  color: var(--text-primary);
-  opacity: 0.85;
-}
-
-.item-where {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-}
-
-.item-body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 0 14px 12px;
-}
-
-.item-note {
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  white-space: pre-wrap;
-}
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding-top: 2px;
-}
-
-.tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 1px 7px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--panel-2);
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-}
-
-.tag-removable {
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.72rem;
-}
-
-.tag-x {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  line-height: 1;
-}
-
-.hint {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-/* --- HSK -------------------------------------------------------------------- */
-.subtabs {
-  display: flex;
-  gap: 2px;
-  padding: 4px 0 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.subtab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px 8px;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color 0.2s ease, border-color 0.2s ease;
-}
-
-.subtab:hover {
-  color: var(--text-primary);
-}
-
-.subtab[aria-selected='true'] {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.view {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Which bands the known list covers. */
-.picks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-}
-
-.pick {
-  padding: 3px 7px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  font-size: 0.74rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-secondary);
-  transition: color 0.2s ease, border-color 0.2s ease;
-}
-
-.pick:hover {
-  color: var(--text-primary);
-  border-color: var(--accent);
-}
-
-.pick-count {
-  padding-left: 4px;
-  font-size: 0.68rem;
-  color: var(--text-secondary);
-  opacity: 0.9;
-}
-
-.pick-on .pick-count {
-  color: var(--text-primary);
-}
-
-.pick-on {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--text-primary);
-}
-
-/* One band's slice of the known list: a header with its bar, then its words. */
-.band {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.band-head {
-  display: grid;
-  grid-template-columns: 4.5rem 1fr auto;
-  align-items: center;
-  gap: 10px;
-  padding-top: 6px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-.band-head .bar {
-  height: 6px;
-}
-
-.section-title {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding-top: 6px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--text-secondary);
-}
-
-.section-meta {
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  text-transform: none;
-  font-variant-numeric: tabular-nums;
-}
-
-.coverage {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-/* A level row in the explore view doubles as the gap list's level picker. */
-.level {
-  display: grid;
-  grid-template-columns: 4.5rem 1fr auto;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 8px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  font-size: 0.82rem;
-  font-variant-numeric: tabular-nums;
-  text-align: left;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.level:hover {
-  background: color-mix(in srgb, var(--panel-2) 60%, transparent);
-}
-
-.level-on {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
-.level-name {
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.bar {
-  display: block;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--track);
-  overflow: hidden;
-}
-
-.bar-fill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--accent);
-  transition: width 0.25s ease;
-}
-
-.level-count {
-  color: var(--text-secondary);
-}
-
-/* One vocabulary row: the characters, the reading and gloss, the actions on
-   the right, and any library references across a second line. */
-.gap {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: start;
-  gap: 10px;
-  padding: 7px 8px 7px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--panel);
-}
-
-.gap-chinese {
-  display: block;
-  min-width: 2.6rem;
-  font-size: 1.05rem;
-  line-height: 1.5;
-}
-
-.gap-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.gap-pinyin {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-}
-
-.gap-gloss {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  font-size: 0.82rem;
-  line-height: 1.45;
-  color: var(--text-secondary);
-  min-width: 0;
-}
-
-/* References back into the library: the item you met the word in. */
-.refs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  grid-column: 2 / -1;
-  padding-top: 1px;
-}
-
-.ref {
-  display: inline-block;
-  max-width: 16rem;
-  padding: 1px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--panel-2);
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: color 0.2s ease, border-color 0.2s ease;
-}
-
-.ref:hover {
-  color: var(--text-primary);
-  border-color: var(--accent);
-}
-
-.ref-more {
-  border-style: dashed;
-  background: none;
-}
-
-/* --- Practice verdicts -------------------------------------------------------- */
 .verdicts {
   display: flex;
   flex-direction: column;
@@ -970,8 +1247,8 @@ textarea:focus-visible {
 }
 
 .verdict-ok {
-  border-color: color-mix(in srgb, #2ecc71 55%, transparent);
-  background: color-mix(in srgb, #2ecc71 12%, transparent);
+  border-color: color-mix(in srgb, var(--ok) 55%, transparent);
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
 }
 
 .verdict-tone {
@@ -993,7 +1270,7 @@ textarea:focus-visible {
   display: block;
 }
 
-/* --- Save sheet -------------------------------------------------------------- */
+/* --- Save sheet ---------------------------------------------------------- */
 .backdrop {
   position: fixed;
   inset: 0;
@@ -1006,13 +1283,13 @@ textarea:focus-visible {
 }
 
 .sheet {
-  width: min(520px, 100%);
+  width: min(560px, 100%);
   max-height: 88dvh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 18px;
+  padding: 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--panel);
@@ -1098,7 +1375,7 @@ textarea:focus-visible {
   padding-top: 4px;
 }
 
-/* --- Toast -------------------------------------------------------------------- */
+/* --- Toast --------------------------------------------------------------- */
 .toast {
   position: fixed;
   left: 50%;
@@ -1115,30 +1392,164 @@ textarea:focus-visible {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
 }
 
-/* --- Responsive ------------------------------------------------------------ */
-@media (min-width: 720px) {
+/* --- Responsive ----------------------------------------------------------
+   Desktop is the target, but a narrow window has to remain usable: the rail
+   turns into a header, the panes stack, and lists keep their reading order. */
+/* The row already says where the item came from; the expanded body repeats it
+   only where the row cannot show it (a narrow window hides that column). */
+@media (min-width: 901px) {
+  .row-meta {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --rail: 208px;
+  }
+
+  .row-main {
+    grid-template-columns: 11rem minmax(0, 1fr) 8rem;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 900px) {
   .app {
-    max-width: 880px;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .rail {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    overflow: visible;
+  }
+
+  .brand {
+    padding-left: 0;
+  }
+
+  .nav {
+    flex-direction: row;
+    order: 3;
+    width: 100%;
+    gap: 2px;
+  }
+
+  .nav-item {
+    width: auto;
+    padding: 8px 11px;
+    font-size: 0.86rem;
+  }
+
+  .nav-count {
+    margin-left: 0;
+  }
+
+  .rail-foot {
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    margin-top: 0;
+    margin-left: auto;
+  }
+
+  .engine {
+    display: none;
+  }
+
+  .tools {
+    flex-direction: row;
+  }
+
+  .tool {
+    width: auto;
+    padding: 8px;
+  }
+
+  .tool-label,
+  .tool-state {
+    display: none;
+  }
+
+  .page {
+    overflow: visible;
+    padding: 20px 16px 32px;
+    gap: 16px;
+  }
+
+  .page-translate {
+    overflow: visible;
+  }
+
+  .page-translate > .panes {
+    flex: none;
   }
 
   .panes {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
   }
 
   .source,
   .output {
-    min-height: 320px;
+    flex: none;
+    min-height: 220px;
   }
-}
 
-@media (max-width: 560px) {
-  .act-label {
+  .row-main {
+    grid-template-columns: 1fr;
+    gap: 3px;
+    padding: 10px 4px 10px 12px;
+  }
+
+  .row-word-cell {
+    gap: 8px;
+  }
+
+  .row-where {
     display: none;
   }
 
-  .gap {
-    gap: 8px;
-    padding-right: 4px;
+  .row-actions {
+    opacity: 1;
+  }
+
+  .words {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .page-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .page-actions {
+    justify-content: flex-start;
+  }
+
+  .act-label {
+    display: none;
+  }
+}
+
+/* Touch screens have no hover: controls that fade in would never appear. */
+@media (hover: none) {
+  .row-actions,
+  .word-actions {
+    opacity: 1;
   }
 }
 

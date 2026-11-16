@@ -4,7 +4,7 @@
    labels the tab shows. No Alpine, no fetch — the rules are testable alone.
    ========================================================================== */
 
-import type { CoverageReport, KnownWord, LevelCoverage } from './types';
+import type { CoverageReport, KnownWord, LevelCoverage, WordRef } from './types';
 
 /** HSK 3.0 folds bands 7, 8 and 9 into one; the data calls that bucket 7. */
 export const TOP_LEVEL = 7;
@@ -33,6 +33,14 @@ export function levelRow(report: CoverageReport, level: number): LevelCoverage |
 /** The band the gap list is showing: the one picked, else the map's current. */
 export function showingLevel(report: CoverageReport, picked: number): number {
   return picked || report.current;
+}
+
+/** The references worth a chip: the sentences the word was met in. A word saved
+    as an item of its own has a reference whose text is the word itself, and
+    that chip said "saved" on nearly every row without adding anything the row
+    does not already show. */
+export function textRefs(word: KnownWord): WordRef[] {
+  return (word.refs ?? []).filter((ref) => ref.text !== word.s);
 }
 
 /** How many references the row is not showing, if any. */

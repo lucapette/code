@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { pinyinFor } from '../src/pinyin';
+import { pinyinFor, pinyinSortKey } from '../src/pinyin';
 
 describe('pinyinFor', () => {
   it('converts plain hanzi with tone marks', () => {
@@ -27,5 +27,25 @@ describe('pinyinFor', () => {
   it('returns an empty string for no Chinese', () => {
     expect(pinyinFor('')).toBe('');
     expect(pinyinFor('plain english')).toBe('plain english');
+  });
+});
+
+describe('pinyinSortKey', () => {
+  it('drops the tone marks, so alphabetical is actually alphabetical', () => {
+    expect(pinyinSortKey('我')).toBe('wo');
+    expect(pinyinSortKey('爱')).toBe('ai');
+    expect(pinyinSortKey('银行')).toBe('yin hang');
+  });
+
+  it('writes ü as u, matching the vocabulary list', () => {
+    expect(pinyinSortKey('女')).toBe('nu');
+    expect(pinyinSortKey('绿色')).toBe('lu se');
+  });
+
+  it('orders hanzi the way a dictionary would', () => {
+    const words = ['我', '爱', '的', '银行', '你好'];
+    const sorted = [...words].sort((a, b) => pinyinSortKey(a).localeCompare(pinyinSortKey(b)));
+
+    expect(sorted).toEqual(['爱', '的', '你好', '我', '银行']);
   });
 });

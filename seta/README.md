@@ -49,11 +49,17 @@ Alpine.js ──POST /api/translate──▶ Go ──in-process──▶ HY-MT1
 
 ## Features
 
+- **A desktop app, not a page** — a fixed rail on the left (Translate, Library,
+  HSK) and one wide working surface on the right. Each section owns its own
+  scroll area, so the navigation and the search box stay put while you read
+- **Alphabetical by pinyin** — the library and both HSK lists read A–Z the way a
+  dictionary does: tone marks are folded for sorting (wǒ sorts under wo), and
+  each HSK list still stays grouped by band
 - **Streaming translation** both ways, direction inferred from the text: any
   CJK ideograph means zh→en
-- **Pinyin wherever Chinese is shown** — under the translation, under every
-  library row, under the save sheet's field, under a pasted lookup — word-aware
-  (银行 → yín háng) and toggleable from the top bar
+- **Pinyin wherever Chinese is shown** — under the translation, beside every
+  library row and HSK word, under the save sheet's field, under a pasted
+  lookup — word-aware (银行 → yín háng) and toggleable from the rail
 - **Copy** and **speak** everywhere a Chinese string is shown
 - **Speak** uses the browser's voices — and *hides itself* when the OS has no
   Chinese voice, instead of reading hanzi in English
@@ -61,10 +67,13 @@ Alpine.js ──POST /api/translate──▶ Go ──in-process──▶ HY-MT1
   your *tones*, graded on-device by a 9M-parameter model (see below)
 - **Save sheet** shared by all three tabs: Chinese (required), meaning, where
   you found it, note, free-form tags as chips
-- **HSK tab in two views**: *Words you know* — every word you have met, newest
-  library items that taught it right there under it, band labels and per-band
-  bars — and *Explore* — coverage per band, the band the map puts you on, and
-  its frequency-sorted unseen words, pageable and saveable
+- **HSK tab in two views**: *Known* — every word you have met, in pinyin order
+  inside its band, with the sentences that taught it right there on the row —
+  and *Missing* — coverage per band, the band the map puts you on, and that
+  band's unseen words in pinyin order, pageable and saveable
+- **A library that fits on a screen**: one word per line, Chinese and reading on
+  the left, meaning in the middle, where you found it on the right; the row
+  opens to show the note, tags, edit/delete and practice
 - **Export** the library as JSON at any time
 - Dark and light themes, keyboard shortcuts (`⌘/Ctrl+Enter`, `Esc`)
 - One self-contained binary: the model runs inside it, the frontend and the
@@ -112,9 +121,9 @@ Working, verified against the real model, in this process:
 - the model inside the binary: no child process, no port, no CGo, and
   cancelling a request really stops the generation (checked per token)
 - library: save/edit/delete, one search box, tag chips, JSON export
-- HSK: words met grouped by band with a reference back to every library item
-  that taught them; per-band coverage; the current band's gaps; load more on
-  both lists
+- HSK: words met grouped by band and sorted by pinyin, with the sentence
+  references that taught them; per-band coverage; the current band's gaps; load
+  more on both lists
 - practice: record a saved item and get per-syllable tone feedback from the
   local model (needs a microphone and `make practice-model`)
 - TTS with a real Chinese voice when the OS has one
@@ -207,18 +216,19 @@ segmenter, no extra data — the dictionary is the segmenter.
 
 ### The two views
 
-*Words you know* answers "what do I have?", which is the question you come back
-with. It lists every word you have met, band by band, most frequent first inside
-each band, and under each word the library items that taught it — tap one and
-the library opens on that item. A word met in many items shows its three newest
-references and a `+N more` chip, which hands the rest to the library's search
-rather than turning the row into a wall of chips. Band chips pick which bands to
-show; they start on HSK 1–3, because a list of every band at once is a wall, not
-an answer.
+*Known* answers "what do I have?", which is the question you come back with. It
+lists every word you have met, band by band, alphabetical by pinyin inside each
+band, and under each word the sentence references that taught it — tap one and
+the library opens on that item. A word met in several items shows its three
+newest references and a `+N more` chip, which hands the rest to the library's
+search rather than turning the row into a wall of chips. The known list is a
+grid of compact cells, so a wide window shows more words rather than one longer
+column. Band chips pick which bands to show; they start on HSK 1–3, because a
+list of every band at once is a wall, not an answer.
 
-*Explore* answers "what is next?". It shows the coverage bar per band, marks the
-band the map puts you on, and lists that band's unseen words. Pick another band
-to look further out.
+*Missing* answers "what is next?". It shows the coverage bar per band, marks the
+band the map puts you on, and lists that band's unseen words, also in pinyin
+order. Pick another band to look further out.
 
 **Current band** is the lowest level still under 80% coverage; once everything
 clears it, the map's edge is the highest level.

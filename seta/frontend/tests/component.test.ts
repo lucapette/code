@@ -337,6 +337,44 @@ describe('setaApp', () => {
     expect(app.visibleItems).toHaveLength(2);
   });
 
+  it('lists the library alphabetically by pinyin, not by save order', async () => {
+    const app = mount({
+      items: [
+        makeItem({ id: 'wo', chinese: '我' }),
+        makeItem({ id: 'ai', chinese: '爱' }),
+        makeItem({ id: 'de', chinese: '的' }),
+      ],
+    });
+    app.init();
+    await tick();
+
+    expect(app.visibleItems.map((item) => item.chinese)).toEqual(['爱', '的', '我']);
+  });
+
+  it('keeps the search filter and the alphabetical order together', async () => {
+    const app = mount({
+      items: [
+        makeItem({ id: 'wo', chinese: '我们', meaning: 'we' }),
+        makeItem({ id: 'ai', chinese: '爱好', meaning: 'hobby' }),
+        makeItem({ id: 'de', chinese: '的', meaning: 'of' }),
+      ],
+    });
+    app.init();
+    await tick();
+
+    app.libraryQuery = 'o';
+    // "hobby" and "of" match; ài hào still sorts before de.
+    expect(app.visibleItems.map((item) => item.chinese)).toEqual(['爱好', '的']);
+  });
+
+  it('names the model state for the rail', async () => {
+    const app = mount();
+    app.init();
+    await tick();
+
+    expect(app.statusLabel).toBe('model ready');
+  });
+
   it('deletes an item and refreshes the map', async () => {
     const app = mount({ items: [makeItem()] });
     app.init();
@@ -618,6 +656,14 @@ describe('setaApp', () => {
     ...overrides,
   });
 
+  it('counts every met word, not only the bands on screen', async () => {
+    const app = mount({ coverage: coverageReport() });
+    app.init();
+    await tick();
+
+    expect(app.metCount).toBe(3);
+  });
+
   it('opens on the words you know, over the first three bands', async () => {
     const app = mount({ coverage: coverageReport() });
     app.init();
@@ -735,7 +781,8 @@ describe('setaApp', () => {
 
     expect(app.tab).toBe('library');
     expect(app.libraryQuery).toBe('我');
-    expect(app.visibleItems.map((item) => item.id)).toEqual(['i1', 'i2']);
+    // The library reads alphabetically: xué (i2) before yín (i1).
+    expect(app.visibleItems.map((item) => item.id)).toEqual(['i2', 'i1']);
   });
 
   it('follows a reference into the library and opens that item', async () => {

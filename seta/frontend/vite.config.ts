@@ -7,7 +7,7 @@
 
 import { defineConfig } from 'vitest/config';
 
-/** Where `make run` / `go run .` listens. Override with BACKEND_URL. */
+/** Where the Go service listens (`make start`, `go run .`). Override with BACKEND_URL. */
 const backend = process.env.BACKEND_URL ?? 'http://localhost:8080';
 
 export default defineConfig({

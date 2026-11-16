@@ -5,6 +5,7 @@ import {
   emptySheet,
   filterItems,
   removeTag,
+  sortByPinyin,
   sheetFromItem,
   sheetFromTranslation,
   sheetFromWord,
@@ -136,5 +137,44 @@ describe('addTags / removeTag', () => {
 
   it('removes by value', () => {
     expect(removeTag(['a', 'b', 'c'], 'b')).toEqual(['a', 'c']);
+  });
+});
+
+describe('sortByPinyin', () => {
+  const items = [
+    item({ id: 'wo', chinese: '我', meaning: 'I' }),
+    item({ id: 'ai', chinese: '爱', meaning: 'to love' }),
+    item({ id: 'de', chinese: '的', meaning: 'of' }),
+    item({ id: 'yin', chinese: '银行', meaning: 'bank' }),
+    item({ id: 'ni', chinese: '你好', meaning: 'hello' }),
+  ];
+
+  it('reads like a dictionary, not like a save history', () => {
+    expect(sortByPinyin(items).map((entry) => entry.chinese)).toEqual([
+      '爱',
+      '的',
+      '你好',
+      '我',
+      '银行',
+    ]);
+  });
+
+  it('leaves the input alone', () => {
+    const before = [...items];
+    sortByPinyin(items);
+    expect(items).toEqual(before);
+  });
+
+  it('keeps homophones in a stable order', () => {
+    const first = sortByPinyin([
+      item({ id: 'b', chinese: '是' }),
+      item({ id: 'a', chinese: '事' }),
+    ]);
+    const second = sortByPinyin([
+      item({ id: 'a', chinese: '事' }),
+      item({ id: 'b', chinese: '是' }),
+    ]);
+
+    expect(first.map((entry) => entry.id)).toEqual(second.map((entry) => entry.id));
   });
 });

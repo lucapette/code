@@ -9,6 +9,7 @@ import {
   levelPercent,
   levelRow,
   showingLevel,
+  textRefs,
   toggleLevel,
 } from '../src/hsk';
 import type { CoverageReport, KnownWord } from '../src/types';
@@ -93,6 +94,18 @@ describe('extraRefs', () => {
 
   it('is zero for a word with no references at all', () => {
     expect(extraRefs(word())).toBe(0);
+  });
+});
+
+describe('textRefs', () => {
+  it('keeps the sentences and drops the self reference', () => {
+    const refs = textRefs(word({ refs: [{ id: 'a', text: '我' }, { id: 'b', text: '是我' }] }));
+
+    expect(refs.map((ref) => ref.id)).toEqual(['b']);
+  });
+
+  it('is empty for a word with no references', () => {
+    expect(textRefs(word())).toEqual([]);
   });
 });
 

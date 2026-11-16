@@ -205,7 +205,7 @@ func TestHSKHandlerCoverage(t *testing.T) {
 	assert.Equal(t, 1, report.Current)
 	assert.Len(t, report.Levels, 4)
 	assert.Equal(t, 3, report.Gaps.Total)
-	assert.Equal(t, "的", report.Gaps.Words[0].Simplified, "most frequent first")
+	assert.Equal(t, "爱", report.Gaps.Words[0].Simplified, "alphabetical by pinyin: ài first")
 	assert.NotEmpty(t, report.Gaps.Words[0].Pinyin)
 	assert.NotEmpty(t, report.Gaps.Words[0].Gloss)
 	assert.Empty(t, report.Known.Words, "nothing saved yet: nothing met")
@@ -239,7 +239,8 @@ func TestHSKHandlerKnownWordsPointAtTheLibrary(t *testing.T) {
 
 	require.Len(t, report.Known.Words, 4)
 	assert.Equal(t, 4, report.Known.Total)
-	assert.Equal(t, []string{"的", "我", "爱", "银行"}, []string{
+	// Alphabetical by pinyin within each band: ài, de, wǒ, then the level-3 word.
+	assert.Equal(t, []string{"爱", "的", "我", "银行"}, []string{
 		report.Known.Words[0].Simplified,
 		report.Known.Words[1].Simplified,
 		report.Known.Words[2].Simplified,

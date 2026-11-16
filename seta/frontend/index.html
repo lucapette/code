@@ -14,6 +14,10 @@
 
   <!-- Icon sprite: one definition, used everywhere with <use href="#i-…">. -->
   <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-translate" viewBox="0 0 24 24"><path d="M4 8h13"/><path d="M14 5l3 3-3 3"/><path d="M20 16H7"/><path d="M10 13l-3 3 3 3"/></symbol>
+    <symbol id="i-library" viewBox="0 0 24 24"><path d="M4 6a3 3 0 0 1 3-3h12v18H7a3 3 0 0 1-3-3z"/><path d="M8 3v18"/></symbol>
+    <symbol id="i-hsk" viewBox="0 0 24 24"><path d="M5 20v-8"/><path d="M10 20V5"/><path d="M15 20v-6"/><path d="M20 20V9"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 5.5A1.5 1.5 0 0 0 13.5 4H5.5A1.5 1.5 0 0 0 4 5.5v8A1.5 1.5 0 0 0 5.5 15"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></symbol>
     <symbol id="i-speak" viewBox="0 0 24 24"><path d="M11 5.5 6.5 9H3.5v6h3L11 18.5z"/><path d="M15.5 9.5a3.5 3.5 0 0 1 0 5"/><path d="M18.5 6.5a8 8 0 0 1 0 11"/></symbol>
@@ -31,460 +35,514 @@
 
   <div class="app">
 
-    <header class="topbar">
+    <!-- ================= Rail ================= -->
+    <aside class="rail">
       <h1 class="brand">
         <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M3 15c3-7 6-7 9 0s6 7 9 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
         <span>seta</span>
       </h1>
-      <div class="topbar-right">
-        <span class="run-ind" x-show="isTranslating" x-cloak>
-          <span class="run-dot" aria-hidden="true"></span>
-          translating
-        </span>
-        <button
-          class="act act-icon"
-          type="button"
-          @click="togglePinyin()"
-          :aria-pressed="showPinyin"
-          :title="showPinyin ? 'Hide pinyin' : 'Show pinyin'"
-          :aria-label="showPinyin ? 'Hide pinyin' : 'Show pinyin'"
-        >
-          <svg class="act-ico" aria-hidden="true"><use :href="showPinyin ? '#i-eye' : '#i-eye-off'"/></svg>
+
+      <nav class="nav" role="tablist" aria-label="Sections">
+        <button class="nav-item" type="button" role="tab" :aria-selected="tab === 'translate'"
+                @click="setTab('translate')">
+          <svg class="nav-ico" aria-hidden="true"><use href="#i-translate"/></svg>
+          <span class="nav-label">Translate</span>
         </button>
-        <button
-          class="icon-btn"
-          type="button"
-          @click="toggleTheme()"
-          :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
-          :title="theme === 'dark' ? 'Light mode' : 'Dark mode'"
-        >
-          <svg x-show="theme === 'dark'" class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <svg x-show="theme === 'light'" x-cloak class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+        <button class="nav-item" type="button" role="tab" :aria-selected="tab === 'library'"
+                @click="setTab('library')">
+          <svg class="nav-ico" aria-hidden="true"><use href="#i-library"/></svg>
+          <span class="nav-label">Library</span>
+          <span class="nav-count" x-show="itemCount" x-text="itemCount"></span>
         </button>
+        <button class="nav-item" type="button" role="tab" :aria-selected="tab === 'hsk'"
+                @click="setTab('hsk')">
+          <svg class="nav-ico" aria-hidden="true"><use href="#i-hsk"/></svg>
+          <span class="nav-label">HSK</span>
+          <span class="nav-count" x-show="metCount" x-text="metCount"></span>
+        </button>
+      </nav>
+
+      <div class="rail-foot">
+        <p class="engine" :class="'engine-' + engineStatus" :title="statusLabel">
+          <span class="engine-dot" aria-hidden="true"></span>
+          <span class="engine-label" x-text="statusLabel"></span>
+        </p>
+        <div class="tools">
+          <button class="tool" type="button" @click="togglePinyin()" :aria-pressed="showPinyin"
+                  :title="showPinyin ? 'Hide pinyin' : 'Show pinyin'"
+                  :aria-label="showPinyin ? 'Hide pinyin' : 'Show pinyin'">
+            <svg class="tool-ico" aria-hidden="true"><use :href="showPinyin ? '#i-eye' : '#i-eye-off'"/></svg>
+            <span class="tool-label">Pinyin</span>
+            <span class="tool-state" x-text="showPinyin ? 'on' : 'off'"></span>
+          </button>
+          <button class="tool" type="button" @click="toggleTheme()"
+                  :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
+            <svg class="tool-ico" viewBox="0 0 24 24" fill="none" aria-hidden="true" x-show="theme === 'dark'">
+              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <svg class="tool-ico" viewBox="0 0 24 24" fill="none" aria-hidden="true" x-show="theme === 'light'" x-cloak>
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="tool-label">Theme</span>
+            <span class="tool-state" x-text="theme"></span>
+          </button>
+        </div>
       </div>
-    </header>
+    </aside>
 
-    <nav class="tabs" role="tablist" aria-label="Sections">
-      <button class="tab" type="button" role="tab" :aria-selected="tab === 'translate'"
-              @click="setTab('translate')">Translate</button>
-      <button class="tab" type="button" role="tab" :aria-selected="tab === 'library'"
-              @click="setTab('library')">
-        Library<span class="tab-count" x-show="itemCount" x-text="itemCount"></span>
-      </button>
-      <button class="tab" type="button" role="tab" :aria-selected="tab === 'hsk'"
-              @click="setTab('hsk')">HSK</button>
-    </nav>
+    <div class="workspace">
 
-    <!-- ================= Translate ================= -->
-    <main class="pane-wrap" x-show="tab === 'translate'" role="tabpanel" aria-label="Translate">
-      <div class="panes">
-        <section class="pane" aria-label="Source text">
-          <div class="pane-head">
-            <label class="pane-label" for="source">Type or paste</label>
-            <div class="pane-actions">
-              <span
-                id="source-count"
-                class="count"
-                :class="{ 'count-over': overLimit }"
-                x-text="sourceBytes + '/' + maxBytes"
-                title="UTF-8 bytes — ⌘↵ translates now, Esc clears"
-              ></span>
-              <button class="act act-icon" type="button" x-show="sourceText" x-cloak
-                      @click="clear()" title="Clear" aria-label="Clear the source text">
-                <svg class="act-ico" aria-hidden="true"><use href="#i-clear"/></svg>
-              </button>
+      <!-- ================= Translate ================= -->
+      <main class="page page-translate" x-show="tab === 'translate'" role="tabpanel" aria-label="Translate">
+        <header class="page-head">
+          <div class="page-heading">
+            <h2 class="page-title">Translate</h2>
+            <p class="page-sub">English and Simplified Chinese, both directions, on this machine.</p>
+          </div>
+          <div class="page-actions">
+            <span class="run-ind" x-show="isTranslating" x-cloak>
+              <span class="run-dot" aria-hidden="true"></span>
+              translating
+            </span>
+          </div>
+        </header>
+
+        <div class="panes">
+          <section class="pane" aria-label="Source text">
+            <div class="pane-head">
+              <label class="pane-label" for="source">Type or paste</label>
+              <div class="pane-actions">
+                <span
+                  id="source-count"
+                  class="count"
+                  :class="{ 'count-over': overLimit }"
+                  x-text="sourceBytes + '/' + maxBytes"
+                  title="UTF-8 bytes — ⌘↵ translates now, Esc clears"
+                ></span>
+                <button class="act act-icon" type="button" x-show="sourceText" x-cloak
+                        @click="clear()" title="Clear" aria-label="Clear the source text">
+                  <svg class="act-ico" aria-hidden="true"><use href="#i-clear"/></svg>
+                </button>
+              </div>
             </div>
-          </div>
-          <textarea
-            id="source"
-            class="source"
-            x-model="sourceText"
-            @input.debounce.350ms="translate()"
-            @keydown.escape="clear()"
-            @keydown.meta.enter.prevent="translate()"
-            @keydown.ctrl.enter.prevent="translate()"
-            aria-describedby="source-count"
-            :aria-invalid="overLimit"
-            placeholder="English to translate, or Chinese to look up…"
-            spellcheck="false"
-          ></textarea>
-          <p class="reading" lang="zh-Latn-pinyin"
-             x-show="showPinyin && pinyinOf(sourceText)"
-             x-text="pinyinOf(sourceText)"></p>
-        </section>
+            <textarea
+              id="source"
+              class="source"
+              x-model="sourceText"
+              @input.debounce.350ms="translate()"
+              @keydown.escape="clear()"
+              @keydown.meta.enter.prevent="translate()"
+              @keydown.ctrl.enter.prevent="translate()"
+              aria-describedby="source-count"
+              :aria-invalid="overLimit"
+              placeholder="English to translate, or Chinese to look up…"
+              spellcheck="false"
+            ></textarea>
+            <p class="reading" lang="zh-Latn-pinyin"
+               x-show="showPinyin && pinyinOf(sourceText)"
+               x-text="pinyinOf(sourceText)"></p>
+          </section>
 
-        <section class="pane" aria-label="Translation">
-          <div class="pane-head">
-            <span class="pane-label" x-text="outputIsChinese ? '简体中文' : 'English'"></span>
-            <div class="pane-actions"></div>
-          </div>
-          <!-- aria-live stays off while streaming: announcing every fragment
-               would drown a screen reader. Completion is announced once. -->
-          <div class="output" aria-live="off">
-            <span class="output-text" :lang="outputIsChinese ? 'zh-Hans' : 'en'" x-show="translatedText" x-text="translatedText"></span>
-            <span class="output-empty" x-show="!translatedText && isTranslating" x-cloak>…</span>
-            <span class="output-empty" x-show="!translatedText && !isTranslating" x-text="placeholder"></span>
-            <div
-              class="pinyin"
-              lang="zh-Latn-pinyin"
-              x-show="outputIsChinese && showPinyin && pinyinText && translatedText"
-              x-cloak
-              x-text="pinyinText"
-            ></div>
-
-            <!-- The actions sit immediately under the translation, not pinned
-                 to the bottom of a tall card. -->
-            <div class="card-foot" x-show="canSaveTranslation" x-cloak>
-              <button class="act" type="button" @click="copyTranslation()"
-                      :title="copied ? 'Copied' : 'Copy the translation'"
-                      :aria-label="copied ? 'Copied' : 'Copy the translation'">
-                <svg class="act-ico" aria-hidden="true"><use :href="copied ? '#i-check' : '#i-copy'"/></svg>
-                <span class="act-label" x-text="copied ? 'copied' : 'copy'"></span>
-              </button>
-              <button class="act" type="button" x-show="ttsAvailable" @click="speak(spokenText)"
-                      title="Read it aloud" aria-label="Read it aloud">
-                <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
-                <span class="act-label">speak</span>
-              </button>
-              <button class="act act-primary" type="button" @click="openSaveFromTranslation()"
-                      title="Save to the library" aria-label="Save to the library">
-                <svg class="act-ico" aria-hidden="true"><use href="#i-save"/></svg>
-                <span class="act-label">save</span>
-              </button>
+          <section class="pane" aria-label="Translation">
+            <div class="pane-head">
+              <span class="pane-label" x-text="outputIsChinese ? '简体中文' : 'English'"></span>
+              <div class="pane-actions"></div>
             </div>
+            <!-- aria-live stays off while streaming: announcing every fragment
+                 would drown a screen reader. Completion is announced once. -->
+            <div class="output" aria-live="off">
+              <span class="output-text" :lang="outputIsChinese ? 'zh-Hans' : 'en'" x-show="translatedText" x-text="translatedText"></span>
+              <span class="output-empty" x-show="!translatedText && isTranslating" x-cloak>…</span>
+              <span class="output-empty" x-show="!translatedText && !isTranslating" x-text="placeholder"></span>
+              <div
+                class="pinyin"
+                lang="zh-Latn-pinyin"
+                x-show="outputIsChinese && showPinyin && pinyinText && translatedText"
+                x-cloak
+                x-text="pinyinText"
+              ></div>
+
+              <!-- The actions sit immediately under the translation, not pinned
+                   to the bottom of a tall card. -->
+              <div class="card-foot" x-show="canSaveTranslation" x-cloak>
+                <button class="act" type="button" @click="copyTranslation()"
+                        :title="copied ? 'Copied' : 'Copy the translation'"
+                        :aria-label="copied ? 'Copied' : 'Copy the translation'">
+                  <svg class="act-ico" aria-hidden="true"><use :href="copied ? '#i-check' : '#i-copy'"/></svg>
+                  <span class="act-label" x-text="copied ? 'copied' : 'copy'"></span>
+                </button>
+                <button class="act" type="button" x-show="ttsAvailable" @click="speak(spokenText)"
+                        title="Read it aloud" aria-label="Read it aloud">
+                  <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
+                  <span class="act-label">speak</span>
+                </button>
+                <button class="act act-primary" type="button" @click="openSaveFromTranslation()"
+                        title="Save to the library" aria-label="Save to the library">
+                  <svg class="act-ico" aria-hidden="true"><use href="#i-save"/></svg>
+                  <span class="act-label">save</span>
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <p class="error" role="alert" x-show="error" x-cloak x-text="error"></p>
+        <p class="page-foot">⌘↵ translates now · Esc clears</p>
+      </main>
+
+      <!-- ================= Library ================= -->
+      <main class="page" x-show="tab === 'library'" role="tabpanel" aria-label="Library">
+        <header class="page-head">
+          <div class="page-heading">
+            <h2 class="page-title">Library</h2>
+            <p class="page-sub">
+              <span x-text="itemCount"></span> <span x-text="itemCount === 1 ? 'word' : 'words'"></span>
+              · alphabetical by pinyin
+            </p>
           </div>
-        </section>
-      </div>
-      <p class="error" role="alert" x-show="error" x-cloak x-text="error"></p>
-    </main>
+          <div class="page-actions">
+            <button class="act" type="button" @click="exportLibrary()" title="Download the library as JSON">
+              <svg class="act-ico" aria-hidden="true"><use href="#i-download"/></svg>
+              <span class="act-label">export</span>
+            </button>
+            <button class="act act-primary" type="button" @click="openSaveSheet()" title="Add an item by hand">
+              <svg class="act-ico" aria-hidden="true"><use href="#i-plus"/></svg>
+              <span class="act-label">add</span>
+            </button>
+          </div>
+        </header>
 
-    <!-- ================= Library ================= -->
-    <main class="pane-wrap" x-show="tab === 'library'" role="tabpanel" aria-label="Library">
-      <div class="toolbar">
-        <input class="search" type="search" x-model="libraryQuery"
-               placeholder="Search Chinese, meaning, note, tags…" aria-label="Search the library" />
-        <button class="act" type="button" @click="exportLibrary()" title="Download the library as JSON">
-          <svg class="act-ico" aria-hidden="true"><use href="#i-download"/></svg>
-          <span class="act-label">export</span>
-        </button>
-        <button class="act act-primary" type="button" @click="openSaveSheet()" title="Add an item by hand">
-          <svg class="act-ico" aria-hidden="true"><use href="#i-plus"/></svg>
-          <span class="act-label">add</span>
-        </button>
-      </div>
+        <div class="toolbar">
+          <input class="search" type="search" x-model="libraryQuery"
+                 placeholder="Search Chinese, meaning, note, tags…" aria-label="Search the library" />
+        </div>
 
-      <p class="hint" x-show="loadingItems" x-cloak>loading…</p>
-      <p class="error" role="alert" x-show="libraryError" x-cloak x-text="libraryError"></p>
+        <p class="hint" x-show="loadingItems" x-cloak>loading…</p>
+        <p class="error" role="alert" x-show="libraryError" x-cloak x-text="libraryError"></p>
 
-      <ul class="items" x-show="!loadingItems">
-        <template x-for="item in visibleItems" :key="item.id">
-          <li class="item" :id="'item-' + item.id">
-            <div class="item-head">
-              <button class="item-row" type="button" @click="toggleItem(item.id)"
-                      :aria-expanded="expandedId === item.id">
-                <span class="item-chinese" lang="zh-Hans" x-text="item.chinese"></span>
-                <span class="item-pinyin" lang="zh-Latn-pinyin" x-show="pinyinOf(item.chinese)"
-                      x-text="pinyinOf(item.chinese)"></span>
-                <span class="item-meaning" x-show="item.meaning" x-text="item.meaning"></span>
-                <span class="item-where" x-show="item.where" x-text="item.where"></span>
-                <span class="tags" x-show="item.tags && item.tags.length">
+        <ul class="rows" x-show="!loadingItems">
+          <template x-for="item in visibleItems" :key="item.id">
+            <li class="row" :id="'item-' + item.id" :class="{ 'row-open': expandedId === item.id }">
+              <div class="row-line">
+                <button class="row-main" type="button" @click="toggleItem(item.id)"
+                        :aria-expanded="expandedId === item.id"
+                        :aria-label="'Details for ' + item.chinese">
+                  <span class="row-word-cell">
+                    <span class="row-word" lang="zh-Hans" x-text="item.chinese"></span>
+                    <span class="row-pinyin" lang="zh-Latn-pinyin" x-show="pinyinOf(item.chinese)"
+                          x-text="pinyinOf(item.chinese)"></span>
+                  </span>
+                  <span class="row-meaning" x-show="item.meaning" x-text="item.meaning"></span>
+                  <span class="row-where" x-show="item.where" :title="item.where" x-text="item.where"></span>
+                </button>
+                <div class="row-actions">
+                  <button class="act act-icon" type="button" @click="copyText(item.chinese)"
+                          title="Copy" :aria-label="'Copy ' + item.chinese">
+                    <svg class="act-ico" aria-hidden="true"><use href="#i-copy"/></svg>
+                  </button>
+                  <button class="act act-icon" type="button" x-show="ttsAvailable" @click="speak(item.chinese)"
+                          title="Speak" :aria-label="'Speak ' + item.chinese">
+                    <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
+                  </button>
+                </div>
+                <span class="row-chevron" aria-hidden="true">
+                  <svg class="act-ico"><use href="#i-chevron"/></svg>
+                </span>
+              </div>
+
+              <div class="row-body" x-show="expandedId === item.id" x-cloak>
+                <p class="row-note" x-show="item.note" x-text="item.note"></p>
+                <p class="row-meta" x-show="item.where">
+                  <span class="row-meta-label">Found in</span>
+                  <span x-text="item.where"></span>
+                </p>
+                <p class="tags" x-show="item.tags && item.tags.length">
                   <template x-for="tag in item.tags ?? []" :key="tag">
                     <span class="tag" x-text="tag"></span>
                   </template>
-                </span>
-              </button>
-              <div class="item-quick">
-                <button class="act act-icon" type="button" @click="copyText(item.chinese)"
-                        title="Copy" :aria-label="'Copy ' + item.chinese">
-                  <svg class="act-ico" aria-hidden="true"><use href="#i-copy"/></svg>
-                </button>
-                <button class="act act-icon" type="button" x-show="ttsAvailable" @click="speak(item.chinese)"
-                        title="Speak" :aria-label="'Speak ' + item.chinese">
-                  <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="item-body" x-show="expandedId === item.id" x-cloak>
-              <p class="item-note" x-show="item.note" x-text="item.note"></p>
-              <div class="actions">
-                <button class="act" type="button" @click="openEditItem(item)">
-                  <svg class="act-ico" aria-hidden="true"><use href="#i-edit"/></svg>
-                  <span class="act-label">edit</span>
-                </button>
-                <button class="act act-danger" type="button" @click="removeItem(item)">
-                  <svg class="act-ico" aria-hidden="true"><use href="#i-delete"/></svg>
-                  <span class="act-label">delete</span>
-                </button>
-                <!-- Practice only appears when the assessment model and a
-                     microphone are both available. -->
-                <button class="act" type="button" x-show="practiceAvailable"
-                        @click="togglePractice(item)"
-                        :aria-pressed="practice[item.id]?.recording ?? false"
-                        :title="practice[item.id]?.recording ?? false ? 'Stop and check' : 'Say it and check my tones'">
-                  <svg class="act-ico" aria-hidden="true"><use :href="practice[item.id]?.recording ?? false ? '#i-stop' : '#i-mic'"/></svg>
-                  <span class="act-label" x-text="practice[item.id]?.recording ?? false ? 'stop' : 'practice'"></span>
-                </button>
-              </div>
-
-              <p class="recording" x-show="practice[item.id]?.recording ?? false" x-cloak>
-                <span class="rec-dot" aria-hidden="true"></span>
-                recording — say it now, then press stop (it ends by itself after 12s)
-              </p>
-              <p class="hint" x-show="practice[item.id]?.busy ?? false" x-cloak>checking your tones…</p>
-              <p class="error" role="alert" x-show="practice[item.id]?.error" x-cloak
-                 x-text="practice[item.id]?.error ?? ''"></p>
-
-              <div class="verdicts" x-show="practice[item.id]?.assessment" x-cloak>
-                <p class="verdict-summary">
-                  <strong x-text="(practice[item.id]?.assessment?.score ?? 0) + '/100'"></strong>
-                  <span x-show="practice[item.id]?.assessment?.unclear"
-                        x-text="'· ' + (practice[item.id]?.assessment?.unclear ?? 0) + ' not clear'"></span>
-                  <span class="verdict-heard"
-                        x-text="'heard: ' + (practice[item.id]?.assessment?.heardText || '—')"></span>
                 </p>
-                <ul class="verdict-list">
-                  <template x-for="syllable in practice[item.id]?.assessment?.syllables ?? []" :key="syllable.index">
-                    <li class="verdict" :class="'verdict-' + syllable.verdict"
-                        :title="verdictLabel(syllable.verdict)">
-                      <span class="verdict-char" lang="zh-Hans" x-text="syllable.text"></span>
-                      <span class="verdict-pinyin" lang="zh-Latn-pinyin" x-text="syllable.heard ?? '—'"></span>
-                      <span class="verdict-expected" x-text="syllable.expected"></span>
-                    </li>
-                  </template>
-                </ul>
-                <p class="hint">green = heard right · amber = wrong tone · red = different syllable · grey = too quiet to judge</p>
-              </div>
-            </div>
-          </li>
-        </template>
-      </ul>
 
-      <p class="hint" x-show="!loadingItems && !visibleItems.length" x-cloak>
-        <span x-show="itemCount === 0">Nothing saved yet. Translate something and press save, or add one by hand.</span>
-        <span x-show="itemCount > 0">Nothing matches that search.</span>
-      </p>
-    </main>
+                <div class="actions">
+                  <button class="act" type="button" @click="openEditItem(item)">
+                    <svg class="act-ico" aria-hidden="true"><use href="#i-edit"/></svg>
+                    <span class="act-label">edit</span>
+                  </button>
+                  <button class="act act-danger" type="button" @click="removeItem(item)">
+                    <svg class="act-ico" aria-hidden="true"><use href="#i-delete"/></svg>
+                    <span class="act-label">delete</span>
+                  </button>
+                  <!-- Practice only appears when the assessment model and a
+                       microphone are both available. -->
+                  <button class="act" type="button" x-show="practiceAvailable"
+                          @click="togglePractice(item)"
+                          :aria-pressed="practice[item.id]?.recording ?? false"
+                          :title="practice[item.id]?.recording ?? false ? 'Stop and check' : 'Say it and check my tones'">
+                    <svg class="act-ico" aria-hidden="true"><use :href="practice[item.id]?.recording ?? false ? '#i-stop' : '#i-mic'"/></svg>
+                    <span class="act-label" x-text="practice[item.id]?.recording ?? false ? 'stop' : 'practice'"></span>
+                  </button>
+                </div>
 
-    <!-- ================= HSK ================= -->
-    <main class="pane-wrap" x-show="tab === 'hsk'" role="tabpanel" aria-label="HSK vocabulary">
+                <p class="recording" x-show="practice[item.id]?.recording ?? false" x-cloak>
+                  <span class="rec-dot" aria-hidden="true"></span>
+                  recording — say it now, then press stop (it ends by itself after 12s)
+                </p>
+                <p class="hint" x-show="practice[item.id]?.busy ?? false" x-cloak>checking your tones…</p>
+                <p class="error" role="alert" x-show="practice[item.id]?.error" x-cloak
+                   x-text="practice[item.id]?.error ?? ''"></p>
 
-      <!-- Two views, one tab: the words you have met (default), and the map
-           behind them. The list is the thing you come back to; the map is the
-           thing you consult. -->
-      <div class="subtabs" role="tablist" aria-label="HSK views">
-        <button class="subtab" type="button" role="tab" :aria-selected="hskView === 'known'"
-                @click="hskView = 'known'">
-          Words you know<span class="tab-count" x-show="coverage.known.total"
-                                x-text="coverage.known.total"></span>
-        </button>
-        <button class="subtab" type="button" role="tab" :aria-selected="hskView === 'explore'"
-                @click="hskView = 'explore'">Explore</button>
-      </div>
-
-      <p class="error" role="alert" x-show="hskError" x-cloak x-text="hskError"></p>
-      <p class="hint" x-show="loadingCoverage && !coverage.levels.length" x-cloak>loading…</p>
-
-      <!-- ---------- What you have met ---------- -->
-      <section class="view" x-show="hskView === 'known'" role="tabpanel" aria-label="Words you know">
-        <div class="picks" role="group" aria-label="Which HSK bands to show">
-          <template x-for="row in coverage.levels" :key="row.level">
-            <button class="pick" type="button"
-                    :class="{ 'pick-on': knownLevels.includes(row.level) }"
-                    :aria-pressed="knownLevels.includes(row.level)"
-                    :title="row.seen + ' of ' + row.total + ' met'"
-                    @click="toggleKnownLevel(row.level)">
-              <span x-text="'HSK ' + levelLabel(row.level)"></span>
-              <!-- How many words you have there, so a band outside the
-                   selection still says what it holds. -->
-              <span class="pick-count" x-show="row.seen" x-text="row.seen"></span>
-            </button>
-          </template>
-        </div>
-
-        <template x-for="group in knownGroups" :key="group.level">
-          <section class="band">
-            <h2 class="band-head">
-              <span class="band-name" x-text="'HSK ' + group.label"></span>
-              <span class="bar" role="img" :aria-label="group.seen + ' of ' + group.total + ' words met'">
-                <span class="bar-fill" :style="'width:' + group.percent + '%'"></span>
-              </span>
-              <span class="section-meta" x-text="group.seen + ' / ' + group.total"></span>
-            </h2>
-
-            <ul class="gaps" x-show="group.words.length">
-              <template x-for="word in group.words" :key="word.s">
-                <li class="gap">
-                  <span class="gap-chinese" lang="zh-Hans" x-text="word.s"></span>
-                  <span class="gap-text">
-                    <span class="gap-pinyin" lang="zh-Latn-pinyin" x-text="word.py"></span>
-                    <span class="gap-gloss" x-text="word.m"></span>
-                  </span>
-                  <span class="actions">
-                    <button class="act act-icon" type="button" @click="copyText(word.s)"
-                            title="Copy" :aria-label="'Copy ' + word.s">
-                      <svg class="act-ico" aria-hidden="true"><use href="#i-copy"/></svg>
-                    </button>
-                    <button class="act act-icon" type="button" x-show="ttsAvailable" @click="speak(word.s)"
-                            title="Speak" :aria-label="'Speak ' + word.s">
-                      <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
-                    </button>
-                  </span>
-                  <!-- Where in the library you met it. One chip per item. -->
-                  <span class="refs" x-show="word.refs && word.refs.length">
-                    <template x-for="ref in word.refs ?? []" :key="ref.id">
-                      <button class="ref" type="button" @click="openItem(ref.id)"
-                              :title="'Open in the library: ' + ref.text"
-                              :lang="ref.text === word.s ? 'en' : 'zh-Hans'"
-                              x-text="ref.text === word.s ? 'saved' : ref.text"></button>
+                <div class="verdicts" x-show="practice[item.id]?.assessment" x-cloak>
+                  <p class="verdict-summary">
+                    <strong x-text="(practice[item.id]?.assessment?.score ?? 0) + '/100'"></strong>
+                    <span x-show="practice[item.id]?.assessment?.unclear"
+                          x-text="'· ' + (practice[item.id]?.assessment?.unclear ?? 0) + ' not clear'"></span>
+                    <span class="verdict-heard"
+                          x-text="'heard: ' + (practice[item.id]?.assessment?.heardText || '—')"></span>
+                  </p>
+                  <ul class="verdict-list">
+                    <template x-for="syllable in practice[item.id]?.assessment?.syllables ?? []" :key="syllable.index">
+                      <li class="verdict" :class="'verdict-' + syllable.verdict"
+                          :title="verdictLabel(syllable.verdict)">
+                        <span class="verdict-char" lang="zh-Hans" x-text="syllable.text"></span>
+                        <span class="verdict-pinyin" lang="zh-Latn-pinyin" x-text="syllable.heard ?? '—'"></span>
+                        <span class="verdict-expected" x-text="syllable.expected"></span>
+                      </li>
                     </template>
-                    <!-- Past three items the row points at the library's search
-                         instead of turning into a wall of chips. -->
-                    <button class="ref ref-more" type="button" x-show="extraRefs(word)" x-cloak
-                            @click="searchLibrary(word.s)"
-                            :title="'Find every item with ' + word.s"
-                            x-text="'+' + extraRefs(word) + ' more'"></button>
-                  </span>
-                </li>
-              </template>
-            </ul>
-          </section>
-        </template>
-
-        <p class="hint" x-show="!loadingCoverage && coverage.levels.length && !coverage.known.total" x-cloak>
-          <span x-show="itemCount === 0">Nothing met yet. Save something you read and every word in it turns up here.</span>
-          <span x-show="itemCount > 0">Nothing met in these bands yet — pick another one above.</span>
-        </p>
-        <button class="act act-quiet" type="button" x-show="coverage.known.more" @click="loadMoreKnown()"
-                x-text="loadingCoverage ? 'loading…' : 'load more words'"></button>
-      </section>
-
-      <!-- ---------- Explore the map ---------- -->
-      <section class="view" x-show="hskView === 'explore'" role="tabpanel" aria-label="Explore the HSK map">
-        <p class="hint">
-          How much of each band you have met. Pick one to see the words it is still missing.
-        </p>
-        <div class="coverage">
-          <template x-for="row in coverage.levels" :key="row.level">
-            <button class="level" type="button"
-                    :class="{ 'level-on': gapLevelShown === row.level }"
-                    :aria-pressed="gapLevelShown === row.level"
-                    :title="row.seen + ' of ' + row.total + ' words met'"
-                    @click="showLevel(row.level)">
-              <span class="level-name" x-text="'HSK ' + levelLabel(row.level)"></span>
-              <span class="bar" role="img" :aria-label="row.seen + ' of ' + row.total + ' words met'">
-                <span class="bar-fill" :style="'width:' + percent(row) + '%'"></span>
-              </span>
-              <span class="level-count" x-text="row.seen + ' / ' + row.total"></span>
-            </button>
-          </template>
-        </div>
-
-        <h2 class="section-title" x-show="coverage.levels.length">
-          Missing from HSK <span x-text="levelLabel(gapLevelShown)"></span>
-          <span class="section-meta" x-text="coverage.gaps.total + ' words'"></span>
-        </h2>
-
-        <ul class="gaps">
-          <template x-for="word in coverage.gaps.words" :key="word.s">
-            <li class="gap">
-              <span class="gap-chinese" lang="zh-Hans" x-text="word.s"></span>
-              <span class="gap-text">
-                <span class="gap-pinyin" lang="zh-Latn-pinyin" x-text="word.py"></span>
-                <span class="gap-gloss" x-text="word.m"></span>
-              </span>
-              <span class="actions">
-                <button class="act act-icon" type="button" @click="copyText(word.s)"
-                        title="Copy" :aria-label="'Copy ' + word.s">
-                  <svg class="act-ico" aria-hidden="true"><use href="#i-copy"/></svg>
-                </button>
-                <button class="act act-icon" type="button" x-show="ttsAvailable" @click="speak(word.s)"
-                        title="Speak" :aria-label="'Speak ' + word.s">
-                  <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
-                </button>
-                <button class="act act-icon" type="button" @click="openSaveFromWord(word)"
-                        title="Save to the library" :aria-label="'Save ' + word.s + ' to the library'">
-                  <svg class="act-ico" aria-hidden="true"><use href="#i-save"/></svg>
-                </button>
-              </span>
+                  </ul>
+                  <p class="hint">green = heard right · amber = wrong tone · red = different syllable · grey = too quiet to judge</p>
+                </div>
+              </div>
             </li>
           </template>
         </ul>
 
-        <p class="hint" x-show="coverage.levels.length && !coverage.gaps.total">
-          Nothing missing at this level. Good place to be.
+        <p class="hint empty" x-show="!loadingItems && !visibleItems.length" x-cloak>
+          <span x-show="itemCount === 0">Nothing saved yet. Translate something and press save, or add one by hand.</span>
+          <span x-show="itemCount > 0">Nothing matches that search.</span>
         </p>
-        <button class="act act-quiet" type="button" x-show="coverage.gaps.more" @click="loadMoreGaps()"
-                x-text="loadingCoverage ? 'loading…' : 'load more words'"></button>
-      </section>
-    </main>
+      </main>
 
-    <!-- ================= Save sheet (shared) ================= -->
-    <div class="backdrop" x-show="sheet.open" x-cloak @click.self="closeSheet()" @keydown.escape.window="closeSheet()">
-      <form class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" @submit.prevent="saveSheet()">
-        <h2 class="sheet-title" id="sheet-title" x-text="sheet.id ? 'Edit item' : 'Save to library'"></h2>
+      <!-- ================= HSK ================= -->
+      <main class="page" x-show="tab === 'hsk'" role="tabpanel" aria-label="HSK vocabulary">
+        <header class="page-head">
+          <div class="page-heading">
+            <h2 class="page-title">HSK</h2>
+            <p class="page-sub">
+              <span x-text="metCount"></span> <span x-text="metCount === 1 ? 'word' : 'words'"></span> met
+              · alphabetical by pinyin
+            </p>
+          </div>
+          <div class="page-actions">
+            <!-- Two views, one tab: the words you have met (default), and the map
+                 behind them. A segmented control, not a second row of tabs. -->
+            <div class="segmented" role="tablist" aria-label="HSK views">
+              <button class="segment" type="button" role="tab" :aria-selected="hskView === 'known'"
+                      @click="hskView = 'known'">Known</button>
+              <button class="segment" type="button" role="tab" :aria-selected="hskView === 'explore'"
+                      @click="hskView = 'explore'">Missing</button>
+            </div>
+          </div>
+        </header>
 
-        <label class="field">
-          <span class="field-label">Chinese <span class="required" aria-hidden="true">*</span></span>
-          <textarea class="field-input field-chinese" rows="2" x-model="sheet.chinese" lang="zh-Hans"
-                    placeholder="汉字" autocomplete="off"></textarea>
-          <span class="reading" lang="zh-Latn-pinyin" x-show="pinyinOf(sheet.chinese)"
-                x-text="pinyinOf(sheet.chinese)"></span>
-        </label>
+        <p class="error" role="alert" x-show="hskError" x-cloak x-text="hskError"></p>
+        <p class="hint" x-show="loadingCoverage && !coverage.levels.length" x-cloak>loading…</p>
 
-        <label class="field">
-          <span class="field-label">Meaning</span>
-          <textarea class="field-input" rows="2" x-model="sheet.meaning" placeholder="your words, or the translation you kept"></textarea>
-        </label>
-
-        <label class="field">
-          <span class="field-label">Where I found it</span>
-          <input class="field-input" type="text" x-model="sheet.where" placeholder="a sign at the mall, my tutor, HSK 1…" />
-        </label>
-
-        <label class="field">
-          <span class="field-label">Note</span>
-          <textarea class="field-input" rows="2" x-model="sheet.note" placeholder="anything worth remembering"></textarea>
-        </label>
-
-        <div class="field">
-          <span class="field-label">Tags</span>
-          <div class="chips">
-            <template x-for="tag in sheet.tags" :key="tag">
-              <button type="button" class="tag tag-removable" @click="removeTag(tag)"
-                      :aria-label="'Remove tag ' + tag">
-                <span x-text="tag"></span><span class="tag-x" aria-hidden="true">×</span>
+        <!-- ---------- What you have met ---------- -->
+        <section class="view" x-show="hskView === 'known'" role="tabpanel" aria-label="Words you know">
+          <div class="picks" role="group" aria-label="Which HSK bands to show">
+            <template x-for="row in coverage.levels" :key="row.level">
+              <button class="pick" type="button"
+                      :class="{ 'pick-on': knownLevels.includes(row.level) }"
+                      :aria-pressed="knownLevels.includes(row.level)"
+                      :title="row.seen + ' of ' + row.total + ' met'"
+                      @click="toggleKnownLevel(row.level)">
+                <span x-text="'HSK ' + levelLabel(row.level)"></span>
+                <!-- How many words you have there, so a band outside the
+                     selection still says what it holds. -->
+                <span class="pick-count" x-show="row.seen" x-text="row.seen"></span>
               </button>
             </template>
-            <input class="chip-input" type="text" x-model="tagDraft" aria-label="Add a tag"
-                   placeholder="add a tag…"
-                   @keydown.enter.prevent="addTag()"
-                   @keydown.backspace="tagsBackspace()"
-                   @input="tagsChanged()" />
           </div>
-        </div>
 
-        <p class="error" role="alert" x-show="sheet.error" x-cloak x-text="sheet.error"></p>
+          <template x-for="group in knownGroups" :key="group.level">
+            <section class="band">
+              <h3 class="band-head">
+                <span class="band-name" x-text="'HSK ' + group.label"></span>
+                <span class="bar" role="img" :aria-label="group.seen + ' of ' + group.total + ' words met'">
+                  <span class="bar-fill" :style="'width:' + group.percent + '%'"></span>
+                </span>
+                <span class="band-meta" x-text="group.seen + ' / ' + group.total"></span>
+              </h3>
 
-        <div class="sheet-actions">
-          <button class="act" type="button" @click="closeSheet()">cancel</button>
-          <button class="act act-primary" type="submit" :disabled="sheet.saving || !sheet.chinese.trim()"
-                  x-text="sheet.saving ? 'saving…' : 'save'"></button>
-        </div>
-      </form>
+              <ul class="words" x-show="group.words.length">
+                <template x-for="word in group.words" :key="word.s">
+                  <li class="word">
+                    <span class="word-head">
+                      <span class="word-chinese" lang="zh-Hans" x-text="word.s"></span>
+                      <span class="word-pinyin" lang="zh-Latn-pinyin" x-text="word.py"></span>
+                    </span>
+                    <span class="word-gloss" :title="word.m" x-text="word.m"></span>
+                    <!-- The sentences you met the word in. One chip per item. -->
+                    <span class="refs" x-show="textRefs(word).length">
+                      <template x-for="ref in textRefs(word)" :key="ref.id">
+                        <button class="ref" type="button" @click="openItem(ref.id)"
+                                lang="zh-Hans"
+                                :title="'Open in the library: ' + ref.text"
+                                x-text="ref.text"></button>
+                      </template>
+                      <!-- Past three items the row points at the library's search
+                           instead of turning into a wall of chips. -->
+                      <button class="ref ref-more" type="button" x-show="extraRefs(word)" x-cloak
+                              @click="searchLibrary(word.s)"
+                              :title="'Find every item with ' + word.s"
+                              x-text="'+' + extraRefs(word) + ' more'"></button>
+                    </span>
+                    <span class="word-actions">
+                      <button class="act act-icon" type="button" @click="copyText(word.s)"
+                              title="Copy" :aria-label="'Copy ' + word.s">
+                        <svg class="act-ico" aria-hidden="true"><use href="#i-copy"/></svg>
+                      </button>
+                      <button class="act act-icon" type="button" x-show="ttsAvailable" @click="speak(word.s)"
+                              title="Speak" :aria-label="'Speak ' + word.s">
+                        <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
+                      </button>
+                    </span>
+                  </li>
+                </template>
+              </ul>
+              <p class="hint" x-show="!group.words.length" x-cloak>Nothing met in this band yet.</p>
+            </section>
+          </template>
+
+          <p class="hint empty" x-show="!loadingCoverage && coverage.levels.length && !coverage.known.total" x-cloak>
+            <span x-show="itemCount === 0">Nothing met yet. Save something you read and every word in it turns up here.</span>
+            <span x-show="itemCount > 0">Nothing met in these bands yet — pick another one above.</span>
+          </p>
+          <button class="act act-quiet" type="button" x-show="coverage.known.more" @click="loadMoreKnown()"
+                  x-text="loadingCoverage ? 'loading…' : 'load more words'"></button>
+        </section>
+
+        <!-- ---------- What is still missing ---------- -->
+        <section class="view" x-show="hskView === 'explore'" role="tabpanel" aria-label="Missing HSK words">
+          <p class="hint">How much of each band you have met. Pick one to see what it is still missing.</p>
+
+          <div class="levels">
+            <template x-for="row in coverage.levels" :key="row.level">
+              <button class="level" type="button"
+                      :class="{ 'level-on': gapLevelShown === row.level }"
+                      :aria-pressed="gapLevelShown === row.level"
+                      :title="row.seen + ' of ' + row.total + ' words met'"
+                      @click="showLevel(row.level)">
+                <span class="level-name" x-text="'HSK ' + levelLabel(row.level)"></span>
+                <span class="bar" role="img" :aria-label="row.seen + ' of ' + row.total + ' words met'">
+                  <span class="bar-fill" :style="'width:' + percent(row) + '%'"></span>
+                </span>
+                <span class="level-count" x-text="row.seen + ' / ' + row.total"></span>
+              </button>
+            </template>
+          </div>
+
+          <h3 class="section-title" x-show="coverage.levels.length">
+            Missing from HSK <span x-text="levelLabel(gapLevelShown)"></span>
+            <span class="section-meta" x-text="coverage.gaps.total + ' words'"></span>
+          </h3>
+
+          <ul class="words">
+            <template x-for="word in coverage.gaps.words" :key="word.s">
+              <li class="word">
+                <span class="word-head">
+                  <span class="word-chinese" lang="zh-Hans" x-text="word.s"></span>
+                  <span class="word-pinyin" lang="zh-Latn-pinyin" x-text="word.py"></span>
+                </span>
+                <span class="word-gloss" x-text="word.m"></span>
+                <span class="word-actions">
+                  <button class="act act-icon" type="button" @click="copyText(word.s)"
+                          title="Copy" :aria-label="'Copy ' + word.s">
+                    <svg class="act-ico" aria-hidden="true"><use href="#i-copy"/></svg>
+                  </button>
+                  <button class="act act-icon" type="button" x-show="ttsAvailable" @click="speak(word.s)"
+                          title="Speak" :aria-label="'Speak ' + word.s">
+                    <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
+                  </button>
+                  <button class="act act-icon" type="button" @click="openSaveFromWord(word)"
+                          title="Save to the library" :aria-label="'Save ' + word.s + ' to the library'">
+                    <svg class="act-ico" aria-hidden="true"><use href="#i-save"/></svg>
+                  </button>
+                </span>
+              </li>
+            </template>
+          </ul>
+
+          <p class="hint empty" x-show="coverage.levels.length && !coverage.gaps.total">
+            Nothing missing at this level. Good place to be.
+          </p>
+          <button class="act act-quiet" type="button" x-show="coverage.gaps.more" @click="loadMoreGaps()"
+                  x-text="loadingCoverage ? 'loading…' : 'load more words'"></button>
+        </section>
+      </main>
+
     </div>
-
-    <div class="toast" x-show="toast" x-cloak role="status" x-text="toast"></div>
-    <p class="sr-only" aria-live="polite" x-text="announcement"></p>
-
   </div>
+
+  <!-- ================= Save sheet (shared) ================= -->
+  <div class="backdrop" x-show="sheet.open" x-cloak @click.self="closeSheet()" @keydown.escape.window="closeSheet()">
+    <form class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" @submit.prevent="saveSheet()">
+      <h2 class="sheet-title" id="sheet-title" x-text="sheet.id ? 'Edit item' : 'Save to library'"></h2>
+
+      <label class="field">
+        <span class="field-label">Chinese <span class="required" aria-hidden="true">*</span></span>
+        <textarea class="field-input field-chinese" rows="2" x-model="sheet.chinese" lang="zh-Hans"
+                  placeholder="汉字" autocomplete="off"></textarea>
+        <span class="reading" lang="zh-Latn-pinyin" x-show="pinyinOf(sheet.chinese)"
+              x-text="pinyinOf(sheet.chinese)"></span>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Meaning</span>
+        <textarea class="field-input" rows="2" x-model="sheet.meaning" placeholder="your words, or the translation you kept"></textarea>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Where I found it</span>
+        <input class="field-input" type="text" x-model="sheet.where" placeholder="a sign at the mall, my tutor, HSK 1…" />
+      </label>
+
+      <label class="field">
+        <span class="field-label">Note</span>
+        <textarea class="field-input" rows="2" x-model="sheet.note" placeholder="anything worth remembering"></textarea>
+      </label>
+
+      <div class="field">
+        <span class="field-label">Tags</span>
+        <div class="chips">
+          <template x-for="tag in sheet.tags" :key="tag">
+            <button type="button" class="tag tag-removable" @click="removeTag(tag)"
+                    :aria-label="'Remove tag ' + tag">
+              <span x-text="tag"></span><span class="tag-x" aria-hidden="true">×</span>
+            </button>
+          </template>
+          <input class="chip-input" type="text" x-model="tagDraft" aria-label="Add a tag"
+                 placeholder="add a tag…"
+                 @keydown.enter.prevent="addTag()"
+                 @keydown.backspace="tagsBackspace()"
+                 @input="tagsChanged()" />
+        </div>
+      </div>
+
+      <p class="error" role="alert" x-show="sheet.error" x-cloak x-text="sheet.error"></p>
+
+      <div class="sheet-actions">
+        <button class="act" type="button" @click="closeSheet()">cancel</button>
+        <button class="act act-primary" type="submit" :disabled="sheet.saving || !sheet.chinese.trim()"
+                x-text="sheet.saving ? 'saving…' : 'save'"></button>
+      </div>
+    </form>
+  </div>
+
+  <div class="toast" x-show="toast" x-cloak role="status" x-text="toast"></div>
+  <p class="sr-only" aria-live="polite" x-text="announcement"></p>
 
 </body>
 </html>

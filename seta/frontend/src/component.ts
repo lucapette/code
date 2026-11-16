@@ -25,6 +25,7 @@ import {
   levelLabel as hskLevelLabel,
   levelPercent,
   showingLevel,
+  textRefs,
   toggleLevel,
   type KnownGroup,
 } from './hsk';
@@ -37,6 +38,7 @@ import {
   sheetFromTranslation,
   sheetFromWord,
   sheetToInput,
+  sortByPinyin,
 } from './library';
 import { pinyinFor } from './pinyin';
 import type { Assessment } from './practice/grade';
@@ -56,6 +58,7 @@ import type {
   SheetState,
   Tab,
   Theme,
+  WordRef,
 } from './types';
 
 export const THEME_KEY = 'seta-theme';
@@ -188,6 +191,14 @@ export function setaApp(): SetaApp {
       return this.sourceBytes > MAX_TEXT_BYTES;
     },
 
+    /** What the rail says about the model, in the same words everywhere. */
+    get statusLabel(): string {
+      if (this.engineStatus === 'ready') return 'model ready';
+      if (this.engineStatus === 'warming') return 'model warming up';
+      if (this.engineStatus === 'unavailable') return 'model unreachable';
+      return 'checking model…';
+    },
+
     get placeholder(): string {
       if (this.engineStatus === 'unavailable') return 'Translation engine is unreachable';
       if (this.engineStatus === 'warming') return 'Model is warming up…';
@@ -195,11 +206,16 @@ export function setaApp(): SetaApp {
     },
 
     get visibleItems(): Item[] {
-      return filterItems(this.items, this.libraryQuery);
+      return sortByPinyin(filterItems(this.items, this.libraryQuery));
     },
 
     get itemCount(): number {
       return this.items.length;
+    },
+
+    /** Every HSK word met, across all bands, not just the ones on screen. */
+    get metCount(): number {
+      return this.coverage.levels.reduce((sum, row) => sum + row.seen, 0);
     },
 
     /** True when the translation output is Chinese (en→zh). */
@@ -554,6 +570,13 @@ export function setaApp(): SetaApp {
       return extraRefs(word);
     },
 
+
+    /** The sentence references a word carries: the chips on the row. */
+    textRefs(word: KnownWord) {
+      return textRefs(word);
+    },
+
+
     /** Where a truncated reference list goes: the library, searching the word. */
     searchLibrary(text: string) {
       this.setTab('library');
@@ -722,9 +745,11 @@ interface SetaAppState {
   readonly sourceBytes: number;
   readonly maxBytes: number;
   readonly overLimit: boolean;
+  readonly statusLabel: string;
   readonly placeholder: string;
   readonly visibleItems: Item[];
   readonly itemCount: number;
+  readonly metCount: number;
   readonly outputIsChinese: boolean;
   readonly spokenText: string;
   readonly canSaveTranslation: boolean;
@@ -763,6 +788,7 @@ interface SetaAppState {
   percent(row: LevelCoverage): number;
   levelLabel(level: number): string;
   extraRefs(word: KnownWord): number;
+  textRefs(word: KnownWord): WordRef[];
   searchLibrary(text: string): void;
   openItem(id: string): void;
   scrollToItem(id: string): void;

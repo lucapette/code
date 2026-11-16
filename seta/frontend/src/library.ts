@@ -7,6 +7,7 @@
    ========================================================================== */
 
 import { levelLabel } from './hsk';
+import { pinyinSortKey } from './pinyin';
 import type { Direction, HskWord, Item, ItemInput, SheetState } from './types';
 
 const MAX_TAGS = 20;
@@ -24,6 +25,22 @@ export function filterItems(items: Item[], query: string): Item[] {
       .toLowerCase()
       .includes(needle),
   );
+}
+
+/**
+ * The library in reading order: alphabetical by pinyin, so a word is where you
+ * remember hearing it rather than where it landed in the save history. Ties
+ * (homophones) fall back to the characters, then the id, so the order is
+ * stable across reloads.
+ */
+export function sortByPinyin(items: Item[]): Item[] {
+  return [...items].sort((a, b) => {
+    const ka = pinyinSortKey(a.chinese);
+    const kb = pinyinSortKey(b.chinese);
+    if (ka !== kb) return ka < kb ? -1 : 1;
+    if (a.chinese !== b.chinese) return a.chinese < b.chinese ? -1 : 1;
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  });
 }
 
 /** A blank sheet, optionally pre-filled. */

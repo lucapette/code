@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 )
 
 //go:embed all:data/hsk.json
@@ -44,10 +45,16 @@ type hskWord struct {
 	Frequency  int    `json:"q"`
 	Pinyin     string `json:"py"`
 	Gloss      string `json:"m"`
+
+	// sortKey is Pinyin with its tone marks folded away, computed once at
+	// startup. It exists only to put lists in alphabetical order: "wǒ" has to
+	// sort under "wo", not after every plain ASCII word as its code points
+	// would. Unexported, so it never travels to the client.
+	sortKey string
 }
 
 // hskIndex is the vocabulary, parsed once at startup: a map by simplified form
-// for matching, and per-level slices already in frequency order so a gap list
+// for matching, and per-level slices already in alphabetical order so a list
 // needs no sorting.
 type hskIndex struct {
 	byWord   map[string]hskWord
@@ -84,6 +91,7 @@ func parseHSK(raw []byte) (*hskIndex, error) {
 		if word.Simplified == "" || word.Level <= 0 {
 			return nil, fmt.Errorf("malformed vocabulary row: %+v", word)
 		}
+		word.sortKey = foldTones(word.Pinyin)
 		index.byWord[word.Simplified] = word
 		index.byLevel[word.Level] = append(index.byLevel[word.Level], word)
 		index.maxRunes = max(index.maxRunes, len([]rune(word.Simplified)))
@@ -91,8 +99,15 @@ func parseHSK(raw []byte) (*hskIndex, error) {
 
 	for level, levelWords := range index.byLevel {
 		sort.SliceStable(levelWords, func(i, j int) bool {
-			if levelWords[i].Frequency != levelWords[j].Frequency {
-				return levelWords[i].Frequency < levelWords[j].Frequency
+			// Alphabetical by pinyin, so a band reads like a dictionary page
+			// and words are where you expect to find them. Ties between
+			// homophones fall back to the tone-marked spelling, then to the
+			// characters, to keep the order stable.
+			if levelWords[i].sortKey != levelWords[j].sortKey {
+				return levelWords[i].sortKey < levelWords[j].sortKey
+			}
+			if levelWords[i].Pinyin != levelWords[j].Pinyin {
+				return levelWords[i].Pinyin < levelWords[j].Pinyin
 			}
 			return levelWords[i].Simplified < levelWords[j].Simplified
 		})
@@ -102,6 +117,36 @@ func parseHSK(raw []byte) (*hskIndex, error) {
 	sort.Ints(index.levels)
 
 	return index, nil
+}
+
+// toneFolds maps the tone-marked vowels pinyin uses onto plain letters. Pinyin
+// has a small, closed set of them, so an explicit table beats pulling in a
+// Unicode normaliser for this.
+var toneFolds = map[rune]string{
+	'ā': "a", 'á': "a", 'ǎ': "a", 'à': "a",
+	'ē': "e", 'é': "e", 'ě': "e", 'è': "e", 'ê': "e",
+	'ī': "i", 'í': "i", 'ǐ': "i", 'ì': "i",
+	'ō': "o", 'ó': "o", 'ǒ': "o", 'ò': "o",
+	'ū': "u", 'ú': "u", 'ǔ': "u", 'ù': "u",
+	'ǖ': "u", 'ǘ': "u", 'ǚ': "u", 'ǜ': "u", 'ü': "u",
+	'ń': "n", 'ň': "n", 'ǹ': "n",
+	'ḿ': "m",
+}
+
+// foldTones is the sort key for one pinyin string: lower case, tone marks
+// removed, ü written as u. Nothing else changes, so "yín háng" becomes
+// "yin hang" and keeps its syllable break.
+func foldTones(pinyin string) string {
+	var out strings.Builder
+	out.Grow(len(pinyin))
+	for _, r := range strings.ToLower(pinyin) {
+		if plain, ok := toneFolds[r]; ok {
+			out.WriteString(plain)
+			continue
+		}
+		out.WriteRune(r)
+	}
+	return out.String()
 }
 
 // levelCoverage is one bar in the HSK tab.
@@ -208,7 +253,7 @@ func (h *hskIndex) coverage(items []Item, query coverageQuery) coverageReport {
 }
 
 // knownPage collects the words the user has met inside the given bands, each
-// with the items it came from, most common first.
+// with the items it came from, in pinyin order within each band.
 func (h *hskIndex) knownPage(seen map[string]struct{}, refs map[string]*wordRefs, levels []int, page int) wordPage {
 	if page <= 0 {
 		page = knownPage
@@ -235,7 +280,7 @@ func (h *hskIndex) knownPage(seen map[string]struct{}, refs map[string]*wordRefs
 	return out
 }
 
-// gapPage collects one band's unseen words, most common first.
+// gapPage collects one band's unseen words, in pinyin order.
 func (h *hskIndex) gapPage(seen map[string]struct{}, level, page int) wordPage {
 	if page <= 0 {
 		page = gapPage

@@ -28,6 +28,25 @@ func mustIndex(t *testing.T) *hskIndex {
 	return index
 }
 
+func TestFoldTones(t *testing.T) {
+	// The sort key is pinyin without tone marks, so alphabetical order is the
+	// reader's alphabetical order rather than Unicode's.
+	cases := map[string]string{
+		"wǒ":       "wo",
+		"ài":       "ai",
+		"shì":      "shi",
+		"yín háng": "yin hang",
+		"lǜ":       "lu",
+		"nǚ":       "nu",
+		"de":       "de",
+		"ē é ě è":  "e e e e",
+		"Běijīng":  "beijing",
+	}
+	for pinyin, want := range cases {
+		assert.Equal(t, want, foldTones(pinyin), "foldTones(%q)", pinyin)
+	}
+}
+
 func TestParseHSK(t *testing.T) {
 	index := mustIndex(t)
 
@@ -35,6 +54,7 @@ func TestParseHSK(t *testing.T) {
 	assert.Equal(t, []int{1, 2, 3, 5}, index.levels)
 	assert.Equal(t, 2, index.maxRunes, "银行 is the longest form")
 	assert.Equal(t, "yín háng", index.byWord["银行"].Pinyin)
+	assert.Equal(t, "yin hang", index.byWord["银行"].sortKey)
 }
 
 func TestParseHSKRejectsBadInput(t *testing.T) {
@@ -134,13 +154,13 @@ func TestCoverageCurrentIsHighestWhenEverythingIsMet(t *testing.T) {
 	assert.Empty(t, report.Gaps.Words)
 }
 
-func TestCoverageGapOrderIsByFrequency(t *testing.T) {
+func TestCoverageGapOrderIsAlphabeticalByPinyin(t *testing.T) {
 	index := mustIndex(t)
 
-	// Level 1 has 的(1) 我(2) 爱(3); gap list keeps frequency order.
+	// Level 1 has 的(de) 我(wǒ) 爱(ài): the gap list reads ài, de, wǒ.
 	report := index.coverage(nil, coverageQuery{})
 	require.Len(t, report.Gaps.Words, 3)
-	assert.Equal(t, []string{"的", "我", "爱"}, []string{
+	assert.Equal(t, []string{"爱", "的", "我"}, []string{
 		report.Gaps.Words[0].Simplified, report.Gaps.Words[1].Simplified, report.Gaps.Words[2].Simplified,
 	})
 }
@@ -173,8 +193,8 @@ func TestKnownWordsCarryTheirLibraryItems(t *testing.T) {
 	assert.Equal(t, 4, report.Known.Total)
 	assert.False(t, report.Known.More)
 
-	// Level first, then frequency: the list reads as a path through the bands.
-	assert.Equal(t, []string{"的", "我", "爱", "银行"}, []string{
+	// Level first, then pinyin: the list reads as a path through the bands.
+	assert.Equal(t, []string{"爱", "的", "我", "银行"}, []string{
 		report.Known.Words[0].Simplified,
 		report.Known.Words[1].Simplified,
 		report.Known.Words[2].Simplified,
@@ -182,8 +202,9 @@ func TestKnownWordsCarryTheirLibraryItems(t *testing.T) {
 	})
 
 	word := report.Known.Words[0]
+	assert.Equal(t, "爱", word.Simplified)
 	assert.Equal(t, 1, word.Level, "every row says which band it belongs to")
-	assert.Equal(t, "de", word.Pinyin)
+	assert.Equal(t, "ài", word.Pinyin)
 	assert.NotEmpty(t, word.Gloss)
 	require.Len(t, word.Refs, 1)
 	assert.Equal(t, "id-2", word.Refs[0].ID)
@@ -267,7 +288,7 @@ func TestKnownListPaging(t *testing.T) {
 	require.Len(t, report.Known.Words, 2)
 	assert.Equal(t, 4, report.Known.Total, "the total is the whole selection, not the page")
 	assert.True(t, report.Known.More)
-	assert.Equal(t, "的", report.Known.Words[0].Simplified, "the most common first")
+	assert.Equal(t, "爱", report.Known.Words[0].Simplified, "alphabetical: ài comes first")
 }
 
 func TestGapsCanTargetAnotherBand(t *testing.T) {
@@ -294,9 +315,10 @@ func TestEmbeddedVocabularyLoads(t *testing.T) {
 	assert.NotEmpty(t, word.Pinyin)
 	assert.NotEmpty(t, word.Gloss)
 
-	assert.Positive(t, index.byLevel[1][0].Frequency, "a level slice starts with a ranked word")
+	// A level slice is in pinyin order, so the list is scannable and stable.
 	for i := 1; i < 200; i++ {
-		assert.LessOrEqual(t, index.byLevel[1][i-1].Frequency, index.byLevel[1][i].Frequency)
+		assert.LessOrEqual(t, index.byLevel[1][i-1].sortKey, index.byLevel[1][i].sortKey,
+			"%s should not sort before %s", index.byLevel[1][i-1].Simplified, index.byLevel[1][i].Simplified)
 	}
 }
 
