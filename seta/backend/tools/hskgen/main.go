@@ -291,7 +291,11 @@ func isMarginalSense(meaning string) bool {
 			return true
 		}
 	}
-	return false
+	// A reading the source files under this character only as an archaic
+	// curiosity is not the word a beginner is being taught: 听 is tīng ("to
+	// listen"), not yǐn ("to smile", archaic), and 离 is lí ("to leave"), not
+	// chī (a mythical beast, archaic). Prefer the living reading.
+	return strings.Contains(lower, "(archaic)")
 }
 
 func countByLevel(words []word) map[int]int {

@@ -317,7 +317,7 @@ reaching the engine, the 5,000-byte boundary), the engine's pure pieces (rune
 splitting across token boundaries, library naming and unpacking, weight
 resolution, GPU env), the store (validation, caps, atomic writes, reload,
 export shape) and the HSK engine (max matching, per-band coverage, current band,
-gaps, references, ranked search) — 132 tests across [backend](backend).
+gaps, references, ranked search) — 135 tests across [backend](backend).
 
 One of those loads the **real weights** and translates both ways
 ([engine_live_test.go](backend/engine_live_test.go)): it skips when
