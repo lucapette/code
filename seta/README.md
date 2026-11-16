@@ -91,15 +91,16 @@ Needs Go, Node and `curl`. No `llama-server`, no Docker, no GPU driver.
 Ways in, if you want them:
 
 ```sh
-make start           # one command: fetch what is missing, build, serve
-make run             # build, then serve on :8080
-make dev             # app + Vite on :5173 with live reload, for frontend work
-make translate-model # just fetch the weights (1.1 GB, into models/)
-make libs            # just fetch / refresh the llama.cpp libraries
+make start             # build, fetch what is missing, serve on :8080
+make dev               # the Go service + Vite on :5173 with live reload
+make test              # Go (-race) + frontend + type check
+make translate-model   # just fetch the weights (1.1 GB, into models/)
+make libs              # just fetch / refresh the llama.cpp libraries
 ```
 
-`make start` is [scripts/start.sh](scripts/start.sh). Your library lives in
-`DATA_DIR` (default `./data`) as a single `items.json`.
+`make start` builds, then runs [scripts/start.sh](scripts/start.sh) — which only
+checks the two payloads and execs the binary. Your library lives in `DATA_DIR`
+(default `./data`) as a single `items.json`.
 
 ### Where things stand
 
@@ -115,7 +116,7 @@ Working, verified against the real model, in this process:
   that taught them; per-band coverage; the current band's gaps; load more on
   both lists
 - practice: record a saved item and get per-syllable tone feedback from the
-  local model (needs a microphone and `make model`)
+  local model (needs a microphone and `make practice-model`)
 - TTS with a real Chinese voice when the OS has one
 
 Not done, roughly in order of how much it matters:
@@ -247,10 +248,11 @@ different syllable, grey too quiet to judge — with the expected tone underneat
 when it differs. A take that recorded nothing says so ("I did not hear anything —
 check which microphone is selected") instead of grading silence.
 
-`make model` fetches the weights (the author states no licence, so they are
-**not** committed — `frontend/public/models/` is gitignored) and the build embeds
-whatever is there. Without them the practice button never appears; with them the
-binary grows to ~36 MB. Recording needs `localhost` or HTTPS.
+`make practice-model` fetches the weights (the author states no licence, so they
+are **not** committed — `frontend/public/models/` is gitignored) and the build
+embeds whatever is there. Without them the practice button never appears; with them the
+binary grows by ~14 MB (the whole thing is ~49 MB: frontend, HSK list, llama.cpp
+libraries and this model). Recording needs `localhost` or HTTPS.
 
 What it gets right, measured on macOS-voice clips (see `make practice-fixtures`):
 a 7-syllable sentence and a 5-syllable phrase both score 100 with every syllable
@@ -307,7 +309,7 @@ editor, coverage paging, record → grade) — 150 tests across
 
 Another gated test runs the **practice model** on real recordings
 ([tests/practice-model.test.ts](frontend/tests/practice-model.test.ts)): it skips
-unless both `make model` and `make practice-fixtures` have been run, and it
+unless both `make practice-model` and `make practice-fixtures` have been run, and it
 asserts that a correct phrase is never accused of a mistake while a wrong tone
 is caught.
 

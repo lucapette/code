@@ -2,12 +2,13 @@
 #
 # seta — one command to run it locally.
 #
-#   ./scripts/start.sh          (or: make start)
+#   make start          (which runs this after building)
+#   ./scripts/start.sh  (if the binary is already built)
 #
-# Builds the app and runs it. The translation model is inside that process now,
-# so there is no model server to start, wait for, or shut down — Ctrl-C stops
-# everything. The first run fetches whatever is missing (the llama.cpp libraries
-# and the ~1.1 GB weights, both once) and nothing after that.
+# Checks the two payloads and runs the app. The translation model is inside that
+# process, so there is no model server to start, wait for, or shut down: Ctrl-C
+# stops everything. Nothing here touches the network once the payloads exist,
+# and `make build` has already carried the libraries into the binary.
 #
 # Overrides:
 #   ADDR        where to serve the app (default :8080)
@@ -44,13 +45,10 @@ fi
 
 if [[ ! -f frontend/public/models/tiny_int8.onnx ]]; then
   say "→ fetching the pronunciation model (~14 MB, once)"
-  make model || say "  (could not fetch it — practice stays hidden, everything else works)"
+  make practice-model || say "  (could not fetch it — practice stays hidden, everything else works)"
 fi
 
-# --- 2. build and run --------------------------------------------------------
-
-say "→ building"
-make build >/dev/null
+# --- 2. run -----------------------------------------------------------------
 
 say
 say "   seta is at http://localhost${addr}"
