@@ -330,14 +330,19 @@
           <div class="page-heading">
             <h2 class="page-title">HSK</h2>
             <p class="page-sub">
-              <span x-text="metCount"></span> <span x-text="metCount === 1 ? 'word' : 'words'"></span> met
-              · alphabetical by pinyin
+              <span x-show="!hskSearchActive">
+                <span x-text="metCount"></span> <span x-text="metCount === 1 ? 'word' : 'words'"></span> met
+                · alphabetical by pinyin
+              </span>
+              <span x-show="hskSearchActive" x-cloak>Across every band — known and missing</span>
             </p>
           </div>
           <div class="page-actions">
             <!-- Two views, one tab: the words you have met (default), and the map
-                 behind them. A segmented control, not a second row of tabs. -->
-            <div class="segmented" role="tablist" aria-label="HSK views">
+                 behind them. A segmented control, not a second row of tabs. The
+                 control steps aside while a search is running: a search covers
+                 every band and marks each hit as met or missing. -->
+            <div class="segmented" role="tablist" aria-label="HSK views" x-show="!hskSearchActive">
               <button class="segment" type="button" role="tab" :aria-selected="hskView === 'known'"
                       @click="hskView = 'known'">Known</button>
               <button class="segment" type="button" role="tab" :aria-selected="hskView === 'explore'"
@@ -346,11 +351,87 @@
           </div>
         </header>
 
+        <div class="toolbar">
+          <input class="search" type="search" x-model="hskQuery"
+                 placeholder="Search all HSK words — Chinese, pinyin or English…"
+                 aria-label="Search the HSK vocabulary"
+                 @input.debounce.250ms="startHskSearch()"
+                 @keydown.escape="clearHskSearch()" />
+        </div>
+
         <p class="error" role="alert" x-show="hskError" x-cloak x-text="hskError"></p>
-        <p class="hint" x-show="loadingCoverage && !coverage.levels.length" x-cloak>loading…</p>
+        <p class="hint" x-show="loadingCoverage && !coverage.levels.length && !hskSearchActive" x-cloak>loading…</p>
+
+        <!-- ---------- Search across every band ---------- -->
+        <section class="view" x-show="hskSearchActive" aria-label="HSK search results">
+          <h3 class="section-title">
+            Matching words
+            <span class="section-meta" x-show="hskResults.total" x-cloak
+                  x-text="hskResults.total + (hskResults.total === 1 ? ' word' : ' words')"></span>
+          </h3>
+
+          <p class="hint" x-show="loadingSearch && !hskResults.words.length" x-cloak>searching…</p>
+          <p class="error" role="alert" x-show="searchError" x-cloak x-text="searchError"></p>
+
+          <ul class="words">
+            <template x-for="word in hskResults.words" :key="word.s">
+              <li class="word">
+                <span class="word-head">
+                  <span class="word-chinese" lang="zh-Hans" x-text="word.s"></span>
+                  <span class="word-pinyin" lang="zh-Latn-pinyin" x-text="word.py"></span>
+                </span>
+                <span class="word-sub">
+                  <span class="word-gloss" :title="word.m" x-text="word.m"></span>
+                  <!-- A hit carries its band and whether you have met it: the
+                       band headers that answer that are not here. -->
+                  <span class="word-meta">
+                    <span class="word-level" x-text="'HSK ' + levelLabel(word.lv)"></span>
+                    <span class="word-state" :class="word.known ? 'is-known' : 'is-missing'"
+                          x-text="word.known ? 'known' : 'missing'"></span>
+                  </span>
+                </span>
+                <!-- The sentences you met the word in, when you have met it. -->
+                <span class="refs" x-show="textRefs(word).length">
+                  <template x-for="ref in textRefs(word)" :key="ref.id">
+                    <button class="ref" type="button" @click="openItem(ref.id)"
+                            lang="zh-Hans"
+                            :title="'Open in the library: ' + ref.text"
+                            x-text="ref.text"></button>
+                  </template>
+                  <button class="ref ref-more" type="button" x-show="extraRefs(word)" x-cloak
+                          @click="searchLibrary(word.s)"
+                          :title="'Find every item with ' + word.s"
+                          x-text="'+' + extraRefs(word) + ' more'"></button>
+                </span>
+                <span class="word-actions">
+                  <button class="act act-icon" type="button" @click="copyText(word.s)"
+                          title="Copy" :aria-label="'Copy ' + word.s">
+                    <svg class="act-ico" aria-hidden="true"><use href="#i-copy"/></svg>
+                  </button>
+                  <button class="act act-icon" type="button" x-show="ttsAvailable" @click="speak(word.s)"
+                          title="Speak" :aria-label="'Speak ' + word.s">
+                    <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
+                  </button>
+                  <button class="act act-icon" type="button" x-show="!word.known" x-cloak
+                          @click="openSaveFromWord(word)"
+                          title="Save to the library" :aria-label="'Save ' + word.s + ' to the library'">
+                    <svg class="act-ico" aria-hidden="true"><use href="#i-save"/></svg>
+                  </button>
+                </span>
+              </li>
+            </template>
+          </ul>
+
+          <p class="hint empty" x-show="!loadingSearch && !searchError && hskResults.total === 0" x-cloak>
+            <span x-show="hskQueryTooShort">One letter is not a search — type two, or the Chinese character.</span>
+            <span x-show="!hskQueryTooShort">No word matches that. Try the characters, the pinyin without tones, or an English word.</span>
+          </p>
+          <button class="act act-quiet" type="button" x-show="hskResults.more" @click="loadMoreSearch()"
+                  x-text="loadingSearch ? 'loading…' : 'load more results'"></button>
+        </section>
 
         <!-- ---------- What you have met ---------- -->
-        <section class="view" x-show="hskView === 'known'" role="tabpanel" aria-label="Words you know">
+        <section class="view" x-show="!hskSearchActive && hskView === 'known'" role="tabpanel" aria-label="Words you know">
           <div class="picks" role="group" aria-label="Which HSK bands to show">
             <template x-for="row in coverage.levels" :key="row.level">
               <button class="pick" type="button"
@@ -425,7 +506,7 @@
         </section>
 
         <!-- ---------- What is still missing ---------- -->
-        <section class="view" x-show="hskView === 'explore'" role="tabpanel" aria-label="Missing HSK words">
+        <section class="view" x-show="!hskSearchActive && hskView === 'explore'" role="tabpanel" aria-label="Missing HSK words">
           <p class="hint">How much of each band you have met. Pick one to see what it is still missing.</p>
 
           <div class="levels">

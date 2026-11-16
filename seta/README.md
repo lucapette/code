@@ -71,6 +71,10 @@ Alpine.js ──POST /api/translate──▶ Go ──in-process──▶ HY-MT1
   inside its band, with the sentences that taught it right there on the row —
   and *Missing* — coverage per band, the band the map puts you on, and that
   band's unseen words in pinyin order, pageable and saveable
+- **Search the whole HSK vocabulary** from either view: characters, pinyin with
+  or without tones and syllable spaces (`yinhang`, `yin hang`, `yín háng`), or
+  English. Every hit says its band and whether you have met it; a missing word
+  can be saved straight from the results
 - **A library that fits on a screen**: one word per line, Chinese and reading on
   the left, meaning in the middle, where you found it on the right; the row
   opens to show the note, tags, edit/delete and practice
@@ -122,8 +126,9 @@ Working, verified against the real model, in this process:
   cancelling a request really stops the generation (checked per token)
 - library: save/edit/delete, one search box, tag chips, JSON export
 - HSK: words met grouped by band and sorted by pinyin, with the sentence
-  references that taught them; per-band coverage; the current band's gaps; load
-  more on both lists
+  references that taught them; per-band coverage; the current band's gaps;
+  load more on both lists; a search across all 10,969 words, by characters,
+  pinyin or English, ranked exact-character-first and labelled known/missing
 - practice: record a saved item and get per-syllable tone feedback from the
   local model (needs a microphone and `make practice-model`)
 - TTS with a real Chinese voice when the OS has one
@@ -214,7 +219,7 @@ word that fits wins, so 银行 inside a saved sentence counts as 银行 and not 
 银 + 行, and a lone 的 is not counted from the middle of an unrelated word. No
 segmenter, no extra data — the dictionary is the segmenter.
 
-### The two views
+### The two views, and the search box
 
 *Known* answers "what do I have?", which is the question you come back with. It
 lists every word you have met, band by band, alphabetical by pinyin inside each
@@ -229,6 +234,15 @@ list of every band at once is a wall, not an answer.
 *Missing* answers "what is next?". It shows the coverage bar per band, marks the
 band the map puts you on, and lists that band's unseen words, also in pinyin
 order. Pick another band to look further out.
+
+*Search* answers "where is that word?". It looks across every band, not just
+the list on screen: the characters (`银`), pinyin however you type it
+(`yinhang`, `yin hang`, `yín háng`, `lv` for lü) or an English gloss (`bank`).
+Results are ranked so the exact character comes first, then readings, then
+glosses, with the band as the tie-break; each hit shows its HSK band and whether
+it is *known* or *missing*, and a missing word can be saved without leaving the
+page. Searching takes over the tab until you clear the box: the Known/Missing
+control steps aside, because the search covers both.
 
 **Current band** is the lowest level still under 80% coverage; once everything
 clears it, the map's edge is the highest level.
@@ -303,7 +317,7 @@ reaching the engine, the 5,000-byte boundary), the engine's pure pieces (rune
 splitting across token boundaries, library naming and unpacking, weight
 resolution, GPU env), the store (validation, caps, atomic writes, reload,
 export shape) and the HSK engine (max matching, per-band coverage, current band,
-gaps, references) — 121 tests across [backend](backend).
+gaps, references, ranked search) — 132 tests across [backend](backend).
 
 One of those loads the **real weights** and translates both ways
 ([engine_live_test.go](backend/engine_live_test.go)): it skips when
@@ -314,8 +328,8 @@ Frontend: SSE parsing, the streaming client, library helpers (search, sheet
 pre-fills, tag parsing), the HSK grouping and band picker, speech availability,
 the practice pipeline (tokens, sandhi, mel frontend, Viterbi alignment, verdicts)
 and the component's state machine (tabs, superseded requests, save/edit, chip
-editor, coverage paging, record → grade) — 150 tests across
-[frontend/tests](frontend/tests).
+editor, coverage paging, HSK search and its stale responses, record → grade) —
+167 tests across [frontend/tests](frontend/tests).
 
 Another gated test runs the **practice model** on real recordings
 ([tests/practice-model.test.ts](frontend/tests/practice-model.test.ts)): it skips
@@ -335,6 +349,7 @@ is caught.
 | `DELETE /api/items/{id}` | remove |
 | `GET /api/items/export` | the library as a JSON download |
 | `GET /api/hsk?levels=1,2,3&known=50&gaps=50` | coverage per band, the words met (each with the library items that taught it), one page of gaps; `?level=4` lists another band's gaps |
+| `GET /api/hsk/search?q=yinhang&limit=50` | the whole vocabulary, ranked: characters, pinyin (tones and syllable spaces optional) or English; every hit says whether it is known |
 | `GET /api/health` | liveness; never touches the model |
 | `GET /api/ready` | readiness; 503 until the in-process model has loaded |
 
@@ -426,7 +441,7 @@ If a feature tempts you, ask first — the app should not presume.
 | `backend/translate.go` | Prompts, direction inference, the SSE contract, timeouts |
 | `backend/store.go` | The library: items, validation, atomic JSON file |
 | `backend/items.go` | Item + HSK HTTP handlers |
-| `backend/hsk.go` | Embedded vocabulary, max-match, coverage and gaps |
+| `backend/hsk.go` | Embedded vocabulary, max-match, coverage, gaps and search |
 | `backend/health.go` | Liveness (always) and readiness (engine loaded?) |
 | `backend/static.go` | Embedded app, caching, security headers |
 | `backend/data/` | `hsk.json` + `PROVENANCE.md` (generated by `make hsk`) |

@@ -4,8 +4,10 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 //go:embed all:data/hsk.json
@@ -27,6 +29,17 @@ const gapPage = 50
 // knownPage is how many known-word rows a response carries by default. Same
 // bargain as gapPage: a page, not everything the user has ever met.
 const knownPage = 50
+
+// searchPage is how many vocabulary search hits a response carries by default,
+// and maxSearchPage caps a hand-written ?limit=.
+const (
+	searchPage    = 50
+	maxSearchPage = 200
+)
+
+// maxSearchRunes bounds a search query. No word, reading or gloss is longer;
+// this only stops a stray paste from walking the whole dictionary for nothing.
+const maxSearchRunes = 64
 
 // maxRefs caps how many library items one word points back at. A word like 的
 // turns up in nearly every item; the row carries a few references and the count
@@ -51,6 +64,10 @@ type hskWord struct {
 	// sort under "wo", not after every plain ASCII word as its code points
 	// would. Unexported, so it never travels to the client.
 	sortKey string
+
+	// pinyinKey is sortKey with the syllable spaces removed, so "yinhang"
+	// finds 银行 without the user knowing where the syllable break goes.
+	pinyinKey string
 }
 
 // hskIndex is the vocabulary, parsed once at startup: a map by simplified form
@@ -92,6 +109,7 @@ func parseHSK(raw []byte) (*hskIndex, error) {
 			return nil, fmt.Errorf("malformed vocabulary row: %+v", word)
 		}
 		word.sortKey = foldTones(word.Pinyin)
+		word.pinyinKey = strings.ReplaceAll(word.sortKey, " ", "")
 		index.byWord[word.Simplified] = word
 		index.byLevel[word.Level] = append(index.byLevel[word.Level], word)
 		index.maxRunes = max(index.maxRunes, len([]rune(word.Simplified)))
@@ -183,6 +201,25 @@ type knownWord struct {
 // wordPage is one page of rows plus enough metadata to offer "load more".
 type wordPage struct {
 	Words []knownWord `json:"words"`
+	Total int         `json:"total"`
+	More  bool        `json:"more"`
+}
+
+// searchHit is a vocabulary row plus the one thing the known and gap lists get
+// from their section headers: whether the user has met this word.
+type searchHit struct {
+	knownWord
+	Known bool `json:"known"`
+
+	// score is this hit's rank, used only while sorting a response. Unexported,
+	// so it never reaches the client.
+	score searchScore
+}
+
+// searchResults is one page of vocabulary search hits, with the full count
+// behind it so the client can offer "load more".
+type searchResults struct {
+	Words []searchHit `json:"words"`
 	Total int         `json:"total"`
 	More  bool        `json:"more"`
 }
@@ -299,6 +336,175 @@ func (h *hskIndex) gapPage(seen map[string]struct{}, level, page int) wordPage {
 	out.More = out.Total > len(out.Words)
 
 	return out
+}
+
+// search looks a query up across the whole vocabulary — Chinese characters,
+// pinyin with or without tones and syllable spaces, or English — and marks each
+// hit with whether the user has met it. It is the "where is that word?" door
+// into a list that is otherwise organized by band and by what is missing.
+//
+// Ranking is what makes the first page useful: an exact character match wins,
+// then character prefix, then any character match, then exact pinyin, pinyin
+// prefix, pinyin substring, and only then the English gloss. Within a rank the
+// vocabulary's frequency order leads, so "yin" reads 因 before 印, and the HSK
+// band and pinyin order settle the rest.
+func (h *hskIndex) search(query string, items []Item, page int) searchResults {
+	if page <= 0 {
+		page = searchPage
+	}
+	out := searchResults{Words: make([]searchHit, 0, min(page, searchPage))}
+
+	needle := strings.TrimSpace(query)
+	if needle == "" {
+		return out
+	}
+	// A one-character query is a Chinese lookup. One Latin letter would match
+	// the pinyin of half the vocabulary and the glosses of the other half.
+	if len([]rune(needle)) < 2 && !hasOnlyHan(needle) {
+		return out
+	}
+
+	seen, refs := h.harvest(items)
+	match := matcherFor(needle)
+
+	matches := make([]searchHit, 0, 32)
+	for _, word := range h.byWord {
+		score := match.score(word)
+		if score < 0 {
+			continue
+		}
+		row := searchHit{knownWord: knownWord{hskWord: word}}
+		if found := refs[word.Simplified]; found != nil {
+			row.Refs, row.RefTotal = found.Items, found.Total
+		}
+		if _, ok := seen[word.Simplified]; ok {
+			row.Known = true
+		}
+		row.score = score
+		matches = append(matches, row)
+	}
+
+	sort.SliceStable(matches, func(i, j int) bool {
+		a, b := matches[i], matches[j]
+		if a.score != b.score {
+			return a.score < b.score
+		}
+		// Within a rank, the words a learner is likelier to want come first.
+		// 因 is a better answer to "yin" than some archaic homophone, and the
+		// vocabulary already carries a frequency rank.
+		if a.Frequency != b.Frequency {
+			return a.Frequency < b.Frequency
+		}
+		if a.Level != b.Level {
+			return a.Level < b.Level
+		}
+		if a.sortKey != b.sortKey {
+			return a.sortKey < b.sortKey
+		}
+		return a.Simplified < b.Simplified
+	})
+
+	out.Total = len(matches)
+	for _, row := range matches {
+		if len(out.Words) >= page {
+			break
+		}
+		out.Words = append(out.Words, row)
+	}
+	out.More = out.Total > len(out.Words)
+
+	return out
+}
+
+// searchScore is how a vocabulary row matched one query. It is kept off the
+// wire: the client only needs the order.
+type searchScore int
+
+// matcherFor prepares one query. Two pinyin spellings are tested, because
+// people type lü as both "lü" and "lv"; the other forms are pre-folded here so
+// the loop over ten thousand words does no string work of its own.
+type matcher struct {
+	needle string
+	pinyin []string
+}
+
+func matcherFor(query string) *matcher {
+	folded := foldTones(query)
+	compact := strings.ReplaceAll(folded, " ", "")
+	keys := []string{compact}
+	if asU := strings.ReplaceAll(compact, "v", "u"); asU != compact {
+		keys = append(keys, asU)
+	}
+	return &matcher{needle: query, pinyin: keys}
+}
+
+// score ranks one word against the query: 0 for the exact character, rising as
+// the match gets looser, -1 for no match at all.
+func (m *matcher) score(word hskWord) searchScore {
+	switch {
+	case word.Simplified == m.needle:
+		return 0
+	case strings.HasPrefix(word.Simplified, m.needle):
+		return 1
+	case strings.Contains(word.Simplified, m.needle):
+		return 2
+	}
+
+	for _, key := range m.pinyin {
+		switch {
+		case word.pinyinKey == key:
+			return 3
+		case strings.HasPrefix(word.pinyinKey, key):
+			return 4
+		case strings.Contains(word.pinyinKey, key):
+			return 5
+		}
+	}
+
+	// English glosses only from two characters up: a single letter would match
+	// most of the dictionary, and the ranks above already own the useful ones.
+	if len([]rune(m.needle)) >= 2 && glossStartsWithWord(word.Gloss, m.needle) {
+		return 6
+	}
+	return -1
+}
+
+// glossStartsWithWord reports whether the query appears in the gloss at the
+// start of a word: "love" finds "to love" and "lover", not "gloves". Plain
+// substring matching on English glosses is too eager to be useful.
+func glossStartsWithWord(gloss, query string) bool {
+	haystack := []rune(strings.ToLower(gloss))
+	needle := []rune(strings.ToLower(query))
+	if len(needle) == 0 || len(needle) > len(haystack) {
+		return false
+	}
+	for i := 0; i+len(needle) <= len(haystack); i++ {
+		if !slices.Equal(haystack[i:i+len(needle)], needle) {
+			continue
+		}
+		if i == 0 || !isWordRune(haystack[i-1]) {
+			return true
+		}
+	}
+	return false
+}
+
+// isWordRune is what separates words in a gloss: letters and digits.
+func isWordRune(r rune) bool {
+	return unicode.IsLetter(r) || unicode.IsDigit(r)
+}
+
+// hasOnlyHan reports whether every rune is a Chinese character.
+func hasOnlyHan(text string) bool {
+	if text == "" {
+		return false
+	}
+	for _, r := range text {
+		if !isCJK(r) {
+			return false
+		}
+	}
+	return true
 }
 
 // hasLevel reports whether the vocabulary knows this band.

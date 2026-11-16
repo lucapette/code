@@ -14,6 +14,7 @@ import {
   deleteItem as apiDeleteItem,
   listItems as apiListItems,
   loadCoverage as apiLoadCoverage,
+  searchVocabulary as apiSearchVocabulary,
   updateItem as apiUpdateItem,
 } from './api';
 import { isAbortError } from './http';
@@ -55,6 +56,7 @@ import type {
   Item,
   KnownWord,
   LevelCoverage,
+  SearchResults,
   SheetState,
   Tab,
   Theme,
@@ -85,6 +87,8 @@ const EMPTY_COVERAGE: CoverageReport = {
   known: { words: [], total: 0, more: false },
   gaps: { words: [], total: 0, more: false },
 };
+
+const EMPTY_SEARCH: SearchResults = { words: [], total: 0, more: false };
 
 export function setaApp(): SetaApp {
   return {
@@ -125,6 +129,13 @@ export function setaApp(): SetaApp {
     loadingCoverage: false,
     hskError: null as string | null,
 
+    /* --- HSK search (every band, known and missing) ---------------- */
+    hskQuery: '',
+    hskResults: EMPTY_SEARCH as SearchResults,
+    loadingSearch: false,
+    searchError: null as string | null,
+    searchPage: WORD_PAGE,
+
     /* --- Save sheet ------------------------------------------------ */
     sheet: emptySheet({ open: false }) as SheetState,
     tagDraft: '',
@@ -137,6 +148,7 @@ export function setaApp(): SetaApp {
     _recorders: {} as Record<string, Recorder>,
     _practiceTimer: null as number | null,
     _pinyinCache: new Map<string, string>(),
+    _searchSeq: 0,
 
     init() {
       const stored = window.localStorage.getItem(THEME_KEY);
@@ -216,6 +228,18 @@ export function setaApp(): SetaApp {
     /** Every HSK word met, across all bands, not just the ones on screen. */
     get metCount(): number {
       return this.coverage.levels.reduce((sum, row) => sum + row.seen, 0);
+    },
+
+    /** A query turns the HSK tab into a search across every band. */
+    get hskSearchActive(): boolean {
+      return this.hskQuery.trim() !== '';
+    },
+
+    /** One Latin letter is not a search: the vocabulary would answer with
+        hundreds of partial pinyin matches. A single Chinese character is fine. */
+    get hskQueryTooShort(): boolean {
+      const query = this.hskQuery.trim();
+      return query.length === 1 && !CJK.test(query);
     },
 
     /** True when the translation output is Chinese (en→zh). */
@@ -387,6 +411,9 @@ export function setaApp(): SetaApp {
       try {
         this.items = await apiListItems();
         await this.refreshCoverage();
+        // Saving or deleting an item changes what counts as met, and a running
+        // HSK search labels every hit with exactly that.
+        if (this.hskSearchActive) await this.searchVocabulary();
       } catch (e) {
         this.libraryError = e instanceof Error ? e.message : 'could not load the library';
       } finally {
@@ -543,6 +570,51 @@ export function setaApp(): SetaApp {
       this.gapLevel = target;
       this.gapPage = GAP_PAGE;
       await this.refreshCoverage();
+    },
+
+    /** Typing in the HSK search box: a new query starts a new page. */
+    startHskSearch() {
+      this.searchPage = WORD_PAGE;
+      void this.searchVocabulary();
+    },
+
+    /** Searches the whole vocabulary — Chinese, pinyin with or without tones,
+        or English — and marks each hit as met or missing. */
+    async searchVocabulary() {
+      const query = this.hskQuery.trim();
+      const seq = ++this._searchSeq;
+
+      if (!query) {
+        this.hskResults = EMPTY_SEARCH;
+        this.loadingSearch = false;
+        this.searchError = null;
+        return;
+      }
+
+      this.loadingSearch = true;
+      this.searchError = null;
+      try {
+        const results = await apiSearchVocabulary(query, this.searchPage);
+        if (seq !== this._searchSeq) return; // a newer keystroke won
+        this.hskResults = results;
+      } catch (e) {
+        if (seq !== this._searchSeq) return;
+        this.searchError = e instanceof Error ? e.message : 'could not search the HSK vocabulary';
+      } finally {
+        if (seq === this._searchSeq) this.loadingSearch = false;
+      }
+    },
+
+    async loadMoreSearch() {
+      if (this.loadingSearch) return;
+      this.searchPage += WORD_PAGE;
+      await this.searchVocabulary();
+    },
+
+    clearHskSearch() {
+      this.hskQuery = '';
+      this.searchPage = WORD_PAGE;
+      void this.searchVocabulary();
     },
 
     async loadMoreKnown() {
@@ -729,6 +801,12 @@ interface SetaAppState {
   loadingCoverage: boolean;
   hskError: string | null;
 
+  hskQuery: string;
+  hskResults: SearchResults;
+  loadingSearch: boolean;
+  searchError: string | null;
+  searchPage: number;
+
   sheet: SheetState;
   tagDraft: string;
 
@@ -740,6 +818,7 @@ interface SetaAppState {
   _recorders: Record<string, Recorder>;
   _practiceTimer: number | null;
   _pinyinCache: Map<string, string>;
+  _searchSeq: number;
 
   pinyinOf(text: string): string;
   readonly sourceBytes: number;
@@ -755,6 +834,8 @@ interface SetaAppState {
   readonly canSaveTranslation: boolean;
   readonly knownGroups: KnownGroup[];
   readonly gapLevelShown: number;
+  readonly hskSearchActive: boolean;
+  readonly hskQueryTooShort: boolean;
 
   init(): void;
   setTab(tab: Tab): void;
@@ -785,6 +866,10 @@ interface SetaAppState {
   showLevel(level: number): Promise<void>;
   loadMoreKnown(): Promise<void>;
   loadMoreGaps(): Promise<void>;
+  startHskSearch(): void;
+  searchVocabulary(): Promise<void>;
+  loadMoreSearch(): Promise<void>;
+  clearHskSearch(): void;
   percent(row: LevelCoverage): number;
   levelLabel(level: number): string;
   extraRefs(word: KnownWord): number;

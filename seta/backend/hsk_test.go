@@ -301,6 +301,126 @@ func TestGapsCanTargetAnotherBand(t *testing.T) {
 	assert.Nil(t, report.Gaps.Words[0].Refs, "an unseen word points nowhere")
 }
 
+func TestSearchFindsCharactersPinyinAndEnglish(t *testing.T) {
+	index := mustIndex(t)
+
+	// 银行 is reachable by the characters, by the reading however you type it,
+	// and by what it means.
+	for _, query := range []string{"银行", "yinhang", "yin hang", "yín háng", "YINHANG", "bank"} {
+		page := index.search(query, nil, 20)
+		require.NotEmpty(t, page.Words, "query %q", query)
+		assert.Equal(t, "银行", page.Words[0].Simplified, "query %q", query)
+	}
+}
+
+func TestSearchRanksExactCharactersFirst(t *testing.T) {
+	index := mustIndex(t)
+
+	// 银 matches itself exactly and 银行 by prefix, so the exact word wins.
+	page := index.search("银", nil, 10)
+	require.Len(t, page.Words, 2)
+	assert.Equal(t, []string{"银", "银行"}, []string{
+		page.Words[0].Simplified,
+		page.Words[1].Simplified,
+	})
+}
+
+func TestSearchPinyinOrderWithinARank(t *testing.T) {
+	index := mustIndex(t)
+
+	// 银's reading is exactly "yin"; 银行's merely starts with it.
+	page := index.search("yin", nil, 10)
+	require.Len(t, page.Words, 2)
+	assert.Equal(t, "银", page.Words[0].Simplified)
+	assert.Equal(t, "银行", page.Words[1].Simplified)
+}
+
+func TestSearchMarksWhatYouHaveMet(t *testing.T) {
+	index := mustIndex(t)
+
+	page := index.search("yin", book("我去银行"), 10)
+	require.NotEmpty(t, page.Words)
+
+	byWord := map[string]searchHit{}
+	for _, word := range page.Words {
+		byWord[word.Simplified] = word
+	}
+	assert.True(t, byWord["银行"].Known, "银行 is in the library")
+	assert.False(t, byWord["银"].Known, "银 is not")
+	require.NotEmpty(t, byWord["银行"].Refs)
+	assert.Equal(t, "我去银行", byWord["银行"].Refs[0].Text)
+}
+
+func TestSearchPutsCommonWordsFirst(t *testing.T) {
+	// Both read yǐng, so the frequency rank decides; 影 is way down the list.
+	index, err := parseHSK([]byte(`[
+		{"s":"影","lv":3,"q":900,"py":"yǐng","m":"shadow"},
+		{"s":"应","lv":3,"q":30,"py":"yīng","m":"should"}
+	]`))
+	require.NoError(t, err)
+
+	page := index.search("ying", nil, 10)
+	require.Len(t, page.Words, 2)
+	assert.Equal(t, "应", page.Words[0].Simplified)
+	assert.Equal(t, "影", page.Words[1].Simplified)
+}
+
+func TestSearchMatchesGlossAtWordStarts(t *testing.T) {
+	// "love" is in 爱's gloss; it is only a coincidence inside "glove".
+	index, err := parseHSK([]byte(`[
+		{"s":"爱","lv":1,"q":300,"py":"ài","m":"to love; to be fond of"},
+		{"s":"手套","lv":4,"q":900,"py":"shǒu tào","m":"glove; mitten"}
+	]`))
+	require.NoError(t, err)
+
+	page := index.search("love", nil, 10)
+	require.Len(t, page.Words, 1)
+	assert.Equal(t, "爱", page.Words[0].Simplified)
+}
+
+func TestSearchPages(t *testing.T) {
+	index := mustIndex(t)
+
+	first := index.search("in", nil, 1)
+	require.Len(t, first.Words, 1)
+	assert.Equal(t, 2, first.Total, "the total is every match, not the page")
+	assert.True(t, first.More)
+
+	whole := index.search("in", nil, 20)
+	require.Len(t, whole.Words, 2)
+	assert.False(t, whole.More)
+}
+
+func TestSearchIgnoresASingleLatinLetter(t *testing.T) {
+	index := mustIndex(t)
+
+	assert.Zero(t, index.search("i", nil, 10).Total, "one letter would match half the dictionary")
+	assert.Zero(t, index.search("I", nil, 10).Total)
+}
+
+func TestSearchAcceptsASingleChineseCharacter(t *testing.T) {
+	index := mustIndex(t)
+
+	page := index.search("银", nil, 10)
+	require.Len(t, page.Words, 2)
+	assert.Equal(t, "银", page.Words[0].Simplified)
+}
+
+func TestSearchWithoutMatches(t *testing.T) {
+	index := mustIndex(t)
+
+	page := index.search("zzz", nil, 10)
+	assert.Zero(t, page.Total)
+	assert.Empty(t, page.Words)
+	assert.False(t, page.More)
+}
+
+func TestSearchIgnoresAnEmptyQuery(t *testing.T) {
+	index := mustIndex(t)
+
+	assert.Zero(t, index.search("   ", nil, 10).Total)
+}
+
 func TestEmbeddedVocabularyLoads(t *testing.T) {
 	index, err := loadHSK()
 	require.NoError(t, err)

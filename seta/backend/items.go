@@ -116,6 +116,29 @@ func (a *app) hskHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, report)
 }
 
+// hskSearchHandler searches the whole vocabulary instead of one band: ?q= is
+// the query (Chinese, pinyin with or without tones, or English), ?limit= the
+// page size. Every hit says whether the user has met it yet.
+func (a *app) hskSearchHandler(w http.ResponseWriter, r *http.Request) {
+	raw := strings.TrimSpace(r.URL.Query().Get("q"))
+	if raw == "" {
+		writeError(w, http.StatusBadRequest, "missing search query")
+		return
+	}
+	if len([]rune(raw)) > maxSearchRunes {
+		writeError(w, http.StatusBadRequest, "search query is too long")
+		return
+	}
+
+	limit, err := pageParam(r.URL.Query().Get("limit"), searchPage, maxSearchPage)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid search count")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, a.hsk.search(raw, a.items.List(), limit))
+}
+
 // parseLevels reads ?levels=1,2,3 against the embedded bands. An absent or
 // empty value keeps the app's default (the first three).
 func (h *hskIndex) parseLevels(raw string) ([]int, error) {

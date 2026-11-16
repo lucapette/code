@@ -31,6 +31,7 @@ func newLibraryServer(t *testing.T) *httptest.Server {
 	mux.HandleFunc("PATCH /api/items/{id}", application.updateItemHandler)
 	mux.HandleFunc("DELETE /api/items/{id}", application.deleteItemHandler)
 	mux.HandleFunc("GET /api/hsk", application.hskHandler)
+	mux.HandleFunc("GET /api/hsk/search", application.hskSearchHandler)
 
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
@@ -257,6 +258,48 @@ func TestHSKHandlerKnownWordsPointAtTheLibrary(t *testing.T) {
 	require.Len(t, refs, 2)
 	assert.Contains(t, []string{refs[0].ID, refs[1].ID}, saved.ID)
 	assert.Equal(t, []string{"我的爱", "我去银行"}, []string{refs[0].Text, refs[1].Text})
+}
+
+func TestHSKSearchHandler(t *testing.T) {
+	server := newLibraryServer(t)
+	readItem(t, send(t, server, http.MethodPost, "/api/items", `{"chinese":"我去银行"}`))
+
+	resp := send(t, server, http.MethodGet, "/api/hsk/search?q=yinhang", "")
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var results searchResults
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&results))
+	require.NotEmpty(t, results.Words)
+	assert.Equal(t, "银行", results.Words[0].Simplified)
+	assert.True(t, results.Words[0].Known, "it is in the library")
+	require.NotEmpty(t, results.Words[0].Refs)
+	assert.Equal(t, "我去银行", results.Words[0].Refs[0].Text)
+
+	// A word the user has not met comes back too, marked missing.
+	missing := send(t, server, http.MethodGet, "/api/hsk/search?q=yin", "")
+	require.Equal(t, http.StatusOK, missing.StatusCode)
+	require.NoError(t, json.NewDecoder(missing.Body).Decode(&results))
+
+	byWord := map[string]searchHit{}
+	for _, word := range results.Words {
+		byWord[word.Simplified] = word
+	}
+	require.Contains(t, byWord, "银")
+	assert.False(t, byWord["银"].Known)
+	assert.True(t, byWord["银行"].Known)
+}
+
+func TestHSKSearchHandlerRejectsBadQueries(t *testing.T) {
+	server := newLibraryServer(t)
+
+	empty := send(t, server, http.MethodGet, "/api/hsk/search", "")
+	assert.Equal(t, http.StatusBadRequest, empty.StatusCode)
+
+	long := send(t, server, http.MethodGet, "/api/hsk/search?q="+strings.Repeat("银", maxSearchRunes+1), "")
+	assert.Equal(t, http.StatusBadRequest, long.StatusCode)
+
+	badLimit := send(t, server, http.MethodGet, "/api/hsk/search?q=yin&limit=nope", "")
+	assert.Equal(t, http.StatusBadRequest, badLimit.StatusCode)
 }
 
 func TestHSKHandlerBandAndPageQuery(t *testing.T) {

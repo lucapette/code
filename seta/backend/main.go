@@ -89,6 +89,7 @@ func main() {
 	mux.HandleFunc("PATCH /api/items/{id}", application.updateItemHandler)
 	mux.HandleFunc("DELETE /api/items/{id}", application.deleteItemHandler)
 	mux.HandleFunc("GET /api/hsk", application.hskHandler)
+	mux.HandleFunc("GET /api/hsk/search", application.hskSearchHandler)
 	mux.Handle("/", staticHandler(distFS))
 
 	srv := &http.Server{

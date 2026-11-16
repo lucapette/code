@@ -6,7 +6,7 @@
    ========================================================================== */
 
 import { fetchJSON } from './http';
-import type { CoverageReport, Item, ItemInput } from './types';
+import type { CoverageReport, Item, ItemInput, SearchResults } from './types';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
@@ -57,6 +57,13 @@ export function loadCoverage(query: CoverageQuery = {}): Promise<CoverageReport>
     .join('&');
 
   return fetchJSON<CoverageReport>(`/api/hsk${search ? `?${search}` : ''}`, { cache: 'no-store' });
+}
+
+/** The whole vocabulary, not one band: Chinese, pinyin or English. Every hit
+    says whether it is already in the library. */
+export function searchVocabulary(query: string, limit: number): Promise<SearchResults> {
+  const params = new URLSearchParams({ q: query, limit: String(limit) });
+  return fetchJSON<SearchResults>(`/api/hsk/search?${params}`, { cache: 'no-store' });
 }
 
 /** Where the export button points: a download, not an API call. */

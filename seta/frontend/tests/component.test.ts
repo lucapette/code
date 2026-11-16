@@ -27,7 +27,7 @@ vi.mock('../src/practice/engine', () => ({
 vi.mock('../src/practice/recorder', () => ({ startRecording: mocks.startRecording }));
 import type { Recorder } from '../src/practice/recorder';
 import { MAX_TEXT_BYTES } from '../src/translate';
-import type { CoverageReport, Item } from '../src/types';
+import type { CoverageReport, Item, SearchResults } from '../src/types';
 
 const encoder = new TextEncoder();
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -39,6 +39,8 @@ const EMPTY_COVERAGE: CoverageReport = {
   known: { words: [], total: 0, more: false },
   gaps: { words: [], total: 0, more: false },
 };
+
+const EMPTY_SEARCH: SearchResults = { words: [], total: 0, more: false };
 
 const makeItem = (overrides: Partial<Item> = {}): Item => ({
   id: 'item-1',
@@ -112,6 +114,9 @@ function fakeServer(
   init: {
     items?: Item[];
     coverage?: CoverageReport;
+    search?: SearchResults;
+    searchByQuery?: Record<string, SearchResults>;
+    slowQuery?: string;
     direction?: 'en-zh' | 'zh-en';
     translateError?: { status: number; message: string };
   } = {},
@@ -159,6 +164,12 @@ function fakeServer(
       });
     }
 
+    if (url.startsWith('/api/hsk/search')) {
+      const query = new URL(url, 'http://seta.local').searchParams.get('q') ?? '';
+      // One query can be made slow, to exercise stale-response handling.
+      if (query === init.slowQuery) await new Promise((resolve) => setTimeout(resolve, 10));
+      return json(init.searchByQuery?.[query] ?? init.search ?? EMPTY_SEARCH);
+    }
     if (url.startsWith('/api/hsk')) return json(state.coverage);
 
     if (url.startsWith('/api/items/export')) return json({ version: 1, items: state.items });
@@ -662,6 +673,122 @@ describe('setaApp', () => {
     await tick();
 
     expect(app.metCount).toBe(3);
+  });
+
+  /* --- HSK search -------------------------------------------------- */
+
+  const searchResults = (overrides: Partial<SearchResults> = {}): SearchResults => ({
+    words: [
+      {
+        s: '银行',
+        lv: 3,
+        q: 300,
+        py: 'yín háng',
+        m: 'bank',
+        known: true,
+        refs: [{ id: 'i1', text: '我去银行' }],
+      },
+      { s: '银', lv: 5, q: 500, py: 'yín', m: 'silver', known: false },
+    ],
+    total: 2,
+    more: false,
+    ...overrides,
+  });
+
+  it('searches the whole vocabulary and labels each hit', async () => {
+    const app = mount({ search: searchResults() });
+    app.init();
+    await tick();
+
+    app.hskQuery = 'yin';
+    await app.searchVocabulary();
+
+    expect(server.callsTo('/api/hsk/search')).toHaveLength(1);
+    expect(server.callsTo('/api/hsk/search')[0].url).toContain('q=yin');
+    expect(app.hskSearchActive).toBe(true);
+    expect(app.hskResults.words.map((word) => word.s)).toEqual(['银行', '银']);
+    expect(app.hskResults.words[0].known).toBe(true);
+    expect(app.hskResults.words[1].known).toBe(false);
+  });
+
+  it('clears the search and hands the tab back to the bands', async () => {
+    const app = mount({ search: searchResults() });
+    app.init();
+    await tick();
+
+    app.hskQuery = 'yin';
+    await app.searchVocabulary();
+    expect(app.hskSearchActive).toBe(true);
+
+    app.clearHskSearch();
+    await tick();
+
+    expect(app.hskQuery).toBe('');
+    expect(app.hskSearchActive).toBe(false);
+    expect(app.hskResults.words).toEqual([]);
+  });
+
+  it('asks for another page of search results', async () => {
+    const app = mount({ search: searchResults({ total: 60, more: true }) });
+    app.init();
+    await tick();
+
+    app.hskQuery = 'yin';
+    await app.searchVocabulary();
+    await app.loadMoreSearch();
+
+    const calls = server.callsTo('/api/hsk/search');
+    expect(calls).toHaveLength(2);
+    expect(calls[1].url).toContain('limit=100');
+  });
+
+  it('refreshes the search after saving a word from the results', async () => {
+    const app = mount({ search: searchResults() });
+    app.init();
+    await tick();
+
+    app.hskQuery = 'yin';
+    await app.searchVocabulary();
+    const before = server.callsTo('/api/hsk/search').length;
+
+    app.openSaveFromWord({ s: '银', lv: 5, q: 500, py: 'yín', m: 'silver' });
+    await app.saveSheet();
+
+    expect(server.callsTo('/api/hsk/search').length).toBe(before + 1);
+  });
+
+  it('ignores a search response that a newer keystroke already replaced', async () => {
+    const app = mount({
+      slowQuery: 'yin',
+      searchByQuery: {
+        yin: { words: [{ s: '银', lv: 5, q: 500, py: 'yín', m: 'silver', known: false }], total: 1, more: false },
+        yinhang: searchResults(),
+      },
+    });
+    app.init();
+    await tick();
+
+    app.hskQuery = 'yin';
+    const stale = app.searchVocabulary();
+    app.hskQuery = 'yinhang';
+    await app.searchVocabulary();
+    await stale; // the first response lands after the second, and is dropped
+
+    expect(server.callsTo('/api/hsk/search')).toHaveLength(2);
+    expect(app.hskResults.words.map((word) => word.s)).toEqual(['银行', '银']);
+  });
+
+  it('treats one Latin letter as too short, not as a query', async () => {
+    const app = mount();
+    app.init();
+    await tick();
+
+    app.hskQuery = 'a';
+    expect(app.hskQueryTooShort).toBe(true);
+    app.hskQuery = '爱';
+    expect(app.hskQueryTooShort).toBe(false);
+    app.hskQuery = 'ai';
+    expect(app.hskQueryTooShort).toBe(false);
   });
 
   it('opens on the words you know, over the first three bands', async () => {

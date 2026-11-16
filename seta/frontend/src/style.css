@@ -1038,9 +1038,63 @@ input:focus-visible {
   text-overflow: ellipsis;
 }
 
+/* The gloss and the hit's metadata share a line, so the hover actions on the
+   word line above never sit on top of either. */
+.word-sub {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.word-sub .word-gloss {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Search hits carry what the band headers usually say: the band, and whether
+   this word is already yours. */
+.word-meta {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+  font-size: 0.66rem;
+  letter-spacing: 0.4px;
+}
+
+.word-level {
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.word-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+
+.word-state::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.is-known {
+  color: var(--ok);
+}
+
+.is-missing {
+  color: var(--text-secondary);
+}
+
 .word-actions {
   position: absolute;
-  top: 7px;
+  top: 6px;
   right: 7px;
   display: flex;
   gap: 1px;

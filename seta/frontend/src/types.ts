@@ -63,6 +63,18 @@ export interface WordPage {
   more: boolean;
 }
 
+/** A vocabulary search hit: a row plus whether the user has met it. */
+export interface SearchHit extends KnownWord {
+  known: boolean;
+}
+
+/** One page of search hits across every HSK band. */
+export interface SearchResults {
+  words: SearchHit[];
+  total: number;
+  more: boolean;
+}
+
 export interface LevelCoverage {
   level: number;
   seen: number;
