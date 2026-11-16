@@ -22,7 +22,7 @@ func newLibraryServer(t *testing.T) *httptest.Server {
 	hsk, err := parseHSK([]byte(fixtureVocabulary))
 	require.NoError(t, err)
 
-	application := newApp("http://127.0.0.1:1/v1/chat/completions", items, hsk)
+	application := newApp(readyTranslator(), items, hsk)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/items", application.listItemsHandler)

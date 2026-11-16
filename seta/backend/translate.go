@@ -1,13 +1,22 @@
+/* ==========================================================================
+   seta — the translate endpoint
+   The app's contract, unchanged from the days of the model sidecar: POST some
+   text, get back SSE deltas, then [DONE]. What changed is what sits behind it —
+   the model now runs in this process (engine.go), so there is no upstream HTTP
+   request to make, no stream to pump and no idle watchdog to run.
+
+   What stays here is the part that is about the product rather than the model:
+   Tencent's prompt templates, the direction heuristic, the byte cap, and the
+   SSE writer both the happy path and the failure path use.
+   ========================================================================== */
+
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -60,9 +69,6 @@ func isCJK(r rune) bool {
 // document cannot silently consume the token budget and stall the stream.
 const maxTextBytes = 5000
 
-// upstreamModel is the name the upstream serves HY-MT under.
-const upstreamModel = "hy-mt-1.8b"
-
 // TranslateRequest is the app's only input shape: text in, direction fixed.
 // There is deliberately no source_lang or target_lang field.
 type TranslateRequest struct {
@@ -83,123 +89,9 @@ func buildPrompt(text string, direction Direction) string {
 	return fmt.Sprintf(promptToChinese, text)
 }
 
-// upstreamMessage is one OpenAI-compatible chat message. Only "user" is ever
-// sent — HY-MT is trained to take everything in a single turn.
-type upstreamMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-// upstreamChatRequest is the body sent to the upstream chat completions
-// endpoint. Sampling values are Tencent's recommended ones; only the
-// universally safe fields travel here (top_k and repetition_penalty are
-// upstream-specific extras better left to launch flags).
-type upstreamChatRequest struct {
-	Model       string            `json:"model"`
-	Messages    []upstreamMessage `json:"messages"`
-	Temperature float64           `json:"temperature"`
-	TopP        float64           `json:"top_p"`
-	MaxTokens   int               `json:"max_tokens"`
-	Stream      bool              `json:"stream"`
-}
-
-// newUpstreamRequest builds the stream request for the given user prompt.
-func newUpstreamRequest(prompt string) upstreamChatRequest {
-	return upstreamChatRequest{
-		Model:       upstreamModel,
-		Messages:    []upstreamMessage{{Role: "user", Content: prompt}},
-		Temperature: 0.7,
-		TopP:        0.6,
-		MaxTokens:   2048,
-		Stream:      true,
-	}
-}
-
-// upstreamChunk is one OpenAI-compatible stream event. Only the delta
-// content of the first choice matters to us.
-type upstreamChunk struct {
-	Choices []struct {
-		Delta struct {
-			Content string `json:"content"`
-		} `json:"delta"`
-	} `json:"choices"`
-}
-
-// extractDelta decodes one upstream SSE payload (the "data: " prefix already
-// stripped). ok=false with a nil error means a benign chunk carrying no
-// content (the role-only first chunk, a usage footer); a non-nil error means
-// the payload is malformed.
-func extractDelta(payload string) (delta string, ok bool, err error) {
-	var chunk upstreamChunk
-	if err := json.Unmarshal([]byte(payload), &chunk); err != nil {
-		return "", false, fmt.Errorf("decode upstream chunk: %w", err)
-	}
-	if len(chunk.Choices) == 0 || chunk.Choices[0].Delta.Content == "" {
-		return "", false, nil
-	}
-	return chunk.Choices[0].Delta.Content, true, nil
-}
-
-// consumeUpstreamLine applies one upstream SSE line to the outgoing stream.
-// done reports the upstream terminator; a non-nil error means the payload was
-// malformed.
-func consumeUpstreamLine(stream *sseWriter, line string) (done bool, err error) {
-	if !strings.HasPrefix(line, "data:") {
-		return false, nil // comments, event fields, blank separators
-	}
-	payload := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
-	if payload == "[DONE]" {
-		return true, nil
-	}
-
-	delta, ok, err := extractDelta(payload)
-	if err != nil {
-		return false, err
-	}
-	if ok {
-		stream.write(delta)
-	}
-	return false, nil
-}
-
-// upstreamLine is one line of the upstream body; eof marks the terminal value.
-type upstreamLine struct {
-	text string
-	err  error // scanner failure, nil on a clean end of body
-	eof  bool
-}
-
-// pumpLines reads the upstream body line by line on its own goroutine, so the
-// handler can select on a stall timer as well as on input. stop releases the
-// pump when the handler gives up, so nothing is left blocked on a dead model.
-func pumpLines(body io.Reader, stop <-chan struct{}) <-chan upstreamLine {
-	lines := make(chan upstreamLine)
-	scanner := bufio.NewScanner(body)
-	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
-
-	go func() {
-		defer close(lines)
-		for scanner.Scan() {
-			select {
-			case lines <- upstreamLine{text: scanner.Text()}:
-			case <-stop:
-				return
-			}
-		}
-		select {
-		case lines <- upstreamLine{eof: true, err: scanner.Err()}:
-		case <-stop:
-		}
-	}()
-
-	return lines
-}
-
-// translateHandler validates the request, streams the upstream completion
-// through as normalized SSE, and maps every failure to a clean status. Raw
-// upstream error bodies are never forwarded: they can leak model paths, GPU
-// diagnostics, or internal hostnames. The failures are logged, though — the
-// operator needs them even when the client must not see them.
+// translateHandler validates the request, streams the engine's translation as
+// SSE, and maps every failure to a clean status. Engine internals — model
+// paths, Metal diagnostics, token counts — are logged, never forwarded.
 func (a *app) translateHandler(w http.ResponseWriter, r *http.Request) {
 	var req TranslateRequest
 	r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
@@ -227,142 +119,67 @@ func (a *app) translateHandler(w http.ResponseWriter, r *http.Request) {
 	direction := detectDirection(req.Text)
 	w.Header().Set(directionHeader, string(direction))
 
-	upstreamBody, err := json.Marshal(newUpstreamRequest(buildPrompt(req.Text, direction)))
-	if err != nil {
-		log.Printf("encode upstream request: %v", err)
-		writeError(w, http.StatusInternalServerError, "translation failed")
-		return
-	}
-
-	// The parent is r.Context() on purpose: an aborted frontend fetch cancels
-	// the vLLM generation instead of burning GPU cycles on it. The child lets
-	// us cut the connection ourselves once the terminator arrives.
-	ctx, cancelUpstream := context.WithCancel(r.Context())
-	defer cancelUpstream()
-
-	upstreamReq, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		a.upstreamURL, bytes.NewReader(upstreamBody))
-	if err != nil {
-		log.Printf("build upstream request: %v", err)
-		writeError(w, http.StatusInternalServerError, "translation failed")
-		return
-	}
-	upstreamReq.Header.Set("Content-Type", "application/json")
-	upstreamReq.Header.Set("Accept", "text/event-stream")
-
-	resp, err := a.client.Do(upstreamReq)
-	if err != nil {
-		if r.Context().Err() != nil {
-			return // client already gone — nothing to report
-		}
-		log.Printf("upstream request: %v", err)
+	if !a.engine.Ready() {
 		writeError(w, http.StatusServiceUnavailable, "translation engine unavailable")
 		return
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		// Drain a little for connection reuse; never forward the body.
-		io.Copy(io.Discard, io.LimitReader(resp.Body, 8<<10))
-		log.Printf("upstream status %s", resp.Status)
-		writeError(w, http.StatusBadGateway, "invalid upstream response")
-		return
-	}
+	// The parent is r.Context() on purpose: closing the tab stops the model on
+	// the next token instead of finishing a translation nobody will read. The
+	// timeout bounds a pathological run — it is not an idle-gap timer, because
+	// an in-process decode cannot go quiet.
+	ctx, cancel := context.WithTimeout(r.Context(), a.translateTimeout())
+	defer cancel()
 
-	// The SSE headers are committed lazily: until the first event is known
-	// good, a failure can still become a proper 502 instead of a broken
-	// 200 stream.
+	// SSE headers are committed lazily: until the first delta arrives, a
+	// failure can still become a proper status instead of a broken 200 stream.
 	stream := &sseWriter{w: w}
-	stop := make(chan struct{})
-	defer close(stop)
-	lines := pumpLines(resp.Body, stop)
 
-	idle := time.NewTimer(a.streamTimeout())
-	defer idle.Stop()
-
-	var (
-		sawDone bool
-		pumpErr error
-	)
-
-loop:
-	for {
-		select {
-		case <-r.Context().Done():
-			return // client went away mid-stream
-
-		case <-idle.C:
-			log.Printf("upstream stream idle for %s", a.streamTimeout())
-			if stream.hasStarted() {
-				stream.fail("translation timed out")
-			} else {
-				writeError(w, http.StatusGatewayTimeout, "translation timed out")
-			}
-			return
-
-		case line, ok := <-lines:
-			if !ok {
-				break loop // pump stopped early; nothing left to read
-			}
-			if line.eof {
-				pumpErr = line.err
-				break loop
-			}
-
-			if !idle.Stop() {
-				select {
-				case <-idle.C:
-				default:
-				}
-			}
-			idle.Reset(a.streamTimeout())
-
-			done, err := consumeUpstreamLine(stream, line.text)
-			if err != nil {
-				log.Printf("upstream stream: %v", err)
-				if stream.hasStarted() {
-					stream.fail("invalid upstream response")
-				} else {
-					writeError(w, http.StatusBadGateway, "invalid upstream response")
-				}
-				return
-			}
-			if done {
-				sawDone = true
-				break loop
-			}
+	err := a.engine.Translate(ctx, buildPrompt(req.Text, direction), func(piece string) error {
+		if err := ctx.Err(); err != nil {
+			return err
 		}
-	}
+		stream.write(piece)
+		return nil
+	})
 
-	if pumpErr != nil {
-		if r.Context().Err() != nil {
-			return // client went away mid-stream
-		}
-		log.Printf("upstream stream: %v", pumpErr)
+	switch {
+	case err == nil:
+		// The model stopped on its own; there may still be nothing to show.
+
+	case errors.Is(err, context.Canceled):
+		return // the client went away mid-stream
+
+	case errors.Is(err, context.DeadlineExceeded):
+		log.Printf("translation timed out after %s", a.translateTimeout())
 		if stream.hasStarted() {
-			stream.fail("invalid upstream response")
+			stream.fail("translation timed out")
 		} else {
-			writeError(w, http.StatusBadGateway, "invalid upstream response")
+			writeError(w, http.StatusGatewayTimeout, "translation timed out")
+		}
+		return
+
+	case errors.Is(err, engineUnavailable):
+		writeError(w, http.StatusServiceUnavailable, "translation engine unavailable")
+		return
+
+	default:
+		log.Printf("translation: %v", err)
+		if stream.hasStarted() {
+			stream.fail("translation failed")
+		} else {
+			writeError(w, http.StatusInternalServerError, "translation failed")
 		}
 		return
 	}
 
 	if !stream.hasStarted() {
-		// 200 with nothing usable: an empty completion, or a bare [DONE] with
-		// no deltas. Either way there is no translation to show, so say so
-		// rather than closing an empty stream that reads as "no input".
-		log.Printf("upstream stream produced no translation")
-		writeError(w, http.StatusBadGateway, "invalid upstream response")
+		// A 200 with nothing in it reads as "no input"; say what happened.
+		log.Printf("translation produced no output")
+		writeError(w, http.StatusBadGateway, "translation failed")
 		return
 	}
 
-	if !sawDone {
-		log.Printf("upstream stream ended without [DONE]")
-	} else {
-		// We stopped at the terminator; close the connection instead of
-		// draining it, so a chatty upstream cannot pin this handler.
-		cancelUpstream()
-	}
 	stream.finish()
 }
 
@@ -426,4 +243,13 @@ func (s *sseWriter) flush() {
 
 func (s *sseWriter) hasStarted() bool {
 	return s.started
+}
+
+// translateTimeout is the per-request deadline, with the default applied for
+// the zero value so a hand-built app in tests still translates.
+func (a *app) translateTimeout() time.Duration {
+	if a.timeout > 0 {
+		return a.timeout
+	}
+	return defaultTranslateTimeout
 }

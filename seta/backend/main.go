@@ -1,7 +1,6 @@
-// Package main implements seta's thin Go orchestrator: it builds the model
-// prompt, calls the OpenAI-compatible upstream, and proxies the stream. The
-// same binary serves the embedded frontend, so there is exactly one
-// public-facing service on one port.
+// Package main is seta: a translator and study notebook in one process. The
+// model runs inside this binary (engine.go), the frontend is embedded, and the
+// library is one JSON file — no model server, no ports but this one.
 package main
 
 import (
@@ -10,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,14 +20,13 @@ import (
 var distFS embed.FS
 
 const (
-	defaultUpstreamURL = "http://localhost:8000/v1/chat/completions"
-	defaultAddr        = ":8080"
+	defaultAddr = ":8080"
 
-	// defaultStreamIdleTimeout bounds the gap *between* upstream chunks. There
-	// is deliberately no overall timeout — a long translation is legitimate —
-	// but a model that stops emitting must surface as an error instead of
-	// leaving the browser spinning forever. Override with STREAM_IDLE_TIMEOUT.
-	defaultStreamIdleTimeout = 30 * time.Second
+	// defaultTranslateTimeout bounds one translation end to end. A 5000-byte
+	// input can legitimately take half a minute on CPU, so this is generous;
+	// it exists to stop a runaway generation from pinning the request forever.
+	// Override with TRANSLATE_TIMEOUT.
+	defaultTranslateTimeout = 60 * time.Second
 
 	// maxBodyBytes caps the raw request body so an oversized POST is refused
 	// before it is decoded. maxTextBytes (translate.go) is the product limit;
@@ -37,49 +34,26 @@ const (
 	maxBodyBytes = 64 << 10
 )
 
-// app carries the handler's collaborators: where the model lives, how to talk
-// to it, how long to wait between its chunks before calling it dead, the saved
-// library, and the embedded HSK vocabulary.
+// app carries the handler's collaborators: the translation engine, how long a
+// request may take, the saved library, and the embedded HSK vocabulary.
 type app struct {
-	upstreamURL string
-	client      *http.Client
-	idleTimeout time.Duration
-	items       *store
-	hsk         *hskIndex
+	engine  translator
+	timeout time.Duration
+	items   *store
+	hsk     *hskIndex
 }
 
 // newApp builds the application with its defaults applied.
-func newApp(upstreamURL string, items *store, hsk *hskIndex) *app {
+func newApp(engine translator, items *store, hsk *hskIndex) *app {
 	return &app{
-		upstreamURL: upstreamURL,
-		items:       items,
-		hsk:         hsk,
-		idleTimeout: envDuration("STREAM_IDLE_TIMEOUT", defaultStreamIdleTimeout),
-		// No overall timeout: the response is a long-lived stream. Bound the
-		// phases instead — connect, and waiting for the model's first headers
-		// (generous: the model may still be loading).
-		client: &http.Client{
-			Transport: &http.Transport{
-				DialContext:           (&net.Dialer{Timeout: 10 * time.Second}).DialContext,
-				MaxIdleConns:          16,
-				IdleConnTimeout:       90 * time.Second,
-				ResponseHeaderTimeout: 5 * time.Minute,
-			},
-		},
+		engine:  engine,
+		timeout: envDuration("TRANSLATE_TIMEOUT", defaultTranslateTimeout),
+		items:   items,
+		hsk:     hsk,
 	}
-}
-
-// streamTimeout is the per-chunk deadline, with the default applied for the
-// zero value so a hand-built app in tests still streams normally.
-func (a *app) streamTimeout() time.Duration {
-	if a.idleTimeout > 0 {
-		return a.idleTimeout
-	}
-	return defaultStreamIdleTimeout
 }
 
 func main() {
-	upstreamURL := envOr("UPSTREAM_URL", defaultUpstreamURL)
 	addr := envOr("ADDR", defaultAddr)
 	dataDir := envOr("DATA_DIR", "data")
 
@@ -94,7 +68,16 @@ func main() {
 	log.Printf("library %s (%d items) · vocabulary %d words, HSK %v",
 		items.path, len(items.List()), len(hsk.byWord), hsk.levels)
 
-	application := newApp(upstreamURL, items, hsk)
+	// The model loads in the background: the library and the HSK map are useful
+	// before the weights are in, and /api/ready is what the UI polls meanwhile.
+	engine := newEngine(envOr("MODEL_PATH", ""), envOr("LIB_DIR", ""))
+	go func() {
+		if err := engine.Load(); err != nil {
+			log.Printf("translation engine unavailable: %v", err)
+		}
+	}()
+
+	application := newApp(engine, items, hsk)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/translate", application.translateHandler)
@@ -115,7 +98,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("seta listening on %s (upstream %s)", addr, upstreamURL)
+		log.Printf("seta listening on %s (model in-process)", addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("listen: %v", err)
 		}
@@ -130,6 +113,10 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Printf("shutdown: %v", err)
 	}
+
+	// Hand the weights and the GPU device back before the process exits;
+	// llama.cpp's own teardown is noisier than this.
+	engine.Close()
 }
 
 func envOr(key, fallback string) string {

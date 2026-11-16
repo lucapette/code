@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -45,21 +44,6 @@ func TestBuildPromptPerDirection(t *testing.T) {
 	assert.Contains(t, buildUserPrompt(TranslateRequest{Text: "hello"}), "翻译为简体中文")
 }
 
-// directionEcho is a stub model that records the prompt it was sent.
-func directionEcho(t *testing.T, seen *string) http.HandlerFunc {
-	t.Helper()
-	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(r.Body)
-		require.NoError(t, err)
-		*seen = string(body)
-
-		w.Header().Set("Content-Type", "text/event-stream")
-		fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"ok\"}}]}\n\n")
-		fmt.Fprint(w, "data: [DONE]\n\n")
-		w.(http.Flusher).Flush()
-	}
-}
-
 func TestTranslateHandlerReportsDirection(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -83,17 +67,20 @@ func TestTranslateHandlerReportsDirection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var upstreamBody string
-			server := newTestApp(t, directionEcho(t, &upstreamBody))
+			engine := readyTranslator()
+			engine.pieces = []string{"ok"}
+			server := newTestApp(t, engine)
 
 			resp := post(t, server, tt.body)
 			require.Equal(t, http.StatusOK, resp.StatusCode)
+			io.Copy(io.Discard, resp.Body)
 
 			assert.Equal(t, string(tt.want), resp.Header.Get(directionHeader),
 				"the client needs to know which language the output is in")
-			assert.Contains(t, upstreamBody, tt.wantInReq,
+			assert.Contains(t, engine.lastMessage(), tt.wantInReq,
 				"the prompt must use the template for that direction")
-			assert.NotContains(t, upstreamBody, `"role":"system"`)
+			assert.NotContains(t, engine.lastMessage(), "system",
+				"HY-MT takes one user turn, never a system prompt")
 		})
 	}
 }

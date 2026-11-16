@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,120 +14,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+/* --- Prompt ---------------------------------------------------------- */
+
 func TestBuildUserPrompt(t *testing.T) {
-	tests := []struct {
-		name string
-		text string
-		want string
-	}{
-		{
-			name: "wraps text in the Chinese template",
-			text: "Hello, world!",
-			want: "将以下文本翻译为简体中文，注意只需要输出翻译后的结果，不要额外解释： Hello, world!",
-		},
-		{
-			name: "keeps multiline text intact",
-			text: "line one\nline two",
-			want: "将以下文本翻译为简体中文，注意只需要输出翻译后的结果，不要额外解释： line one\nline two",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, buildUserPrompt(TranslateRequest{Text: tt.text}))
-		})
-	}
-}
-
-func TestNewUpstreamRequest(t *testing.T) {
-	req := newUpstreamRequest("prompt text")
-
-	assert.Equal(t, "hy-mt-1.8b", req.Model, "model name")
-	assert.Equal(t, []upstreamMessage{{Role: "user", Content: "prompt text"}}, req.Messages,
-		"exactly one user message — the model takes no system prompt")
-	assert.InDelta(t, 0.7, req.Temperature, 0.0001)
-	assert.InDelta(t, 0.6, req.TopP, 0.0001)
-	assert.Equal(t, 2048, req.MaxTokens)
-	assert.True(t, req.Stream, "the UI streams — the upstream call must too")
-
-	for _, msg := range req.Messages {
-		assert.NotEqual(t, "system", msg.Role, "no system prompt may be sent")
-	}
-}
-
-func TestExtractDelta(t *testing.T) {
-	tests := []struct {
-		name    string
-		payload string
-		want    string
-		ok      bool
-		wantErr bool
-	}{
-		{
-			name:    "content delta",
-			payload: `{"choices":[{"delta":{"content":"你好"}}]}`,
-			want:    "你好",
-			ok:      true,
-		},
-		{
-			name:    "role-only first chunk carries no content",
-			payload: `{"choices":[{"delta":{"role":"assistant"}}]}`,
-			ok:      false,
-		},
-		{
-			name:    "finish-reason chunk carries no content",
-			payload: `{"choices":[{"finish_reason":"stop","delta":{}}]}`,
-			ok:      false,
-		},
-		{
-			name:    "no choices",
-			payload: `{"choices":[]}`,
-			ok:      false,
-		},
-		{
-			name:    "malformed payload",
-			payload: `{broken`,
-			ok:      false,
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, ok, err := extractDelta(tt.payload)
-
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.ok, ok)
-		})
-	}
+	assert.Equal(t, "将以下文本翻译为简体中文，注意只需要输出翻译后的结果，不要额外解释： hello",
+		buildUserPrompt(TranslateRequest{Text: "hello"}))
+	assert.Equal(t, "将以下文本翻译为英文，注意只需要输出翻译后的结果，不要额外解释： 你好",
+		buildUserPrompt(TranslateRequest{Text: "你好"}))
 }
 
 /* --- Handler --------------------------------------------------------- */
 
-// newTestApp wires the handler to a stub upstream speaking the
-// OpenAI-compatible SSE shape.
-func newTestApp(t *testing.T, upstream http.HandlerFunc) *httptest.Server {
+// newTestApp wires the translate handler to a scripted engine.
+func newTestApp(t *testing.T, engine *fakeTranslator) *httptest.Server {
 	t.Helper()
-	return newTestAppWith(t, func(*app) {}, upstream)
+	return newTestAppWith(t, engine, func(*app) {})
 }
 
 // newTestAppWith is newTestApp with a chance to adjust the app first, for tests
-// that need a different stall timeout.
-func newTestAppWith(t *testing.T, configure func(*app), upstream http.HandlerFunc) *httptest.Server {
+// that need a different request timeout.
+func newTestAppWith(t *testing.T, engine *fakeTranslator, configure func(*app)) *httptest.Server {
 	t.Helper()
 
-	stub := httptest.NewServer(upstream)
-	t.Cleanup(stub.Close)
-
-	application := &app{
-		upstreamURL: stub.URL + "/v1/chat/completions",
-		client:      &http.Client{},
-	}
+	application := &app{engine: engine}
 	configure(application)
 
 	handler := http.NewServeMux()
@@ -148,10 +57,25 @@ func post(t *testing.T, server *httptest.Server, body string) *http.Response {
 	return resp
 }
 
+// sseFrames splits a streamed body into its event payloads.
+func sseFrames(t *testing.T, body io.Reader) []string {
+	t.Helper()
+
+	raw, err := io.ReadAll(body)
+	require.NoError(t, err)
+
+	var frames []string
+	for _, line := range strings.Split(string(raw), "\n") {
+		if payload, ok := strings.CutPrefix(line, "data: "); ok {
+			frames = append(frames, payload)
+		}
+	}
+	return frames
+}
+
 func TestTranslateHandlerValidation(t *testing.T) {
-	unused := newTestApp(t, func(w http.ResponseWriter, r *http.Request) {
-		t.Error("upstream must not be called for invalid requests")
-	})
+	engine := readyTranslator()
+	server := newTestApp(t, engine)
 
 	tests := []struct {
 		name       string
@@ -175,7 +99,7 @@ func TestTranslateHandlerValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, err := http.NewRequest(tt.method, unused.URL+"/api/translate", strings.NewReader(tt.body))
+			req, err := http.NewRequest(tt.method, server.URL+"/api/translate", strings.NewReader(tt.body))
 			require.NoError(t, err)
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
@@ -189,207 +113,190 @@ func TestTranslateHandlerValidation(t *testing.T) {
 			}
 		})
 	}
+
+	assert.Zero(t, engine.callCount(), "an invalid request must never reach the model")
+}
+
+// TestTranslateHandlerByteCapBoundary pins the off-by-one: the cap is a limit,
+// not an exclusive bound.
+func TestTranslateHandlerByteCapBoundary(t *testing.T) {
+	engine := readyTranslator()
+	engine.pieces = []string{"好"}
+	server := newTestApp(t, engine)
+
+	atCap := strings.Repeat("a", maxTextBytes)
+	resp := post(t, server, `{"text":"`+atCap+`"}`)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, []string{`{"delta":"好"}`, "[DONE]"}, sseFrames(t, resp.Body))
+
+	overCap := strings.Repeat("a", maxTextBytes+1)
+	resp = post(t, server, `{"text":"`+overCap+`"}`)
+	assert.Equal(t, http.StatusRequestEntityTooLarge, resp.StatusCode)
 }
 
 func TestTranslateHandlerStreamsDeltas(t *testing.T) {
-	server := newTestApp(t, func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/event-stream")
-		flusher := w.(http.Flusher)
-		for _, event := range []string{
-			`data: {"choices":[{"delta":{"role":"assistant"}}]}`,
-			``,
-			`data: {"choices":[{"delta":{"content":"你好"}}]}`,
-			``,
-			`data: {"choices":[{"delta":{"content":"，世界"}}]}`,
-			``,
-			`data: [DONE]`,
-			``,
-		} {
-			fmt.Fprintln(w, event)
-			flusher.Flush()
-		}
-	})
+	engine := readyTranslator()
+	engine.pieces = []string{"银行", "在哪", "里？"}
+	server := newTestApp(t, engine)
 
-	resp := post(t, server, `{"text":"Hello, world!"}`)
+	resp := post(t, server, `{"text":"where is the bank?"}`)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "text/event-stream", resp.Header.Get("Content-Type"))
+	assert.Equal(t, "en-zh", resp.Header.Get(directionHeader))
+	assert.Equal(t, []string{
+		`{"delta":"银行"}`,
+		`{"delta":"在哪"}`,
+		`{"delta":"里？"}`,
+		"[DONE]",
+	}, sseFrames(t, resp.Body))
+}
 
+func TestTranslateHandlerHandsTheEngineTheDirectionalPrompt(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want string
+	}{
+		{
+			name: "english input",
+			body: `{"text":"hello"}`,
+			want: buildPrompt("hello", ToChinese),
+		},
+		{
+			name: "chinese input",
+			body: `{"text":"你好"}`,
+			want: buildPrompt("你好", ToEnglish),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			engine := readyTranslator()
+			engine.pieces = []string{"ok"}
+			server := newTestApp(t, engine)
+
+			resp := post(t, server, tt.body)
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+			io.Copy(io.Discard, resp.Body)
+
+			assert.Equal(t, tt.want, engine.lastMessage())
+		})
+	}
+}
+
+func TestTranslateHandlerBeforeTheModelIsReady(t *testing.T) {
+	engine := &fakeTranslator{ready: false}
+	server := newTestApp(t, engine)
+
+	resp := post(t, server, `{"text":"hello"}`)
+
+	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
-	assert.Equal(t, strings.Join([]string{
-		`data: {"delta":"你好"}`,
-		``,
-		`data: {"delta":"，世界"}`,
-		``,
-		`data: [DONE]`,
-		``,
-		"",
-	}, "\n"), string(body))
+	assert.JSONEq(t, `{"error":"translation engine unavailable"}`, string(body))
+	assert.Zero(t, engine.callCount(), "a warming engine must not be asked to translate")
 }
 
-func TestTranslateHandlerUpstreamFailures(t *testing.T) {
-	t.Run("unreachable upstream maps to 503", func(t *testing.T) {
-		stub := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
-		stub.Close() // dead URL
+func TestTranslateHandlerWithNoOutput(t *testing.T) {
+	server := newTestApp(t, readyTranslator())
 
-		server := httptest.NewServer(http.HandlerFunc((&app{
-			upstreamURL: stub.URL,
-			client:      &http.Client{},
-		}).translateHandler))
-		t.Cleanup(server.Close)
+	resp := post(t, server, `{"text":"hello"}`)
 
-		resp := post(t, server, `{"text":"hello"}`)
-		assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
-		body, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
-		assert.JSONEq(t, `{"error":"translation engine unavailable"}`, string(body))
-	})
-
-	t.Run("upstream error status maps to 502 without leaking its body", func(t *testing.T) {
-		server := newTestApp(t, func(w http.ResponseWriter, r *http.Request) {
-			http.Error(w, "model /models/HY-MT1.5-1.8B not found on gpu-worker-3", http.StatusInternalServerError)
-		})
-
-		resp := post(t, server, `{"text":"hello"}`)
-		assert.Equal(t, http.StatusBadGateway, resp.StatusCode)
-		body, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
-		assert.JSONEq(t, `{"error":"invalid upstream response"}`, string(body))
-	})
-
-	t.Run("empty upstream stream maps to 502", func(t *testing.T) {
-		server := newTestApp(t, func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK) // 200, then nothing
-		})
-
-		resp := post(t, server, `{"text":"hello"}`)
-		assert.Equal(t, http.StatusBadGateway, resp.StatusCode)
-		body, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
-		assert.JSONEq(t, `{"error":"invalid upstream response"}`, string(body))
-	})
+	// 200 with an empty stream would render as "no input"; say what happened.
+	assert.Equal(t, http.StatusBadGateway, resp.StatusCode)
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"error":"translation failed"}`, string(body))
 }
 
-func TestTranslateHandlerMidStreamGarbage(t *testing.T) {
-	t.Run("garbage before any delta maps to 502", func(t *testing.T) {
-		server := newTestApp(t, func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "text/event-stream")
-			fmt.Fprint(w, "data: {broken\n\n")
-			w.(http.Flusher).Flush()
-		})
+func TestTranslateHandlerFailureBeforeOutput(t *testing.T) {
+	engine := readyTranslator()
+	engine.err = errors.New("synthetic engine failure")
+	server := newTestApp(t, engine)
 
-		resp := post(t, server, `{"text":"hello"}`)
-		assert.Equal(t, http.StatusBadGateway, resp.StatusCode)
-	})
+	resp := post(t, server, `{"text":"hello"}`)
 
-	t.Run("garbage after a delta becomes a stream error event", func(t *testing.T) {
-		server := newTestApp(t, func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "text/event-stream")
-			flusher := w.(http.Flusher)
-			fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"你好\"}}]}\n\n")
-			flusher.Flush()
-			fmt.Fprint(w, "data: {broken\n\n") // no [DONE] after this
-			flusher.Flush()
-		})
-
-		resp := post(t, server, `{"text":"hello"}`)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-		body, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
-		assert.Contains(t, string(body), `data: {"delta":"你好"}`)
-		assert.Contains(t, string(body), `data: {"error":"invalid upstream response"}`)
-		assert.Contains(t, string(body), "data: [DONE]")
-	})
-
-	t.Run("stream ending without [DONE] still terminates ours", func(t *testing.T) {
-		server := newTestApp(t, func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "text/event-stream")
-			fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"你好\"}}]}\n\n")
-			w.(http.Flusher).Flush()
-			// upstream just hangs up
-		})
-
-		resp := post(t, server, `{"text":"hello"}`)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
-
-		body, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
-		assert.Contains(t, string(body), `data: {"delta":"你好"}`)
-		assert.Contains(t, string(body), "data: [DONE]")
-	})
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"error":"translation failed"}`, string(body))
 }
 
-func TestTranslateHandlerSendsPromptAndSampling(t *testing.T) {
-	server := newTestApp(t, func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(r.Body)
-		require.NoError(t, err)
+func TestTranslateHandlerFailureMidStream(t *testing.T) {
+	engine := readyTranslator()
+	engine.pieces = []string{"今天"}
+	engine.err = errors.New("synthetic mid-stream failure")
+	server := newTestApp(t, engine)
 
-		assert.Contains(t, string(body), `"model":"hy-mt-1.8b"`)
-		assert.Contains(t, string(body), `"role":"user"`)
-		assert.Contains(t, string(body), "将以下文本翻译为简体中文，注意只需要输出翻译后的结果，不要额外解释： hello")
-		assert.NotContains(t, string(body), `"role":"system"`)
-		assert.Contains(t, string(body), `"stream":true`)
+	resp := post(t, server, `{"text":"today"}`)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "deltas already sent: the status is committed")
 
-		w.Header().Set("Content-Type", "text/event-stream")
-		fmt.Fprint(w, "data: {\"choices\":[{\"delta\":{\"content\":\"你好\"}}]}\n\n")
-		w.(http.Flusher).Flush()
-		fmt.Fprint(w, "data: [DONE]\n\n")
-		w.(http.Flusher).Flush()
+	// What was translated stands; the error arrives inside the stream.
+	assert.Equal(t, []string{
+		`{"delta":"今天"}`,
+		`{"error":"translation failed"}`,
+		"[DONE]",
+	}, sseFrames(t, resp.Body))
+}
+
+func TestTranslateHandlerTimesOutBeforeOutput(t *testing.T) {
+	engine := &fakeTranslator{ready: true, hold: true}
+	server := newTestAppWith(t, engine, func(application *app) {
+		application.timeout = 20 * time.Millisecond
 	})
 
 	resp := post(t, server, `{"text":"hello"}`)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	assert.Equal(t, http.StatusGatewayTimeout, resp.StatusCode)
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"error":"translation timed out"}`, string(body))
 }
 
-func TestAbortPropagatesToUpstream(t *testing.T) {
-	upstreamStarted := make(chan struct{})
-	upstreamCancelled := make(chan struct{})
-
-	server := newTestApp(t, func(w http.ResponseWriter, r *http.Request) {
-		// Drain the body first: the server only arms close-detection (and
-		// thus context cancellation) once the request body is consumed.
-		io.Copy(io.Discard, r.Body)
-		close(upstreamStarted)
-		<-r.Context().Done() // hold the stream open until someone cancels
-		close(upstreamCancelled)
+func TestTranslateHandlerTimesOutMidStream(t *testing.T) {
+	engine := &fakeTranslator{ready: true, pieces: []string{"今天"}, hold: true}
+	server := newTestAppWith(t, engine, func(application *app) {
+		application.timeout = 20 * time.Millisecond
 	})
+
+	resp := post(t, server, `{"text":"today"}`)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	assert.Equal(t, []string{
+		`{"delta":"今天"}`,
+		`{"error":"translation timed out"}`,
+		"[DONE]",
+	}, sseFrames(t, resp.Body))
+	assert.ErrorIs(t, engine.lastErr(), context.DeadlineExceeded)
+}
+
+// TestAbortReachesTheEngine is the point of the whole in-process design: closing
+// the tab must stop the model, not leave it translating into a dead socket.
+func TestAbortReachesTheEngine(t *testing.T) {
+	engine := &fakeTranslator{ready: true, hold: true, started: make(chan struct{})}
+	server := newTestApp(t, engine)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		server.URL+"/api/translate", strings.NewReader(`{"text":"hello"}`))
 	require.NoError(t, err)
 
-	client := &http.Client{}
-	respCh := make(chan error, 1)
+	done := make(chan struct{})
 	go func() {
-		resp, err := client.Do(req)
-		if resp != nil {
+		defer close(done)
+		resp, err := http.DefaultClient.Do(req)
+		if err == nil {
 			resp.Body.Close()
 		}
-		respCh <- err
 	}()
 
-	// Wait for the stub to be holding the stream, rather than sleeping: the
-	// abort must land while the upstream request is genuinely in flight.
-	select {
-	case <-upstreamStarted:
-	case <-time.After(5 * time.Second):
-		t.Fatal("the request never reached the upstream stub")
-	}
+	<-engine.started
 	cancel()
+	<-done
 
-	select {
-	case <-upstreamCancelled:
-		// the abort reached the model instead of burning the generation
-	case <-time.After(5 * time.Second):
-		t.Fatal("upstream context was never cancelled by the client abort")
-	}
-
-	select {
-	case <-respCh:
-	case <-time.After(5 * time.Second):
-		t.Fatal("client request never returned after abort")
-	}
+	require.Eventually(t, func() bool {
+		return engine.lastErr() != nil
+	}, 2*time.Second, 5*time.Millisecond)
+	assert.ErrorIs(t, engine.lastErr(), context.Canceled)
 }

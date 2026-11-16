@@ -9,4 +9,8 @@ backend/dist/*
 bin/
 /data/
 frontend/public/models/
+# The translation weights and the llama.cpp libraries seta embeds. Both are
+# fetched (`make translate-model`, `make libs`), never committed.
+models/
+backend/libs/lib*
 frontend/tests/fixtures/

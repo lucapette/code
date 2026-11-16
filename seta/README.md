@@ -28,19 +28,22 @@ everything else is optional and can be filled in later.
 ## Stack
 
 ```
-Alpine.js ──POST /api/translate──▶ Go ──OpenAI-compatible──▶ HY-MT1.5-1.8B
-           ◀──SSE deltas────────  (one binary)  ◀──SSE──  (Docker, GPU or CPU)
-                                  │
+Alpine.js ──POST /api/translate──▶ Go ──in-process──▶ HY-MT1.5-1.8B (llama.cpp)
+           ◀──SSE deltas────────  (one binary)
                                   ├── items.json      (your library, one file)
-                                  └── HSK 3.0 words   (go:embed, ~880 KB)
+                                  ├── HSK 3.0 words   (go:embed, ~880 KB)
+                                  └── llama.cpp libs  (go:embed, ~12 MB)
 ```
 
-- **Model**: Tencent HY-MT1.5-1.8B, a translation-only 1.8B model. Served behind
-  an OpenAI-compatible `/v1/chat/completions` endpoint — llama.cpp by default,
-  vLLM on GPU boxes.
-- **Go layer**: a thin orchestrator. It builds the prompt, infers the direction,
-  proxies the stream, normalizes errors, matches your saved text against the
-  embedded vocabulary, and writes your library. It never runs inference.
+- **Model**: Tencent HY-MT1.5-1.8B, a translation-only 1.8B model, quantised to
+  Q4_K_M (~1.1 GB) and loaded **inside the Go process** at startup. There is no
+  model server: no port, no supervisor, no second binary to install.
+- **Inference**: llama.cpp called through [yzma](https://github.com/hybridgroup/yzma),
+  which uses purego instead of cgo — so `CGO_ENABLED=0` still holds and the
+  binary cross-compiles. The llama.cpp shared libraries are embedded in the
+  binary and unpacked into the user's cache on first run.
+- **Go layer**: prompts, direction inference, the SSE contract, the library,
+  and the HSK map. Same job as before; the proxy in the middle is gone.
 - **Frontend**: one Alpine.js component over a few plain modules. No framework
   build step in production — the binary embeds the built assets.
 
@@ -64,46 +67,49 @@ Alpine.js ──POST /api/translate──▶ Go ──OpenAI-compatible──▶
   its frequency-sorted unseen words, pageable and saveable
 - **Export** the library as JSON at any time
 - Dark and light themes, keyboard shortcuts (`⌘/Ctrl+Enter`, `Esc`)
-- One self-contained binary; no accounts, no telemetry, no external APIs
+- One self-contained binary: the model runs inside it, the frontend and the
+  HSK vocabulary are embedded, no accounts, no telemetry, no external APIs
 
 ## Run it
 
-One command, no Docker:
+One command:
 
 ```sh
 make start
 ```
 
-That is the whole thing: it starts a translation model with llama.cpp on `:8000`
-(downloading the ~1.1 GB model the first time, cached after), fetches the
-pronunciation model once (~14 MB), builds the binary and serves the app at
-**http://localhost:8080**. `Ctrl-C` stops the app — and the model, if this script
-started it.
+That is the whole thing: it fetches what is missing (the llama.cpp libraries
+once, the ~1.1 GB weights once), builds the binary and serves the app at
+**http://localhost:8080**. The model loads in the background for about six
+seconds — until it is ready the Translate tab says *Model is warming up…* while
+the Library and HSK tabs work normally.
 
-Needs Go, Node, `curl` and `llama-server` (`brew install llama.cpp`). If a model
-is already answering on `:8000`, the script leaves it alone and only runs the
-app.
+`Ctrl-C` stops everything, because everything is one process.
+
+Needs Go, Node and `curl`. No `llama-server`, no Docker, no GPU driver.
 
 Ways in, if you want them:
 
 ```sh
-make start             # one command: model + practice model + app
-make run               # app only, needs a model already running
-make dev               # app + Vite on :5173 with live reload, for frontend work
-docker compose up      # everything in containers, model included
+make start           # one command: fetch what is missing, build, serve
+make run             # build, then serve on :8080
+make dev             # app + Vite on :5173 with live reload, for frontend work
+make translate-model # just fetch the weights (1.1 GB, into models/)
+make libs            # just fetch / refresh the llama.cpp libraries
 ```
 
-`make start` is [scripts/start.sh](scripts/start.sh); it takes `UPSTREAM_URL`,
-`MODEL_PORT`, `LLAMA_SERVER_BIN`, `MODEL_WAIT_SECONDS` and `ADDR` when the
-defaults get in the way. Your library lives in `DATA_DIR` (default `./data`) as a
-single `items.json`; in Docker it is the `seta-data` volume.
+`make start` is [scripts/start.sh](scripts/start.sh). Your library lives in
+`DATA_DIR` (default `./data`) as a single `items.json`.
 
 ### Where things stand
 
-Working, verified against the real models:
+Working, verified against the real model, in this process:
 
 - translation both ways with streaming, abort, pinyin and a clean error surface;
-  direction inferred from the text
+  direction inferred from the text; ~90 tokens/s on Apple silicon's GPU, ~50 on
+  CPU only, first token in well under a second
+- the model inside the binary: no child process, no port, no CGo, and
+  cancelling a request really stops the generation (checked per token)
 - library: save/edit/delete, one search box, tag chips, JSON export
 - HSK: words met grouped by band with a reference back to every library item
   that taught them; per-band coverage; the current band's gaps; load more on
@@ -121,6 +127,8 @@ Not done, roughly in order of how much it matters:
   or HTTPS
 - the grader was measured on synthesised clips: two-syllable items are flaky and
   it was trained on read speech
+- one request at a time (a single context, queued): a second tab waits. The old
+  model server had `--parallel 1` too, so this is not a regression.
 
 ### What `make dev` actually runs
 
@@ -134,48 +142,47 @@ http://localhost:8080 to see what the embedded build does. Both talk to the same
 Go service, so translate, library and coverage behave identically. Use
 `localhost`, not `127.0.0.1`, for the Vite port (it binds IPv6 `[::1]`).
 
-### If translation says "unreachable"
+### If translation says "unavailable"
 
-The UI loads without a model — useful for working on layout. Translating then
-fails with `translation engine unavailable`, and the output pane says
-*Model is warming up…* from `GET /api/ready`. That is a readiness state, not a
-bug: start the model and the pane recovers on its own (it re-probes every 10s).
+The app does not need the model to start: the Library and HSK tabs work while it
+loads, and keep working if it cannot load at all. The Translate pane says
+*Model is warming up…* from `GET /api/ready`, and translating before that is a
+503. The server log says which of the three things is missing:
+
+| Log line | Fix |
+|----------|-----|
+| `translation model not found: …` | `make translate-model` (or set `MODEL_PATH`) |
+| `carries no llama.cpp libraries` | `make libs`, then `make build` |
+| `load model …` / `load llama.cpp …` | the file is corrupt or from another llama.cpp version |
 
 Other knobs: `ADDR` (default `:8080`), `DATA_DIR` (default `data`),
-`STREAM_IDLE_TIMEOUT` (default `30s`).
+`MODEL_PATH` (the GGUF to load), `LIB_DIR` (override the unpacked libraries),
+`GPU_LAYERS` (`0`, `cpu` or `off` to stay on the CPU; everything is offloaded by
+default), `TRANSLATE_TIMEOUT` (default `60s`).
 
-### Serving the model
+### The model, in the binary
 
-Default (`docker-compose.yml`): llama.cpp with the official
-[tencent/HY-MT1.5-1.8B-GGUF](https://huggingface.co/tencent/HY-MT1.5-1.8B-GGUF)
-Q4_K_M quant — runs on any Docker host, GPU or not. First boot downloads the
-~1.1 GB model into the `hy-mt-cache` volume; watch `docker compose logs -f hy-mt`.
-Tencent's recommended sampling (`top_k 20`, `repetition_penalty 1.05`) is set as
-server launch flags so the wire request stays minimal.
+`make libs` fetches the llama.cpp shared libraries for the machine you build on
+([scripts/fetch-libs.sh](scripts/fetch-libs.sh)), pins the release tag in one
+place, and they are embedded with `go:embed`. At startup the engine unpacks them
+into `~/Library/Caches/seta/llama.cpp/<tag>/` (or `$XDG_CACHE_HOME` on Linux) —
+a shared library has to exist as a file before the loader can open it — and
+calls into them with purego. Nothing else is installed or exported: no
+`DYLD_LIBRARY_PATH`, no `llama-server`, no port.
 
-The model container is internal (`expose`, not `ports`) and carries a
-`curl /health` healthcheck — llama-server answers 503 while loading and 200 when
-ready — so the app can wait for `service_healthy` instead of 503ing through the
-first download.
+Why this shape:
 
-NVIDIA GPU box, best quality — swap in the vLLM variant commented at the bottom
-of `docker-compose.yml`:
+- **One process** is simpler to reason about than two: `Ctrl-C` stops
+  generation, `REQUEST_TIMEOUT` bounds it, and a request the browser abandons is
+  cut on the next token (~15 ms) instead of finishing into a dead socket.
+- **No CGo** keeps `CGO_ENABLED=0` and cross-compilation. The cost is that the
+  libraries are shared objects unpacked at runtime (5–12 MB per platform) rather
+  than a statically linked blob.
+- **Same speed** as the old server: the identical llama.cpp build runs the same
+  model; measured 87–98 tok/s against the server's 95 on this machine.
 
-```sh
-docker run --gpus all -p 8000:8000 vllm/vllm-openai:latest \
-  --model tencent/HY-MT1.5-1.8B --served-model-name hy-mt-1.8b
-```
-
-Fastest on a Mac: skip Docker for the model, run it natively (Metal):
-
-```sh
-brew install llama.cpp
-llama-server -hf tencent/HY-MT1.5-1.8B-GGUF:Q4_K_M --alias hy-mt-1.8b --port 8000
-make run
-```
-
-Precision is a one-way door only in hardware terms: BF16 (vLLM, best) → FP8 →
-Int4 → GGUF Q8_0 → Q4_K_M. en→zh degrades gently, but it degrades.
+Sampling is the app's own now: `temperature 0.7`, `top_p 0.6` (the values it
+always sent) and `top_k 20` (the model's own preference), `max_tokens 2048`.
 
 ## The HSK map
 
@@ -278,19 +285,27 @@ make test         # go test -race + frontend tests + type check
 make lint         # go vet + gofmt
 ```
 
-Go: prompt building for both directions, direction inference, the SSE proxy
-(stall watchdog, empty stream, abort propagation, error mapping), the store
-(validation, caps, atomic writes, reload, export shape), and the HSK engine
-(max matching, per-level coverage, current level, gap paging) — 57 tests across
-[backend](backend).
+Go: prompt building for both directions, direction inference, the SSE contract
+(deltas, mid-stream failures, timeout before and after the first delta, abort
+reaching the engine, the 5,000-byte boundary), the engine's pure pieces (rune
+splitting across token boundaries, library naming and unpacking, weight
+resolution, GPU env), the store (validation, caps, atomic writes, reload,
+export shape) and the HSK engine (max matching, per-band coverage, current band,
+gaps, references) — 121 tests across [backend](backend).
+
+One of those loads the **real weights** and translates both ways
+([engine_live_test.go](backend/engine_live_test.go)): it skips when
+`make translate-model` has not run, and it asserts that cancelling stops the
+model while the next request still works.
 
 Frontend: SSE parsing, the streaming client, library helpers (search, sheet
-pre-fills, tag parsing), speech availability, the practice pipeline (tokens,
-sandhi, mel frontend, Viterbi alignment, verdicts) and the component's state
-machine (tabs, superseded requests, save/edit, chip editor, coverage paging,
-record → grade) — 118 tests across [frontend/tests](frontend/tests).
+pre-fills, tag parsing), the HSK grouping and band picker, speech availability,
+the practice pipeline (tokens, sandhi, mel frontend, Viterbi alignment, verdicts)
+and the component's state machine (tabs, superseded requests, save/edit, chip
+editor, coverage paging, record → grade) — 150 tests across
+[frontend/tests](frontend/tests).
 
-One test file runs the **real model** on real recordings
+Another gated test runs the **practice model** on real recordings
 ([tests/practice-model.test.ts](frontend/tests/practice-model.test.ts)): it skips
 unless both `make model` and `make practice-fixtures` have been run, and it
 asserts that a correct phrase is never accused of a mistake while a wrong tone
@@ -301,7 +316,7 @@ is caught.
 | Route | What it is |
 |-------|------------|
 | `GET /` | the embedded app |
-| `POST /api/translate` | validate → infer direction → prompt → proxy the model stream (SSE). Answers `X-Seta-Direction: en-zh\|zh-en` |
+| `POST /api/translate` | validate → infer direction → prompt → run the model → stream SSE. Answers `X-Seta-Direction: en-zh\|zh-en` |
 | `GET /api/items` | the whole library, newest first |
 | `POST /api/items` | save one item (`chinese` required) |
 | `PATCH /api/items/{id}` | partial update |
@@ -309,7 +324,7 @@ is caught.
 | `GET /api/items/export` | the library as a JSON download |
 | `GET /api/hsk?levels=1,2,3&known=50&gaps=50` | coverage per band, the words met (each with the library items that taught it), one page of gaps; `?level=4` lists another band's gaps |
 | `GET /api/health` | liveness; never touches the model |
-| `GET /api/ready` | readiness; probes the model's `/v1/models`, 503 while warming |
+| `GET /api/ready` | readiness; 503 until the in-process model has loaded |
 
 ### The stream contract
 
@@ -325,12 +340,11 @@ Headers are committed lazily: until the first event is known good, a failure is
 still a clean status instead of a broken 200 stream. Every event is flushed
 immediately.
 
-A 200 upstream that yields no deltas (empty completion, or a bare `[DONE]`) is a
-502 here — there is no translation to show. There is no overall request timeout
-(a long translation is legitimate), but `STREAM_IDLE_TIMEOUT` bounds the gap
-between chunks: a wedged model ends the stream with
+A run that produces no deltas at all (the model emitted only an end token) is a
+502 here — there is no translation to show. `TRANSLATE_TIMEOUT` (default 60s)
+bounds one request: a run that outlives it ends the stream with
 `{"error":"translation timed out"}` and `[DONE]`, or a 504 if nothing was sent
-yet.
+yet. Closing the tab cancels the generation on the next token.
 
 ### Errors
 
@@ -338,16 +352,17 @@ yet.
 |-----------|--------|------|
 | Missing/blank text, bad JSON | 400 | `{"error":"text is required"}` |
 | Text over 5,000 bytes | 413 | `{"error":"text exceeds limit"}` |
-| Upstream unreachable | 503 | `{"error":"translation engine unavailable"}` |
-| Empty or malformed upstream | 502 | `{"error":"invalid upstream response"}` |
-| Upstream stalled before output | 504 | `{"error":"translation timed out"}` |
+| Model not loaded (warming, or missing weights) | 503 | `{"error":"translation engine unavailable"}` |
+| Model produced nothing / failed | 502, 500 | `{"error":"translation failed"}` |
+| Request outlived `TRANSLATE_TIMEOUT` | 504 | `{"error":"translation timed out"}` |
 | Item without `chinese` | 400 | `{"error":"chinese is required"}` |
 | Item field over its cap | 400 | `{"error":"note exceeds 2000 bytes"}` |
 | Unknown item id | 404 | `{"error":"item not found"}` |
 | Item body over 64 KiB | 413 | `{"error":"item too large"}` |
 
-Raw upstream error bodies are never forwarded — they leak model paths, GPU
-diagnostics and internal hostnames — but they are logged for the operator.
+Engine internals — model paths, Metal diagnostics, token counts — never reach
+the client; they are logged instead. The failure stays visible to the operator
+even when the browser must not see it.
 
 ## How the model is prompted
 
@@ -363,7 +378,9 @@ Direction is inferred by the Go service (any CJK ideograph → zh→en) and repo
 to the client in a response header, so the UI knows whether the output is
 Chinese without keeping its own copy of the rule. No direction toggle in the UI.
 
-Sampling: `temperature 0.7`, `top_p 0.6`, `max_tokens 2048`, `stream true`.
+That prompt is one user turn; the engine wraps it in the model's own chat
+template (read from the GGUF), which llama-server used to do. Sampling is the
+app's: `temperature 0.7`, `top_p 0.6`, `top_k 20`, `max_tokens 2048`.
 
 ## Pinyin and speech
 
@@ -392,16 +409,18 @@ If a feature tempts you, ask first — the app should not presume.
 | File | Purpose |
 |------|---------|
 | `backend/main.go` | Config, routes, server lifecycle, JSON helpers |
-| `backend/translate.go` | Prompts, direction inference, SSE proxy + stall watchdog |
+| `backend/engine.go` | The model: load, chat template, sampling, streaming, cancel |
+| `backend/engine_libs.go` | Embedded llama.cpp libraries: unpack + link on first run |
+| `backend/translate.go` | Prompts, direction inference, the SSE contract, timeouts |
 | `backend/store.go` | The library: items, validation, atomic JSON file |
 | `backend/items.go` | Item + HSK HTTP handlers |
 | `backend/hsk.go` | Embedded vocabulary, max-match, coverage and gaps |
-| `backend/health.go` | Liveness/readiness, `/v1/models` derivation |
+| `backend/health.go` | Liveness (always) and readiness (engine loaded?) |
 | `backend/static.go` | Embedded app, caching, security headers |
 | `backend/data/` | `hsk.json` + `PROVENANCE.md` (generated by `make hsk`) |
 | `backend/tools/hskgen/` | The generator behind `make hsk` |
-| `backend/*_test.go` | Proxy, store, HSK, items, health, static tests |
-| `backend/Dockerfile` | Multi-stage: node build → go embed → alpine, non-root, `/data` |
+| `backend/*_test.go` | Engine (incl. a gated live run), handler, store, HSK, static |
+| `backend/libs/` | llama.cpp shared libraries, fetched by `make libs` (gitignored) |
 | `frontend/index.html` | The three tabs, the save sheet, all bindings |
 | `frontend/src/component.ts` | The Alpine component: state, tabs, sheet |
 | `frontend/src/translate.ts` | Streaming client (injectable fetch) |
@@ -411,5 +430,6 @@ If a feature tempts you, ask first — the app should not presume.
 | `frontend/src/practice/` | Recording, log-mel, CTC alignment, grading, verdicts |
 | `frontend/src/pinyin.ts`, `sse.ts` | Hanzi → pinyin; SSE buffer parsing |
 | `frontend/vite.config.ts` | Dev `/api` proxy, build target, test include |
-| `docker-compose.yml` | `hy-mt` (internal, healthchecked) + `app` (public, `seta-data`) |
-| `Makefile` | install / build / run / dev / test / lint / hsk / clean |
+| `scripts/fetch-libs.sh` | Pins and downloads the llama.cpp libraries |
+| `models/` | The translation weights, fetched by `make translate-model` (gitignored) |
+| `Makefile` | install / libs / build / run / dev / test / lint / hsk / model / clean |
