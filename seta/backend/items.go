@@ -25,7 +25,12 @@ const (
 
 // listItemsHandler returns the whole library, newest first.
 func (a *app) listItemsHandler(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"items": a.items.List()})
+	items, err := a.items.List(r.Context())
+	if err != nil {
+		writeLibraryError(w, "library read failed", err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
 }
 
 // createItemHandler saves one item. Only chinese is required.
@@ -35,7 +40,7 @@ func (a *app) createItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	item, err := a.items.Create(patch)
+	item, err := a.items.Create(r.Context(), patch)
 	if err != nil {
 		writeItemError(w, err)
 		return
@@ -50,7 +55,7 @@ func (a *app) updateItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	item, err := a.items.Update(r.PathValue("id"), patch)
+	item, err := a.items.Update(r.Context(), r.PathValue("id"), patch)
 	if err != nil {
 		writeItemError(w, err)
 		return
@@ -60,7 +65,7 @@ func (a *app) updateItemHandler(w http.ResponseWriter, r *http.Request) {
 
 // deleteItemHandler removes one item.
 func (a *app) deleteItemHandler(w http.ResponseWriter, r *http.Request) {
-	if err := a.items.Delete(r.PathValue("id")); err != nil {
+	if err := a.items.Delete(r.Context(), r.PathValue("id")); err != nil {
 		writeItemError(w, err)
 		return
 	}
@@ -71,8 +76,13 @@ func (a *app) deleteItemHandler(w http.ResponseWriter, r *http.Request) {
 // hatch that makes reshaping the data model safe.
 func (a *app) exportItemsHandler(w http.ResponseWriter, r *http.Request) {
 	filename := fmt.Sprintf("seta-library-%s.json", time.Now().UTC().Format("2006-01-02"))
+	payload, err := a.items.export(r.Context())
+	if err != nil {
+		writeLibraryError(w, "library read failed", err)
+		return
+	}
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
-	writeJSON(w, http.StatusOK, a.items.export())
+	writeJSON(w, http.StatusOK, payload)
 }
 
 // hskHandler serves the HSK tab. ?levels= picks which bands the known-word list
@@ -107,7 +117,13 @@ func (a *app) hskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	report := a.hsk.coverage(a.items.List(), coverageQuery{
+	items, err := a.items.List(r.Context())
+	if err != nil {
+		writeLibraryError(w, "library read failed", err)
+		return
+	}
+
+	report := a.hsk.coverage(items, coverageQuery{
 		KnownLevels: levels,
 		KnownPage:   known,
 		GapLevel:    gapLevel,
@@ -136,7 +152,13 @@ func (a *app) hskSearchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, a.hsk.search(raw, a.items.List(), limit))
+	items, err := a.items.List(r.Context())
+	if err != nil {
+		writeLibraryError(w, "library read failed", err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, a.hsk.search(raw, items, limit))
 }
 
 // parseLevels reads ?levels=1,2,3 against the embedded bands. An absent or
@@ -201,7 +223,13 @@ func writeItemError(w http.ResponseWriter, err error) {
 	case errors.Is(err, errItemNotFound):
 		writeError(w, http.StatusNotFound, "item not found")
 	default:
-		log.Printf("library: %v", err)
-		writeError(w, http.StatusInternalServerError, "library write failed")
+		writeLibraryError(w, "library write failed", err)
 	}
+}
+
+// writeLibraryError is the read/write failure path: logged in full, answered
+// with something safe to show.
+func writeLibraryError(w http.ResponseWriter, message string, err error) {
+	log.Printf("library: %v", err)
+	writeError(w, http.StatusInternalServerError, message)
 }

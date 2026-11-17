@@ -30,7 +30,7 @@ everything else is optional and can be filled in later.
 ```
 Alpine.js ──POST /api/translate──▶ Go ──in-process──▶ HY-MT1.5-1.8B (llama.cpp)
            ◀──SSE deltas────────  (one binary)
-                                  ├── items.json      (your library, one file)
+                                  ├── seta.db        (your library, one file)
                                   ├── HSK 3.0 words   (go:embed, ~880 KB)
                                   └── llama.cpp libs  (go:embed, ~12 MB)
 ```
@@ -113,7 +113,8 @@ make libs              # just fetch / refresh the llama.cpp libraries
 
 `make start` builds, then runs [scripts/start.sh](scripts/start.sh) — which only
 checks the two payloads and execs the binary. Your library lives in `DATA_DIR`
-(default `./data`) as a single `items.json`.
+(default `./data`) as a single `seta.db`: SQLite, through the pure-Go
+`modernc.org/sqlite` driver, so `CGO_ENABLED=0` still holds.
 
 ### Where things stand
 
@@ -297,12 +298,16 @@ so reading 你好 slowly as nǐ hǎo is not a mistake.
 
 ## Data and backups
 
-- `items.json`: `{"version": 1, "items": [...]}` in `DATA_DIR`, replaced
-  atomically on every write (temp file + rename), so a crash cannot truncate it.
-- Adding fields later means adding columns with defaults — old rows never become
-  invalid.
-- The export button (`GET /api/items/export`) gives the same file as a download.
-  That is the escape hatch when the data model changes shape in a few months.
+- `seta.db`: one SQLite file in `DATA_DIR`, opened in WAL mode with
+  `synchronous=FULL`, so a committed write survives a crash.
+- The schema is versioned with `PRAGMA user_version`; opening an older database
+  applies the missing migrations, and a newer schema stops the app instead of
+  guessing. Deleting an item cascades to its tags.
+- Adding fields later means adding a migration with defaults — old rows never
+  become invalid.
+- The export button (`GET /api/items/export`) hands the library back as JSON
+  (`{"version": 1, "items": [...]}`). That is the escape hatch: it stays
+  readable without the app and without SQLite.
 
 ## Test it
 
@@ -439,7 +444,7 @@ If a feature tempts you, ask first — the app should not presume.
 | `backend/engine.go` | The model: load, chat template, sampling, streaming, cancel |
 | `backend/engine_libs.go` | Embedded llama.cpp libraries: unpack + link on first run |
 | `backend/translate.go` | Prompts, direction inference, the SSE contract, timeouts |
-| `backend/store.go` | The library: items, validation, atomic JSON file |
+| `backend/store.go` | The library: items, validation, SQLite schema and migrations |
 | `backend/items.go` | Item + HSK HTTP handlers |
 | `backend/hsk.go` | Embedded vocabulary, max-match, coverage, gaps and search |
 | `backend/health.go` | Liveness (always) and readiness (engine loaded?) |

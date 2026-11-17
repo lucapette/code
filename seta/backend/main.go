@@ -1,6 +1,6 @@
 // Package main is seta: a translator and study notebook in one process. The
 // model runs inside this binary (engine.go), the frontend is embedded, and the
-// library is one JSON file — no model server, no ports but this one.
+// library is one SQLite file — no model server, no ports but this one.
 package main
 
 import (
@@ -57,7 +57,16 @@ func main() {
 	addr := envOr("ADDR", defaultAddr)
 	dataDir := envOr("DATA_DIR", "data")
 
-	items, err := newStore(dataDir)
+	startup, cancelStartup := context.WithTimeout(context.Background(), 10*time.Second)
+	items, err := newStore(startup, dataDir)
+	if err != nil {
+		cancelStartup()
+		log.Fatalf("library: %v", err)
+	}
+	defer items.Close()
+
+	count, err := items.count(startup)
+	cancelStartup()
 	if err != nil {
 		log.Fatalf("library: %v", err)
 	}
@@ -66,7 +75,7 @@ func main() {
 		log.Fatalf("vocabulary: %v", err)
 	}
 	log.Printf("library %s (%d items) · vocabulary %d words, HSK %v",
-		items.path, len(items.List()), len(hsk.byWord), hsk.levels)
+		items.path, count, len(hsk.byWord), hsk.levels)
 
 	// The model loads in the background: the library and the HSK map are useful
 	// before the weights are in, and /api/ready is what the UI polls meanwhile.

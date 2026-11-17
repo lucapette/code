@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -17,8 +18,9 @@ import (
 func newLibraryServer(t *testing.T) *httptest.Server {
 	t.Helper()
 
-	items, err := newStore(t.TempDir())
+	items, err := newStore(context.Background(), t.TempDir())
 	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, items.Close()) })
 	hsk, err := parseHSK([]byte(fixtureVocabulary))
 	require.NoError(t, err)
 
@@ -189,7 +191,7 @@ func TestItemsExportIsADownload(t *testing.T) {
 		Items      []Item `json:"items"`
 	}
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&exported))
-	assert.Equal(t, storeVersion, exported.Version)
+	assert.Equal(t, exportVersion, exported.Version)
 	assert.NotEmpty(t, exported.ExportedAt)
 	require.Len(t, exported.Items, 1)
 	assert.Equal(t, "from my tutor", exported.Items[0].Note)
