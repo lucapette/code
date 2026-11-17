@@ -17,12 +17,13 @@ Three tabs. Not four, not five.
 | Tab | What it does |
 |-----|--------------|
 | **Translate** | Type or paste; the direction is inferred. Chinese out, or English out when you pasted Chinese. Each result can be copied, spoken, or saved. |
-| **Library** | The notebook: one free-form list of things you saved, with one search box and a JSON export. |
+| **Library** | The notebook: one free-form list of things you saved, with one search box, a spaced review pass over what you saved, and a JSON export. |
 | **HSK** | Read-only map: how much of each HSK 3.0 level your saved text has actually covered, and which frequent words of your current level you have not met yet. |
 
 The unit of learning is the sentence you met in the wild. There is no
-curriculum, no lesson list, no grammar drill, and no spaced repetition yet —
-deliberately. Saving an item requires **one field: the Chinese text**;
+curriculum, no lesson list and no grammar drill. Review is the one deliberate
+loop: one card at a time, characters and pinyin visible, you recall the meaning
+and grade yourself. Saving an item requires **one field: the Chinese text**;
 everything else is optional and can be filled in later.
 
 ## Stack
@@ -78,6 +79,10 @@ Alpine.js ──POST /api/translate──▶ Go ──in-process──▶ HY-MT1
 - **A library that fits on a screen**: one word per line, Chinese and reading on
   the left, meaning in the middle, where you found it on the right; the row
   opens to show the note, tags, edit/delete and practice
+- **Review** the library on a spaced ladder: characters and pinyin up front, the
+  meaning on reveal, then again/good/easy. Again returns in 10 minutes; good
+  moves one rung of 1/3/7/16/35/75 days and easy skips one. The header shows how
+  many cards are due, and "go over all" ignores the dates for a full pass
 - **Export** the library as JSON at any time
 - Dark and light themes, keyboard shortcuts (`⌘/Ctrl+Enter`, `Esc`)
 - One self-contained binary: the model runs inside it, the frontend and the
@@ -126,6 +131,8 @@ Working, verified against the real model, in this process:
 - the model inside the binary: no child process, no port, no CGo, and
   cancelling a request really stops the generation (checked per token)
 - library: save/edit/delete, one search box, tag chips, JSON export
+- review: the spaced ladder over the library, characters and pinyin first,
+  self-graded, with the whole grade history kept in SQLite
 - HSK: words met grouped by band and sorted by pinyin, with the sentence
   references that taught them; per-band coverage; the current band's gaps;
   load more on both lists; a search across all 10,969 words, by characters,
@@ -136,9 +143,10 @@ Working, verified against the real model, in this process:
 
 Not done, roughly in order of how much it matters:
 
-- practice lives on library items only — no review screen yet, by design until
-  the library has ~50–100 items
-- no spaced repetition
+- review grades are self-assessed: no typed answers and no writing practice —
+  reading for meaning is the skill being trained
+- review drills the library rows; the HSK known/missing map is not drilled
+  separately
 - copying has no fallback outside secure contexts, so `copy` needs `localhost`
   or HTTPS
 - the grader was measured on synthesised clips: two-syllable items are flaky and
@@ -305,9 +313,12 @@ so reading 你好 slowly as nǐ hǎo is not a mistake.
   guessing. Deleting an item cascades to its tags.
 - Adding fields later means adding a migration with defaults — old rows never
   become invalid.
-- The export button (`GET /api/items/export`) hands the library back as JSON
-  (`{"version": 1, "items": [...]}`). That is the escape hatch: it stays
-  readable without the app and without SQLite.
+- Review lives in two tables: `review_log` is append-only (every grade, with its
+  timestamp) and `review_state` is the schedule that log implies. Both cascade
+  with the item, so deleting a word also deletes its history.
+- The export button (`GET /api/items/export`) hands everything back as JSON —
+  `version: 2`, `items`, `reviews`, `progress`. That is the escape hatch: it
+  stays readable without the app and without SQLite.
 
 ## Test it
 
@@ -320,9 +331,10 @@ Go: prompt building for both directions, direction inference, the SSE contract
 (deltas, mid-stream failures, timeout before and after the first delta, abort
 reaching the engine, the 5,000-byte boundary), the engine's pure pieces (rune
 splitting across token boundaries, library naming and unpacking, weight
-resolution, GPU env), the store (validation, caps, atomic writes, reload,
-export shape) and the HSK engine (max matching, per-band coverage, current band,
-gaps, references, ranked search) — 135 tests across [backend](backend).
+resolution, GPU env), the store (validation, caps, schema and migrations,
+cascading deletes, concurrent writes, reload, export shape), the review ladder
+and queue, and the HSK engine (max matching, per-band coverage, current band,
+gaps, references, ranked search) — 167 tests across [backend](backend).
 
 One of those loads the **real weights** and translates both ways
 ([engine_live_test.go](backend/engine_live_test.go)): it skips when
@@ -333,8 +345,9 @@ Frontend: SSE parsing, the streaming client, library helpers (search, sheet
 pre-fills, tag parsing), the HSK grouping and band picker, speech availability,
 the practice pipeline (tokens, sandhi, mel frontend, Viterbi alignment, verdicts)
 and the component's state machine (tabs, superseded requests, save/edit, chip
-editor, coverage paging, HSK search and its stale responses, record → grade) —
-167 tests across [frontend/tests](frontend/tests).
+editor, coverage paging, HSK search and its stale responses, the review session
+and its keyboard flow, record → grade) — 174 tests across
+[frontend/tests](frontend/tests).
 
 Another gated test runs the **practice model** on real recordings
 ([tests/practice-model.test.ts](frontend/tests/practice-model.test.ts)): it skips
@@ -352,7 +365,9 @@ is caught.
 | `POST /api/items` | save one item (`chinese` required) |
 | `PATCH /api/items/{id}` | partial update |
 | `DELETE /api/items/{id}` | remove |
-| `GET /api/items/export` | the library as a JSON download |
+| `GET /api/items/export` | the library, its review history and schedules as a JSON download |
+| `GET /api/review?scope=due\|all&limit=200` | review cards (`scope=due` is the ladder's queue; `all` walks the library), plus due/total/new counts |
+| `POST /api/review` | grade one card: `{"item_id": "…", "grade": 0\|1\|2}` → its next due date |
 | `GET /api/hsk?levels=1,2,3&known=50&gaps=50` | coverage per band, the words met (each with the library items that taught it), one page of gaps; `?level=4` lists another band's gaps |
 | `GET /api/hsk/search?q=yinhang&limit=50` | the whole vocabulary, ranked: characters, pinyin (tones and syllable spaces optional) or English; every hit says whether it is known |
 | `GET /api/health` | liveness; never touches the model |
@@ -430,9 +445,9 @@ are not rendered at all. Nothing is stored and the Go service is not involved.
 ## Not built yet, on purpose
 
 Deferred until the library has ~50–100 items and the shape of how you learn is
-visible: spaced repetition and review cards (practice lives on library items for
-now), YouTube/reader ingestion, source types or URL parsing, accounts and sync,
-and any curriculum.
+visible: listening drills (the speak button is there, the review card is not),
+YouTube/reader ingestion, source types or URL parsing, accounts and sync, and
+any curriculum.
 
 If a feature tempts you, ask first — the app should not presume.
 
@@ -445,6 +460,7 @@ If a feature tempts you, ask first — the app should not presume.
 | `backend/engine_libs.go` | Embedded llama.cpp libraries: unpack + link on first run |
 | `backend/translate.go` | Prompts, direction inference, the SSE contract, timeouts |
 | `backend/store.go` | The library: items, validation, SQLite schema and migrations |
+| `backend/review.go` | The review ladder, the due queue, and the two review routes |
 | `backend/items.go` | Item + HSK HTTP handlers |
 | `backend/hsk.go` | Embedded vocabulary, max-match, coverage, gaps and search |
 | `backend/health.go` | Liveness (always) and readiness (engine loaded?) |
@@ -453,8 +469,8 @@ If a feature tempts you, ask first — the app should not presume.
 | `backend/tools/hskgen/` | The generator behind `make hsk` |
 | `backend/*_test.go` | Engine (incl. a gated live run), handler, store, HSK, static |
 | `backend/libs/` | llama.cpp shared libraries, fetched by `make libs` (gitignored) |
-| `frontend/index.html` | The three tabs, the save sheet, all bindings |
-| `frontend/src/component.ts` | The Alpine component: state, tabs, sheet |
+| `frontend/index.html` | The three tabs, the save sheet, the review overlay, all bindings |
+| `frontend/src/component.ts` | The Alpine component: state, tabs, sheet, review session |
 | `frontend/src/translate.ts` | Streaming client (injectable fetch) |
 | `frontend/src/api.ts`, `http.ts` | Item/HSK calls and error plumbing |
 | `frontend/src/library.ts` | Search, sheet pre-fills, tag parsing (pure) |
