@@ -127,6 +127,7 @@ export function setaApp(): SetaApp {
     reviewRevealed: false,
     reviewDone: 0,
     reviewLoading: false,
+    reviewBusy: false,
     reviewError: null as string | null,
     reviewDue: 0,
     reviewTotal: 0,
@@ -621,14 +622,17 @@ export function setaApp(): SetaApp {
 
     async gradeReview(grade: 0 | 1 | 2) {
       const card = this.currentReviewCard;
-      if (!card || !this.reviewRevealed) return;
+      if (!card || !this.reviewRevealed || this.reviewBusy) return;
 
+      this.reviewBusy = true;
       this.reviewError = null;
       try {
         await apiGradeReview(card.id, grade);
       } catch (e) {
         this.reviewError = e instanceof Error ? e.message : 'could not save the grade';
         return;
+      } finally {
+        this.reviewBusy = false;
       }
 
       this.reviewDone += 1;
@@ -936,6 +940,7 @@ interface SetaAppState {
   reviewRevealed: boolean;
   reviewDone: number;
   reviewLoading: boolean;
+  reviewBusy: boolean;
   reviewError: string | null;
   reviewDue: number;
   reviewTotal: number;

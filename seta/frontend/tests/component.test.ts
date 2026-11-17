@@ -1147,6 +1147,21 @@ describe('setaApp', () => {
     expect(app.currentReviewCard).toBeNull();
   });
 
+  it('ignores a second grade while the first is saving', async () => {
+    const app = mount({ items: [makeItem({ id: 'a', chinese: '冰箱', meaning: 'fridge' })] });
+    app.init();
+    await tick();
+    await app.openReview();
+    app.revealReview();
+
+    const first = app.gradeReview(1);
+    const second = app.gradeReview(1);
+    await Promise.all([first, second]);
+
+    expect(app.reviewDone).toBe(1);
+    expect(server.callsTo('/api/review').filter((call) => call.method === 'POST')).toHaveLength(1);
+  });
+
   it('closes the overlay on Escape', async () => {
     const app = mount({ items: [makeItem({ id: 'a', chinese: '冰箱', meaning: 'fridge' })] });
     app.init();

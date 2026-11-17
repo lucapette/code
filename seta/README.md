@@ -346,7 +346,7 @@ pre-fills, tag parsing), the HSK grouping and band picker, speech availability,
 the practice pipeline (tokens, sandhi, mel frontend, Viterbi alignment, verdicts)
 and the component's state machine (tabs, superseded requests, save/edit, chip
 editor, coverage paging, HSK search and its stale responses, the review session
-and its keyboard flow, record → grade) — 174 tests across
+and its keyboard flow, record → grade) — 175 tests across
 [frontend/tests](frontend/tests).
 
 Another gated test runs the **practice model** on real recordings

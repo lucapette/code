@@ -613,15 +613,15 @@
           </button>
 
           <div class="study-grades" x-show="reviewRevealed" x-cloak>
-            <button class="grade grade-again" type="button" @click="gradeReview(0)">
+            <button class="grade grade-again" type="button" :disabled="reviewBusy" @click="gradeReview(0)">
               <span class="grade-name">again</span>
               <span class="grade-hint">in 10 min</span>
             </button>
-            <button class="grade grade-good" type="button" @click="gradeReview(1)">
+            <button class="grade grade-good" type="button" :disabled="reviewBusy" @click="gradeReview(1)">
               <span class="grade-name">good</span>
               <span class="grade-hint">next step</span>
             </button>
-            <button class="grade grade-easy" type="button" @click="gradeReview(2)">
+            <button class="grade grade-easy" type="button" :disabled="reviewBusy" @click="gradeReview(2)">
               <span class="grade-name">easy</span>
               <span class="grade-hint">skip ahead</span>
             </button>
