@@ -97,6 +97,8 @@ func main() {
 	mux.HandleFunc("GET /api/items/export", application.exportItemsHandler)
 	mux.HandleFunc("PATCH /api/items/{id}", application.updateItemHandler)
 	mux.HandleFunc("DELETE /api/items/{id}", application.deleteItemHandler)
+	mux.HandleFunc("GET /api/review", application.reviewHandler)
+	mux.HandleFunc("POST /api/review", application.createReviewHandler)
 	mux.HandleFunc("GET /api/hsk", application.hskHandler)
 	mux.HandleFunc("GET /api/hsk/search", application.hskSearchHandler)
 	mux.Handle("/", staticHandler(distFS))

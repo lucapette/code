@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -33,7 +34,7 @@ const (
 
 	// exportVersion is the JSON export's format, not the schema version. The
 	// schema lives in PRAGMA user_version (see migrations).
-	exportVersion = 1
+	exportVersion = 2
 
 	// maxChineseBytes caps a saved item's Chinese text. maxFieldBytes caps the
 	// optional free-text fields; the tag limits keep the chip editor bearable.
@@ -66,6 +67,27 @@ var migrations = [][]string{
 			position INTEGER NOT NULL,
 			PRIMARY KEY (item_id, tag)
 		) WITHOUT ROWID`,
+	},
+	{
+		// The training log is append-only; review_state is the schedule that
+		// log implies. Both leave with the item they belong to.
+		`CREATE TABLE review_log (
+			id          INTEGER PRIMARY KEY,
+			item_id     TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+			mode        TEXT NOT NULL,
+			grade       INTEGER NOT NULL CHECK (grade BETWEEN 0 AND 2),
+			reviewed_at INTEGER NOT NULL
+		)`,
+		`CREATE INDEX review_log_item ON review_log (item_id, reviewed_at)`,
+		`CREATE TABLE review_state (
+			item_id       TEXT PRIMARY KEY REFERENCES items(id) ON DELETE CASCADE,
+			due_at        INTEGER NOT NULL,
+			interval_days REAL NOT NULL DEFAULT 0,
+			streak        INTEGER NOT NULL DEFAULT 0,
+			lapses        INTEGER NOT NULL DEFAULT 0,
+			reviewed_at   INTEGER NOT NULL
+		) WITHOUT ROWID`,
+		`CREATE INDEX review_state_due ON review_state (due_at)`,
 	},
 }
 
@@ -351,21 +373,40 @@ func (s *store) count(ctx context.Context) (int, error) {
 	return total, nil
 }
 
-// export is the escape hatch: every row, plus the format version and when it
-// left the app.
+// export is the escape hatch: every table, plus the format version and when it
+// left the app. The review history is included so a backup is not just words.
 func (s *store) export(ctx context.Context) (any, error) {
 	items, err := s.List(ctx)
 	if err != nil {
 		return nil, err
 	}
+	reviews, err := s.reviewLog(ctx)
+	if err != nil {
+		return nil, err
+	}
+	states, err := s.reviewStates(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	progress := make([]reviewState, 0, len(states))
+	for _, state := range states {
+		progress = append(progress, state)
+	}
+	sort.Slice(progress, func(i, j int) bool { return progress[i].ItemID < progress[j].ItemID })
+
 	return struct {
-		Version    int       `json:"version"`
-		ExportedAt time.Time `json:"exported_at"`
-		Items      []Item    `json:"items"`
+		Version    int           `json:"version"`
+		ExportedAt time.Time     `json:"exported_at"`
+		Items      []Item        `json:"items"`
+		Reviews    []reviewEntry `json:"reviews"`
+		Progress   []reviewState `json:"progress"`
 	}{
 		Version:    exportVersion,
 		ExportedAt: time.Now().UTC(),
 		Items:      items,
+		Reviews:    reviews,
+		Progress:   progress,
 	}, nil
 }
 

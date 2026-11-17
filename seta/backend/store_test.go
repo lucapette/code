@@ -305,12 +305,48 @@ func TestStoreExportShape(t *testing.T) {
 	require.NoError(t, err)
 
 	var exported struct {
-		Version    int       `json:"version"`
-		ExportedAt time.Time `json:"exported_at"`
-		Items      []Item    `json:"items"`
+		Version    int           `json:"version"`
+		ExportedAt time.Time     `json:"exported_at"`
+		Items      []Item        `json:"items"`
+		Reviews    []reviewEntry `json:"reviews"`
+		Progress   []reviewState `json:"progress"`
 	}
 	require.NoError(t, json.Unmarshal(raw, &exported))
 	assert.Equal(t, exportVersion, exported.Version)
 	assert.False(t, exported.ExportedAt.IsZero())
 	require.Len(t, exported.Items, 1)
+	assert.Empty(t, exported.Reviews, "no reviews yet, but the field is still an array")
+	assert.Empty(t, exported.Progress)
+}
+
+func TestStoreExportCarriesTheReviewHistory(t *testing.T) {
+	s := mustStore(t)
+	ctx := context.Background()
+
+	item, err := s.Create(ctx, itemPatch{Chinese: strPtr("冰箱"), Meaning: strPtr("fridge")})
+	require.NoError(t, err)
+	now := time.Date(2026, 11, 17, 10, 0, 0, 0, time.UTC)
+	_, err = s.recordReview(ctx, item.ID, gradeGood, now)
+	require.NoError(t, err)
+
+	payload, err := s.export(ctx)
+	require.NoError(t, err)
+	raw, err := json.Marshal(payload)
+	require.NoError(t, err)
+
+	var exported struct {
+		Version  int           `json:"version"`
+		Reviews  []reviewEntry `json:"reviews"`
+		Progress []reviewState `json:"progress"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &exported))
+	assert.Equal(t, 2, exported.Version)
+	require.Len(t, exported.Reviews, 1)
+	assert.Equal(t, item.ID, exported.Reviews[0].ItemID)
+	assert.Equal(t, gradeGood, exported.Reviews[0].Grade)
+	assert.Equal(t, now, exported.Reviews[0].ReviewedAt)
+
+	require.Len(t, exported.Progress, 1)
+	assert.Equal(t, item.ID, exported.Progress[0].ItemID)
+	assert.Equal(t, 1, exported.Progress[0].Streak)
 }
