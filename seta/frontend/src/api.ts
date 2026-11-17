@@ -6,7 +6,15 @@
    ========================================================================== */
 
 import { fetchJSON } from './http';
-import type { CoverageReport, Item, ItemInput, SearchResults } from './types';
+import type {
+  CoverageReport,
+  Item,
+  ItemInput,
+  ReviewQueue,
+  ReviewScope,
+  ReviewState,
+  SearchResults,
+} from './types';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
@@ -64,6 +72,22 @@ export function loadCoverage(query: CoverageQuery = {}): Promise<CoverageReport>
 export function searchVocabulary(query: string, limit: number): Promise<SearchResults> {
   const params = new URLSearchParams({ q: query, limit: String(limit) });
   return fetchJSON<SearchResults>(`/api/hsk/search?${params}`, { cache: 'no-store' });
+}
+
+/** The review session: due cards, or the whole library on demand. */
+export function loadReviewQueue(scope: ReviewScope = 'due', limit?: number): Promise<ReviewQueue> {
+  const params = new URLSearchParams({ scope });
+  if (limit !== undefined) params.set('limit', String(limit));
+  return fetchJSON<ReviewQueue>(`/api/review?${params}`, { cache: 'no-store' });
+}
+
+/** One grade: the ladder answers with the card's next due date. */
+export function gradeReview(itemID: string, grade: 0 | 1 | 2): Promise<ReviewState> {
+  return fetchJSON<ReviewState>('/api/review', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ item_id: itemID, grade }),
+  });
 }
 
 /** Where the export button points: a download, not an API call. */

@@ -16,6 +16,7 @@
   <svg class="sprite" aria-hidden="true" focusable="false">
     <symbol id="i-translate" viewBox="0 0 24 24"><path d="M4 8h13"/><path d="M14 5l3 3-3 3"/><path d="M20 16H7"/><path d="M10 13l-3 3 3 3"/></symbol>
     <symbol id="i-library" viewBox="0 0 24 24"><path d="M4 6a3 3 0 0 1 3-3h12v18H7a3 3 0 0 1-3-3z"/><path d="M8 3v18"/></symbol>
+    <symbol id="i-review" viewBox="0 0 24 24"><rect x="3.5" y="7" width="13" height="13" rx="2.5"/><path d="M7.5 4.5h11a2 2 0 0 1 2 2v11"/></symbol>
     <symbol id="i-hsk" viewBox="0 0 24 24"><path d="M5 20v-8"/><path d="M10 20V5"/><path d="M15 20v-6"/><path d="M20 20V9"/></symbol>
     <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
     <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 5.5A1.5 1.5 0 0 0 13.5 4H5.5A1.5 1.5 0 0 0 4 5.5v8A1.5 1.5 0 0 0 5.5 15"/></symbol>
@@ -204,6 +205,11 @@
             </p>
           </div>
           <div class="page-actions">
+            <button class="act" type="button" @click="openReview()"
+                    :title="reviewDue ? 'Review the ' + reviewDue + ' cards due today' : 'Review the library'">
+              <svg class="act-ico" aria-hidden="true"><use href="#i-review"/></svg>
+              <span class="act-label" x-text="reviewButtonLabel"></span>
+            </button>
             <button class="act" type="button" @click="exportLibrary()" title="Download the library as JSON">
               <svg class="act-ico" aria-hidden="true"><use href="#i-download"/></svg>
               <span class="act-label">export</span>
@@ -565,6 +571,92 @@
       </main>
 
     </div>
+  </div>
+
+
+  <!-- ================= Review overlay ================= -->
+  <div class="backdrop" x-show="reviewOpen" x-cloak @click.self="closeReview()"
+       @keydown.window="handleReviewKey($event)">
+    <section class="study" role="dialog" aria-modal="true" aria-labelledby="study-title">
+      <header class="study-head">
+        <h2 class="study-title" id="study-title">Review</h2>
+        <p class="study-progress" x-text="reviewProgress"></p>
+        <button class="act act-icon" type="button" @click="closeReview()" aria-label="Close review">
+          <svg class="act-ico" aria-hidden="true"><use href="#i-clear"/></svg>
+        </button>
+      </header>
+
+      <p class="hint" x-show="reviewLoading" x-cloak>loading…</p>
+
+      <template x-if="!reviewLoading && currentReviewCard">
+        <div class="study-body">
+          <p class="study-word" lang="zh-Hans" x-text="currentReviewCard.chinese"></p>
+          <p class="study-pinyin" lang="zh-Latn-pinyin" x-show="pinyinOf(currentReviewCard.chinese)"
+             x-text="pinyinOf(currentReviewCard.chinese)"></p>
+          <button class="act act-icon" type="button" x-show="ttsAvailable"
+                  @click="speak(currentReviewCard.chinese)" aria-label="Hear it">
+            <svg class="act-ico" aria-hidden="true"><use href="#i-speak"/></svg>
+          </button>
+
+          <div class="study-reveal" x-show="reviewRevealed" x-cloak>
+            <p class="study-meaning" x-text="currentReviewCard.meaning"></p>
+            <p class="study-note" x-show="currentReviewCard.note" x-text="currentReviewCard.note"></p>
+            <p class="study-where" x-show="currentReviewCard.where">
+              <span class="study-where-label">Found in</span>
+              <span x-text="currentReviewCard.where"></span>
+            </p>
+          </div>
+
+          <button class="act act-primary study-show" type="button" x-show="!reviewRevealed"
+                  @click="revealReview()">
+            <span>show meaning</span><kbd>space</kbd>
+          </button>
+
+          <div class="study-grades" x-show="reviewRevealed" x-cloak>
+            <button class="grade grade-again" type="button" @click="gradeReview(0)">
+              <span class="grade-name">again</span>
+              <span class="grade-hint">in 10 min</span>
+            </button>
+            <button class="grade grade-good" type="button" @click="gradeReview(1)">
+              <span class="grade-name">good</span>
+              <span class="grade-hint">next step</span>
+            </button>
+            <button class="grade grade-easy" type="button" @click="gradeReview(2)">
+              <span class="grade-name">easy</span>
+              <span class="grade-hint">skip ahead</span>
+            </button>
+          </div>
+
+          <p class="error" role="alert" x-show="reviewError" x-cloak x-text="reviewError"></p>
+        </div>
+      </template>
+
+      <template x-if="!reviewLoading && !currentReviewCard">
+        <div class="study-body study-empty">
+          <p class="study-meaning" x-show="reviewDone > 0"
+             x-text="'Session done — ' + reviewDone + ' graded.'"></p>
+          <p class="study-meaning" x-show="reviewDone === 0 && reviewTotal > 0">Nothing due right now.</p>
+          <p class="study-meaning" x-show="reviewDone === 0 && reviewTotal === 0">
+            Save a word with a meaning first.
+          </p>
+          <p class="error" role="alert" x-show="reviewError" x-cloak x-text="reviewError"></p>
+          <div class="study-actions">
+            <button class="act" type="button" x-show="reviewDone === 0 && reviewTotal > reviewDue"
+                    @click="openReview('all')">
+              go over all <span x-text="reviewTotal"></span>
+            </button>
+            <button class="act act-primary" type="button" @click="closeReview()">done</button>
+          </div>
+        </div>
+      </template>
+
+      <footer class="study-foot">
+        <span x-text="reviewScope === 'all' ? 'everything' : 'due today'"></span>
+        <button class="act act-quiet" type="button" x-show="reviewScope === 'due' && reviewTotal > reviewDue"
+                @click="openReview('all')">go over all</button>
+        <span class="study-keys">space reveal · 1/2/3 grade · esc close</span>
+      </footer>
+    </section>
   </div>
 
   <!-- ================= Save sheet (shared) ================= -->

@@ -1429,6 +1429,181 @@ input:focus-visible {
   padding-top: 4px;
 }
 
+/* --- Review overlay ------------------------------------------------------ */
+.study {
+  width: min(540px, 100%);
+  max-height: 88dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.study-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.study-title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.study-progress {
+  margin-left: auto;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.study-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 26px 10px 18px;
+  text-align: center;
+}
+
+.study-word {
+  font-size: clamp(2.6rem, 8vw, 3.5rem);
+  line-height: 1.15;
+  font-weight: 600;
+}
+
+.study-pinyin {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.study-reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 44ch;
+  margin-top: 8px;
+}
+
+.study-meaning {
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+
+.study-note,
+.study-where {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.study-where-label {
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.study-show {
+  margin-top: 10px;
+}
+
+.study-show kbd,
+.study-keys kbd {
+  font: inherit;
+  font-size: 0.7rem;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+}
+
+.study-grades {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.grade {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.grade:hover {
+  border-color: var(--accent);
+}
+
+.grade:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.grade-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.grade-hint {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.grade-again {
+  border-color: color-mix(in srgb, var(--danger) 34%, var(--border));
+}
+
+.study-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.study-empty {
+  gap: 12px;
+}
+
+.study-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+}
+
+.study-keys {
+  margin-left: auto;
+}
+
+@media (max-width: 520px) {
+  .study-grades {
+    grid-template-columns: 1fr;
+  }
+
+  .study-keys {
+    display: none;
+  }
+}
+
 /* --- Toast --------------------------------------------------------------- */
 .toast {
   position: fixed;

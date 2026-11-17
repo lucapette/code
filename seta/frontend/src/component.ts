@@ -12,8 +12,10 @@ import {
   EXPORT_PATH,
   createItem as apiCreateItem,
   deleteItem as apiDeleteItem,
+  gradeReview as apiGradeReview,
   listItems as apiListItems,
   loadCoverage as apiLoadCoverage,
+  loadReviewQueue as apiLoadReviewQueue,
   searchVocabulary as apiSearchVocabulary,
   updateItem as apiUpdateItem,
 } from './api';
@@ -56,6 +58,7 @@ import type {
   Item,
   KnownWord,
   LevelCoverage,
+  ReviewScope,
   SearchResults,
   SheetState,
   Tab,
@@ -115,6 +118,18 @@ export function setaApp(): SetaApp {
     expandedId: null as string | null,
     loadingItems: false,
     libraryError: null as string | null,
+
+    /* --- Review (one overlay, one card at a time) ------------------- */
+    reviewOpen: false,
+    reviewScope: 'due' as ReviewScope,
+    reviewCards: [] as Item[],
+    reviewIndex: 0,
+    reviewRevealed: false,
+    reviewDone: 0,
+    reviewLoading: false,
+    reviewError: null as string | null,
+    reviewDue: 0,
+    reviewTotal: 0,
 
     /* --- HSK ------------------------------------------------------- */
     practiceAvailable: false,
@@ -223,6 +238,24 @@ export function setaApp(): SetaApp {
 
     get itemCount(): number {
       return this.items.length;
+    },
+
+    /** The card being reviewed, or null on an empty or finished session. */
+    get currentReviewCard(): Item | null {
+      return this.reviewCards[this.reviewIndex] ?? null;
+    },
+
+    get reviewRemaining(): number {
+      return Math.max(0, this.reviewCards.length - this.reviewIndex);
+    },
+
+    get reviewProgress(): string {
+      if (!this.currentReviewCard) return '';
+      return `${this.reviewRemaining} left · ${this.reviewDone} done`;
+    },
+
+    get reviewButtonLabel(): string {
+      return this.reviewDue > 0 ? `review ${this.reviewDue}` : 'review';
     },
 
     /** Every HSK word met, across all bands, not just the ones on screen. */
@@ -414,6 +447,7 @@ export function setaApp(): SetaApp {
         // Saving or deleting an item changes what counts as met, and a running
         // HSK search labels every hit with exactly that.
         if (this.hskSearchActive) await this.searchVocabulary();
+        await this.refreshReviewDue();
       } catch (e) {
         this.libraryError = e instanceof Error ? e.message : 'could not load the library';
       } finally {
@@ -533,6 +567,112 @@ export function setaApp(): SetaApp {
 
     exportLibrary() {
       window.location.href = EXPORT_PATH;
+    },
+
+    /* --- Review ----------------------------------------------------- */
+
+    /** The due badge on the library header, nothing more. A failure here is not
+        worth a banner: the overlay reports its own errors. */
+    async refreshReviewDue() {
+      try {
+        const queue = await apiLoadReviewQueue('due', 1);
+        this.reviewDue = queue.due;
+        this.reviewTotal = queue.total;
+      } catch {
+        /* leave the count as it was */
+      }
+    },
+
+    async openReview(scope: ReviewScope = 'due') {
+      this.reviewOpen = true;
+      this.reviewScope = scope;
+      this.reviewCards = [];
+      this.reviewIndex = 0;
+      this.reviewRevealed = false;
+      this.reviewDone = 0;
+      this.reviewError = null;
+      this.reviewLoading = true;
+
+      try {
+        const queue = await apiLoadReviewQueue(scope);
+        this.reviewCards = queue.cards;
+        this.reviewDue = queue.due;
+        this.reviewTotal = queue.total;
+      } catch (e) {
+        this.reviewError = e instanceof Error ? e.message : 'could not load the review queue';
+      } finally {
+        this.reviewLoading = false;
+      }
+    },
+
+    closeReview() {
+      this.reviewOpen = false;
+      this.reviewCards = [];
+      this.reviewIndex = 0;
+      this.reviewRevealed = false;
+      this.reviewDone = 0;
+      this.reviewError = null;
+      void this.refreshReviewDue();
+    },
+
+    revealReview() {
+      if (this.currentReviewCard) this.reviewRevealed = true;
+    },
+
+    async gradeReview(grade: 0 | 1 | 2) {
+      const card = this.currentReviewCard;
+      if (!card || !this.reviewRevealed) return;
+
+      this.reviewError = null;
+      try {
+        await apiGradeReview(card.id, grade);
+      } catch (e) {
+        this.reviewError = e instanceof Error ? e.message : 'could not save the grade';
+        return;
+      }
+
+      this.reviewDone += 1;
+      if (grade === 0) {
+        // "Again" comes back at the end of this session, not tomorrow.
+        this.reviewCards = [...this.reviewCards, card];
+      }
+      this.reviewIndex += 1;
+      this.reviewRevealed = false;
+
+      if (!this.currentReviewCard) void this.refreshReviewDue();
+    },
+
+    /** Space reveals, 1/2/3 grade, Escape closes. The card has no fields, so
+        there is nothing to distract a keyboard shortcut. */
+    handleReviewKey(event: KeyboardEvent) {
+      if (!this.reviewOpen) return;
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        this.closeReview();
+        return;
+      }
+      if (!this.currentReviewCard) return;
+
+      if (event.key === ' ' && !this.reviewRevealed) {
+        event.preventDefault();
+        this.revealReview();
+        return;
+      }
+      if (!this.reviewRevealed) return;
+
+      if (event.key === '1') {
+        event.preventDefault();
+        void this.gradeReview(0);
+      }
+      if (event.key === '2') {
+        event.preventDefault();
+        void this.gradeReview(1);
+      }
+      if (event.key === '3') {
+        event.preventDefault();
+        void this.gradeReview(2);
+      }
     },
 
     /* --- HSK ------------------------------------------------------- */
@@ -789,6 +929,17 @@ interface SetaAppState {
   loadingItems: boolean;
   libraryError: string | null;
 
+  reviewOpen: boolean;
+  reviewScope: ReviewScope;
+  reviewCards: Item[];
+  reviewIndex: number;
+  reviewRevealed: boolean;
+  reviewDone: number;
+  reviewLoading: boolean;
+  reviewError: string | null;
+  reviewDue: number;
+  reviewTotal: number;
+
   practiceAvailable: boolean;
   practice: Record<string, PracticeState>;
 
@@ -828,6 +979,10 @@ interface SetaAppState {
   readonly placeholder: string;
   readonly visibleItems: Item[];
   readonly itemCount: number;
+  readonly currentReviewCard: Item | null;
+  readonly reviewRemaining: number;
+  readonly reviewProgress: string;
+  readonly reviewButtonLabel: string;
   readonly metCount: number;
   readonly outputIsChinese: boolean;
   readonly spokenText: string;
@@ -860,6 +1015,13 @@ interface SetaAppState {
   toggleItem(id: string): void;
   removeItem(item: Item): Promise<void>;
   exportLibrary(): void;
+
+  refreshReviewDue(): Promise<void>;
+  openReview(scope?: ReviewScope): Promise<void>;
+  closeReview(): void;
+  revealReview(): void;
+  gradeReview(grade: 0 | 1 | 2): Promise<void>;
+  handleReviewKey(event: KeyboardEvent): void;
 
   refreshCoverage(): Promise<void>;
   toggleKnownLevel(level: number): Promise<void>;

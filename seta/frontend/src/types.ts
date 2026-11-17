@@ -104,3 +104,25 @@ export interface SheetState {
   error: string | null;
   saving: boolean;
 }
+
+/** Review scope: what the ladder says is due, or the whole library. */
+export type ReviewScope = 'due' | 'all';
+
+/** One page of review cards plus the counts behind it. */
+export interface ReviewQueue {
+  cards: Item[];
+  due: number;
+  total: number;
+  new: number;
+  more: boolean;
+}
+
+/** The schedule one graded card came away with. */
+export interface ReviewState {
+  item_id: string;
+  due_at: string;
+  interval_days: number;
+  streak: number;
+  lapses: number;
+  reviewed_at: string;
+}

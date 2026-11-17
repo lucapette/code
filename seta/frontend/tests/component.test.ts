@@ -128,6 +128,10 @@ function fakeServer(
   };
   const calls: { url: string; method: string; body: Record<string, unknown> | undefined }[] = [];
   const streams: { push: (chunk: string) => void }[] = [];
+  const reviewStates = new Map<
+    string,
+    { due_at: string; interval_days: number; streak: number; lapses: number; reviewed_at: string }
+  >();
 
   const json = (payload: unknown, status = 200) =>
     new Response(JSON.stringify(payload), { status, headers: { 'Content-Type': 'application/json' } });
@@ -171,6 +175,45 @@ function fakeServer(
       return json(init.searchByQuery?.[query] ?? init.search ?? EMPTY_SEARCH);
     }
     if (url.startsWith('/api/hsk')) return json(state.coverage);
+
+    if (url.startsWith('/api/review') && method === 'GET') {
+      const params = new URL(url, 'http://seta.local').searchParams;
+      const scope = params.get('scope') ?? 'due';
+      const limit = Number(params.get('limit') ?? 200);
+      const now = Date.now();
+      const reviewable = state.items.filter((item) => (item.meaning ?? '').trim() !== '');
+      const due = reviewable.filter((item) => {
+        const saved = reviewStates.get(item.id);
+        return !saved || new Date(saved.due_at).getTime() <= now;
+      });
+      const chosen = scope === 'all' ? reviewable : due;
+      return json({
+        cards: chosen.slice(0, limit),
+        due: due.length,
+        total: reviewable.length,
+        new: reviewable.filter((item) => !reviewStates.has(item.id)).length,
+        more: chosen.length > limit,
+      });
+    }
+
+    if (url === '/api/review' && method === 'POST') {
+      const itemID = String(body?.item_id ?? '');
+      const grade = Number(body?.grade ?? 0);
+      const saved = reviewStates.get(itemID);
+      const now = new Date();
+      const streak = grade === 0 ? 0 : (saved?.streak ?? 0) + (grade === 2 ? 2 : 1);
+      const days = grade === 0 ? 0 : grade === 1 ? 1 : 3;
+      const next = {
+        item_id: itemID,
+        due_at: new Date(now.getTime() + (grade === 0 ? 10 * 60_000 : days * 86_400_000)).toISOString(),
+        interval_days: days,
+        streak,
+        lapses: (saved?.lapses ?? 0) + (grade === 0 ? 1 : 0),
+        reviewed_at: now.toISOString(),
+      };
+      reviewStates.set(itemID, next);
+      return json(next);
+    }
 
     if (url.startsWith('/api/items/export')) return json({ version: 1, items: state.items });
 
@@ -990,5 +1033,127 @@ describe('setaApp', () => {
     expect(app.placeholder).toBe('Model is warming up…');
     app.engineStatus = 'unavailable';
     expect(app.placeholder).toBe('Translation engine is unreachable');
+  });
+
+  /* --- review ------------------------------------------------------ */
+
+  it('counts due cards on init and labels the header button', async () => {
+    const app = mount({
+      items: [
+        makeItem({ id: 'a', chinese: '冰箱', meaning: 'fridge' }),
+        makeItem({ id: 'b', chinese: '绵宝' }), // no meaning: nothing to recall
+      ],
+    });
+    app.init();
+    await tick();
+
+    expect(app.reviewDue).toBe(1);
+    expect(app.reviewTotal).toBe(1);
+    expect(app.reviewButtonLabel).toBe('review 1');
+  });
+
+  it('opens a session with characters and pinyin, one card at a time', async () => {
+    const app = mount({
+      items: [
+        makeItem({ id: 'a', chinese: '冰箱', meaning: 'fridge', where: 'my tutor' }),
+        makeItem({ id: 'b', chinese: '昨天', meaning: 'yesterday' }),
+      ],
+    });
+    app.init();
+    await tick();
+
+    await app.openReview();
+    expect(app.reviewOpen).toBe(true);
+    expect(app.currentReviewCard?.id).toBe('a');
+    expect(app.pinyinOf('冰箱')).toContain('bīng');
+    expect(app.reviewProgress).toBe('2 left · 0 done');
+
+    app.revealReview();
+    expect(app.reviewRevealed).toBe(true);
+
+    await app.gradeReview(1);
+    expect(app.currentReviewCard?.id).toBe('b');
+    expect(app.reviewRevealed).toBe(false);
+    expect(app.reviewDone).toBe(1);
+    expect(server.callsTo('/api/review').find((call) => call.method === 'POST')?.body).toEqual({
+      item_id: 'a',
+      grade: 1,
+    });
+  });
+
+  it('brings an "again" card back at the end of the session', async () => {
+    const app = mount({
+      items: [
+        makeItem({ id: 'a', chinese: '冰箱', meaning: 'fridge' }),
+        makeItem({ id: 'b', chinese: '昨天', meaning: 'yesterday' }),
+      ],
+    });
+    app.init();
+    await tick();
+    await app.openReview();
+
+    app.revealReview();
+    await app.gradeReview(0);
+
+    expect(app.reviewCards.map((card) => card.id)).toEqual(['a', 'b', 'a']);
+    expect(app.currentReviewCard?.id).toBe('b');
+
+    app.revealReview();
+    await app.gradeReview(1);
+    expect(app.currentReviewCard?.id).toBe('a');
+  });
+
+  it('finishes a session and can then walk the whole library', async () => {
+    const app = mount({ items: [makeItem({ id: 'a', chinese: '冰箱', meaning: 'fridge' })] });
+    app.init();
+    await tick();
+
+    await app.openReview();
+    app.revealReview();
+    await app.gradeReview(1);
+    expect(app.currentReviewCard).toBeNull();
+    expect(app.reviewDone).toBe(1);
+
+    app.closeReview();
+    expect(app.reviewOpen).toBe(false);
+
+    await app.openReview('all');
+    expect(app.currentReviewCard?.id).toBe('a');
+  });
+
+  it('reveals and grades from the keyboard', async () => {
+    const app = mount({ items: [makeItem({ id: 'a', chinese: '冰箱', meaning: 'fridge' })] });
+    app.init();
+    await tick();
+    await app.openReview();
+
+    const press = (key: string) => {
+      let prevented = false;
+      app.handleReviewKey({
+        key,
+        preventDefault: () => {
+          prevented = true;
+        },
+      } as unknown as KeyboardEvent);
+      return prevented;
+    };
+
+    expect(press(' ')).toBe(true);
+    expect(app.reviewRevealed).toBe(true);
+
+    press('2');
+    await tick();
+    expect(app.reviewDone).toBe(1);
+    expect(app.currentReviewCard).toBeNull();
+  });
+
+  it('closes the overlay on Escape', async () => {
+    const app = mount({ items: [makeItem({ id: 'a', chinese: '冰箱', meaning: 'fridge' })] });
+    app.init();
+    await tick();
+    await app.openReview();
+
+    app.handleReviewKey({ key: 'Escape', preventDefault: () => {} } as unknown as KeyboardEvent);
+    expect(app.reviewOpen).toBe(false);
   });
 });
