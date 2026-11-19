@@ -67,7 +67,9 @@ Alpine.js ──POST /api/translate──▶ Go ──in-process──▶ HY-MT1
 - **Practice**: say a saved item into the mic and get per-syllable feedback on
   your *tones*, graded on-device by a 9M-parameter model (see below)
 - **Save sheet** shared by all three tabs: Chinese (required), meaning, where
-  you found it, note, free-form tags as chips
+  you found it, note, free-form tags as chips. The source remembers the last
+  place you used for a day, and autocompletes the ones already in the library —
+  arrow keys pick, Enter takes it
 - **HSK tab in two views**: *Known* — every word you have met, in pinyin order
   inside its band, with the sentences that taught it right there on the row —
   and *Missing* — coverage per band, the band the map puts you on, and that
@@ -316,6 +318,9 @@ so reading 你好 slowly as nǐ hǎo is not a mistake.
 - Review lives in two tables: `review_log` is append-only (every grade, with its
   timestamp) and `review_state` is the schedule that log implies. Both cascade
   with the item, so deleting a word also deletes its history.
+- The save sheet's last source is client-side only:
+  `localStorage['seta-last-where'] = {value, at}`, ignored once it is a day old.
+  It is not in the database and not in the export; clearing site data forgets it.
 - The export button (`GET /api/items/export`) hands everything back as JSON —
   `version: 2`, `items`, `reviews`, `progress`. That is the escape hatch: it
   stays readable without the app and without SQLite.
@@ -346,7 +351,8 @@ pre-fills, tag parsing), the HSK grouping and band picker, speech availability,
 the practice pipeline (tokens, sandhi, mel frontend, Viterbi alignment, verdicts)
 and the component's state machine (tabs, superseded requests, save/edit, chip
 editor, coverage paging, HSK search and its stale responses, the review session
-and its keyboard flow, record → grade) — 175 tests across
+and its keyboard flow, record → grade, source memory and autocomplete) — 189
+tests across
 [frontend/tests](frontend/tests).
 
 Another gated test runs the **practice model** on real recordings

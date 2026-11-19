@@ -677,10 +677,29 @@
         <textarea class="field-input" rows="2" x-model="sheet.meaning" placeholder="your words, or the translation you kept"></textarea>
       </label>
 
-      <label class="field">
-        <span class="field-label">Where I found it</span>
-        <input class="field-input" type="text" x-model="sheet.where" placeholder="a sign at the mall, my tutor, HSK 1…" />
-      </label>
+      <div class="field">
+        <label class="field-label" for="sheet-where">Where I found it</label>
+        <div class="where-field">
+          <input id="sheet-where" class="field-input" type="text" x-model="sheet.where"
+                 @input="whereTyping()" @focus="focusWhere()" @blur="closeWhereSuggestions()"
+                 @keydown="whereKey($event)"
+                 placeholder="a sign at the mall, my tutor, HSK 1…"
+                 autocomplete="off" role="combobox" aria-autocomplete="list"
+                 aria-controls="where-suggestions"
+                 :aria-expanded="whereSuggestOpen && whereSuggestions.length > 0"
+                 :aria-activedescendant="whereSuggestOpen && whereSuggestions.length ? 'where-suggestion-' + whereSuggestIndex : null" />
+          <ul class="where-suggest" id="where-suggestions" role="listbox" aria-label="Where you found things"
+              x-show="whereSuggestOpen && whereSuggestions.length" x-cloak>
+            <template x-for="(value, index) in whereSuggestions" :key="value">
+              <li role="option" :id="'where-suggestion-' + index" :aria-selected="index === whereSuggestIndex"
+                  class="where-suggest-row" :class="{ 'is-active': index === whereSuggestIndex }"
+                  @mousedown.prevent="acceptWhere(value)"
+                  @mouseenter="whereSuggestIndex = index"
+                  x-text="value"></li>
+            </template>
+          </ul>
+        </div>
+      </div>
 
       <label class="field">
         <span class="field-label">Note</span>

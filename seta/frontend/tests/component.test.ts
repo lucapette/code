@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PINYIN_KEY, THEME_KEY, setaApp } from '../src/component';
+import { PINYIN_KEY, THEME_KEY, WHERE_KEY, setaApp } from '../src/component';
 
 const mocks = vi.hoisted(() => ({
   modelAvailable: vi.fn(async () => true),
@@ -592,6 +592,217 @@ describe('setaApp', () => {
     const app = mount();
     expect(app.pinyinOf('银行')).toBe('yín háng');
     expect(app._pinyinCache.get('银行')).toBe('yín háng');
+  });
+
+
+  /* --- where I found it -------------------------------------------- */
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  it('prefills where with the last source from the past day', () => {
+    window.localStorage.setItem(WHERE_KEY, JSON.stringify({ value: 'my tutor', at: Date.now() }));
+    const app = mount();
+
+    app.openSaveFromTranslation();
+
+    expect(app.sheet.where).toBe('my tutor');
+  });
+
+  it('forgets the last source once it is a day old', () => {
+    window.localStorage.setItem(
+      WHERE_KEY,
+      JSON.stringify({ value: 'old source', at: Date.now() - DAY_MS }),
+    );
+    const app = mount();
+
+    app.openSaveSheet();
+
+    expect(app.sheet.where).toBe('');
+  });
+
+  it('ignores a corrupt remembered source', () => {
+    window.localStorage.setItem(WHERE_KEY, '{not json');
+    const app = mount();
+
+    app.openSaveSheet();
+
+    expect(app.sheet.where).toBe('');
+  });
+
+  it('keeps the source a draft already carries', () => {
+    window.localStorage.setItem(WHERE_KEY, JSON.stringify({ value: 'my tutor', at: Date.now() }));
+    const app = mount();
+
+    app.openSaveFromWord({ s: '银行', lv: 3, q: 300, py: 'yín háng', m: 'bank' });
+
+    expect(app.sheet.where).toBe('HSK 3');
+  });
+
+  it('remembers the source of a successful save, trimmed', async () => {
+    const app = mount();
+    app.openSaveFromTranslation();
+    app.sheet.chinese = '冰箱';
+    app.sheet.meaning = 'fridge';
+    app.sheet.where = '  my tutor  ';
+
+    await app.saveSheet();
+
+    const saved = JSON.parse(window.localStorage.getItem(WHERE_KEY) ?? '{}');
+    expect(saved.value).toBe('my tutor');
+    expect(typeof saved.at).toBe('number');
+  });
+
+  it('reopens the sheet with the source that was just saved', async () => {
+    const app = mount();
+    app.openSaveSheet({ chinese: '冰箱', where: 'my tutor' });
+    await app.saveSheet();
+
+    app.openSaveFromTranslation();
+
+    expect(app.sheet.where).toBe('my tutor');
+  });
+
+  it('does not remember an empty source', async () => {
+    window.localStorage.setItem(WHERE_KEY, JSON.stringify({ value: 'my tutor', at: Date.now() }));
+    const app = mount();
+    app.openSaveFromTranslation();
+    app.sheet.chinese = '冰箱';
+    app.sheet.where = '';
+
+    await app.saveSheet();
+
+    const saved = JSON.parse(window.localStorage.getItem(WHERE_KEY) ?? '{}');
+    expect(saved.value).toBe('my tutor');
+  });
+
+  it('does not remember the HSK band a save left untouched', async () => {
+    const app = mount();
+    app.openSaveFromWord({ s: '冰箱', lv: 1, q: 1, py: 'bīng xiāng', m: 'fridge' });
+
+    await app.saveSheet();
+
+    expect(window.localStorage.getItem(WHERE_KEY)).toBeNull();
+  });
+
+  it('remembers an HSK source once it is edited', async () => {
+    const app = mount();
+    app.openSaveFromWord({ s: '冰箱', lv: 1, q: 1, py: 'bīng xiāng', m: 'fridge' });
+    app.sheet.where = 'Zhangkai chinese';
+
+    await app.saveSheet();
+
+    const saved = JSON.parse(window.localStorage.getItem(WHERE_KEY) ?? '{}');
+    expect(saved.value).toBe('Zhangkai chinese');
+  });
+
+  it('suggests distinct saved sources, prefix matches first', async () => {
+    const app = mount({
+      items: [
+        makeItem({ id: 'hello', where: 'hello chinese' }),
+        makeItem({ id: 'class', where: 'chinese class' }),
+        makeItem({ id: 'dup', where: 'Hello Chinese' }),
+        makeItem({ id: 'none' }),
+      ],
+    });
+    app.init();
+    await tick();
+
+    app.openSaveSheet();
+    app.sheet.where = 'chinese';
+    app.whereTyping();
+
+    expect(app.whereSuggestions).toEqual(['chinese class', 'hello chinese']);
+  });
+
+  it('does not suggest the exact source in the field', async () => {
+    const app = mount({ items: [makeItem({ where: 'my tutor' })] });
+    app.init();
+    await tick();
+
+    app.openSaveSheet();
+    app.sheet.where = 'my tutor';
+    app.whereTyping();
+
+    expect(app.whereSuggestions).toEqual([]);
+  });
+
+  it('takes a suggestion with Enter without saving the item', async () => {
+    const app = mount({ items: [makeItem({ where: 'chinese class' })] });
+    app.init();
+    await tick();
+
+    app.openSaveSheet({ chinese: '冰箱' });
+    app.sheet.where = 'chi';
+    app.whereTyping();
+
+    app.whereKey({
+      key: 'Enter',
+      metaKey: false,
+      ctrlKey: false,
+      altKey: false,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    } as unknown as KeyboardEvent);
+
+    expect(app.sheet.where).toBe('chinese class');
+    expect(app.sheet.open).toBe(true);
+    expect(server.calls.some((call) => call.method === 'POST')).toBe(false);
+  });
+
+  it('walks the suggestions with the arrow keys', async () => {
+    const app = mount({
+      items: [
+        makeItem({ id: 'hello', where: 'hello chinese' }),
+        makeItem({ id: 'class', where: 'chinese class' }),
+      ],
+    });
+    app.init();
+    await tick();
+
+    app.openSaveSheet();
+    app.sheet.where = 'chi';
+    app.whereTyping();
+
+    const press = (key: string) => {
+      app.whereKey({
+        key,
+        metaKey: false,
+        ctrlKey: false,
+        altKey: false,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as unknown as KeyboardEvent);
+    };
+
+    press('ArrowDown');
+    expect(app.whereSuggestIndex).toBe(1);
+    press('Enter');
+
+    expect(app.sheet.where).toBe('hello chinese');
+  });
+
+  it('closes the suggestions on Escape without closing the sheet', async () => {
+    const app = mount({ items: [makeItem({ where: 'chinese class' })] });
+    app.init();
+    await tick();
+
+    app.openSaveSheet();
+    app.sheet.where = 'chi';
+    app.whereTyping();
+
+    const stopPropagation = vi.fn();
+    app.whereKey({
+      key: 'Escape',
+      metaKey: false,
+      ctrlKey: false,
+      altKey: false,
+      preventDefault: vi.fn(),
+      stopPropagation,
+    } as unknown as KeyboardEvent);
+
+    expect(app.whereSuggestOpen).toBe(false);
+    expect(app.sheet.open).toBe(true);
+    expect(stopPropagation).toHaveBeenCalled();
   });
 
   /* --- practice ---------------------------------------------------- */

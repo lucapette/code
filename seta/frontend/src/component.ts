@@ -68,6 +68,11 @@ import type {
 
 export const THEME_KEY = 'seta-theme';
 export const PINYIN_KEY = 'seta-pinyin';
+export const WHERE_KEY = 'seta-last-where';
+
+// A "Where I found it" value is worth prefilling for a day; after that the
+// sheet starts empty again.
+const WHERE_TTL_MS = 24 * 60 * 60 * 1000;
 
 const CJK = /[\u4e00-\u9fff]/;
 const COPIED_MS = 1500;
@@ -155,6 +160,10 @@ export function setaApp(): SetaApp {
     /* --- Save sheet ------------------------------------------------ */
     sheet: emptySheet({ open: false }) as SheetState,
     tagDraft: '',
+    sheetWhereBase: '',
+    sheetWhereAuto: false,
+    whereSuggestOpen: false,
+    whereSuggestIndex: 0,
 
     _controller: null as AbortController | null,
     _readyTimer: null as number | null,
@@ -814,8 +823,13 @@ export function setaApp(): SetaApp {
     /* --- Save sheet (shared by all three tabs) --------------------- */
 
     openSaveSheet(draft: Partial<SheetState> = {}) {
-      this.sheet = emptySheet(draft);
+      // The last source comes back for a new save; an edit, or a draft that
+      // already carries one (HSK's band), keeps what it was given.
+      this.sheet = emptySheet({ where: this.rememberedWhere(), ...draft });
+      this.sheetWhereBase = this.sheet.where;
+      this.sheetWhereAuto = false;
       this.tagDraft = '';
+      this.closeWhereSuggestions();
     },
 
     /** From the Translate tab: direction decides what the item is. */
@@ -825,6 +839,8 @@ export function setaApp(): SetaApp {
 
     openSaveFromWord(word: HskWord) {
       this.openSaveSheet(sheetFromWord(word));
+      // "HSK 3" is the app's default, not a source the user chose.
+      this.sheetWhereAuto = true;
     },
 
     openEditItem(item: Item) {
@@ -857,6 +873,132 @@ export function setaApp(): SetaApp {
       this.sheet.tags = removeTag(this.sheet.tags, tag);
     },
 
+    /* --- Where I found it: memory and autocomplete ------------------ */
+
+    /** The last source used on a save, as long as it is under a day old. */
+    rememberedWhere(): string {
+      try {
+        const raw = window.localStorage.getItem(WHERE_KEY);
+        if (!raw) return '';
+        const saved = JSON.parse(raw) as { value?: unknown; at?: unknown };
+        if (typeof saved.value !== 'string' || typeof saved.at !== 'number') return '';
+        if (!saved.value.trim()) return '';
+        if (Date.now() - saved.at >= WHERE_TTL_MS) return '';
+        return saved.value;
+      } catch {
+        return '';
+      }
+    },
+
+    rememberWhere(value: string) {
+      const trimmed = value.trim();
+      if (!trimmed) return;
+      try {
+        window.localStorage.setItem(WHERE_KEY, JSON.stringify({ value: trimmed, at: Date.now() }));
+      } catch {
+        /* private mode or a full quota: the next sheet just starts empty */
+      }
+    },
+
+    /** Only a source the user actually chose counts as "last used": an HSK
+        save keeps its prefilled band, and cancelling must not count at all. */
+    rememberWhereAfterSave() {
+      const value = this.sheet.where.trim();
+      if (!value) return;
+      if (this.sheetWhereAuto && value === this.sheetWhereBase.trim()) return;
+      this.rememberWhere(value);
+    },
+
+    /** Distinct sources already in the library, most recent item first. */
+    get whereSuggestions(): string[] {
+      const query = this.sheet.where.trim().toLowerCase();
+      const seen = new Set<string>();
+      const values: string[] = [];
+
+      for (const item of this.items) {
+        const value = (item.where ?? '').trim();
+        if (!value) continue;
+        const key = value.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        values.push(value);
+      }
+
+      const matches = values.filter((value) => {
+        const lower = value.toLowerCase();
+        return lower !== query && (!query || lower.includes(query));
+      });
+      matches.sort((a, b) => {
+        const aPrefix = a.toLowerCase().startsWith(query) ? 0 : 1;
+        const bPrefix = b.toLowerCase().startsWith(query) ? 0 : 1;
+        return aPrefix - bPrefix;
+      });
+      return matches.slice(0, 6);
+    },
+
+    focusWhere() {
+      this.whereSuggestOpen = true;
+      this.whereSuggestIndex = 0;
+    },
+
+    whereTyping() {
+      this.whereSuggestOpen = true;
+      this.whereSuggestIndex = 0;
+    },
+
+    closeWhereSuggestions() {
+      this.whereSuggestOpen = false;
+      this.whereSuggestIndex = 0;
+    },
+
+    acceptWhere(value: string) {
+      this.sheet.where = value;
+      this.closeWhereSuggestions();
+    },
+
+    /** Arrows walk the list; Enter/Tab take a value; Escape closes the list
+        and stops there, so the sheet itself only closes on the next Escape. */
+    whereKey(event: KeyboardEvent) {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+      if (event.key === 'Escape') {
+        if (!this.whereSuggestOpen) return;
+        event.preventDefault();
+        event.stopPropagation();
+        this.closeWhereSuggestions();
+        return;
+      }
+
+      const suggestions = this.whereSuggestions;
+      if (!suggestions.length) return;
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        if (!this.whereSuggestOpen) {
+          this.whereSuggestOpen = true;
+          this.whereSuggestIndex = 0;
+        } else {
+          this.whereSuggestIndex = (this.whereSuggestIndex + 1) % suggestions.length;
+        }
+        return;
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (!this.whereSuggestOpen) {
+          this.whereSuggestOpen = true;
+          this.whereSuggestIndex = suggestions.length - 1;
+        } else {
+          this.whereSuggestIndex =
+            (this.whereSuggestIndex - 1 + suggestions.length) % suggestions.length;
+        }
+        return;
+      }
+      if ((event.key === 'Enter' || event.key === 'Tab') && this.whereSuggestOpen) {
+        event.preventDefault();
+        this.acceptWhere(suggestions[Math.min(this.whereSuggestIndex, suggestions.length - 1)]);
+      }
+    },
+
     async saveSheet() {
       if (this.sheet.saving) return;
       if (!this.sheet.chinese.trim()) {
@@ -875,6 +1017,7 @@ export function setaApp(): SetaApp {
         } else {
           await apiCreateItem(input);
         }
+        this.rememberWhereAfterSave();
         this.closeSheet();
         this.notify(editing ? 'Updated' : 'Saved');
         this.expandedId = null;
@@ -965,6 +1108,10 @@ interface SetaAppState {
 
   sheet: SheetState;
   tagDraft: string;
+  sheetWhereBase: string;
+  sheetWhereAuto: boolean;
+  whereSuggestOpen: boolean;
+  whereSuggestIndex: number;
 
   _controller: AbortController | null;
   _readyTimer: number | null;
@@ -1055,6 +1202,15 @@ interface SetaAppState {
   tagsBackspace(): void;
   removeTag(tag: string): void;
   saveSheet(): Promise<void>;
+  readonly whereSuggestions: string[];
+  rememberedWhere(): string;
+  rememberWhere(value: string): void;
+  rememberWhereAfterSave(): void;
+  focusWhere(): void;
+  whereTyping(): void;
+  closeWhereSuggestions(): void;
+  acceptWhere(value: string): void;
+  whereKey(event: KeyboardEvent): void;
 
   notify(message: string): void;
 }
